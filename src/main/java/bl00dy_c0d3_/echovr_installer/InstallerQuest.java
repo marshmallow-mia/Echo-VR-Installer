@@ -18,6 +18,7 @@ public class InstallerQuest {
     Path targetPath2;
     Path targetPath3;
     String folder;
+    String libcName;
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
@@ -44,26 +45,27 @@ public class InstallerQuest {
         }
         else{
             if (mac){
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/libc++.dylib");
                 folder = "platform-tools-mac";
+                libcName = "libc++.dylib";
+                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
             }
             else{
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/libc++.so");
                 folder = "platform-tools-linux";
+                libcName = "libc++.so";
+                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
             }
-            String dir = System.getProperty("java.io.tmpdir") + "/" + folder + "/";
+            String dir = tempPath + "/" + folder + "/";
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
             }
-            String dir2 = System.getProperty("java.io.tmpdir") + "/" + folder + "/lib64/";
+            String dir2 = tempPath + "/" + folder + "/lib64/";
             File file2 = new File(dir2);
             if (!file2.exists()){
                 file2.mkdirs();
             }
             try {
-                //targetPath2 is set up in the distro check
-                InputStream stream2 = getClass().getClassLoader().getResourceAsStream(folder + "/lib64/libc++.so");
+                InputStream stream2 = getClass().getClassLoader().getResourceAsStream(folder + "/lib64/" + libcName);
                 Files.copy(stream2, targetPath2, StandardCopyOption.REPLACE_EXISTING);
 
 
@@ -116,10 +118,10 @@ public class InstallerQuest {
                 runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"", 4);
             }
             else{
-                runShellCommand(tempPath + "/platform-tools-linux/adb " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand(tempPath + "/platform-tools-linux/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand(tempPath + "/platform-tools-linux/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
-                runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
+                runShellCommand(tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15", 1);
+                runShellCommand(tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
+                runShellCommand(tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
+                runShellCommand(tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
 
 
             }
@@ -157,6 +159,9 @@ public class InstallerQuest {
             if(isWindows) {
                 process = new ProcessBuilder(tempPath + "/platform-tools/adb.exe", "devices").start();
             }
+            else if(mac){
+                process = new ProcessBuilder(tempPath + "/platform-tools-mac/adb", "devices").start();
+            }
             else{
                 process = new ProcessBuilder(tempPath + "/platform-tools-linux/adb", "devices").start();
             }
@@ -165,7 +170,6 @@ public class InstallerQuest {
             //e.printStackTrace();
         }
         //TODO ^
-
 
         // StringBuilder to accumulate the output
         StringBuilder stdOutResult = new StringBuilder();
@@ -183,8 +187,6 @@ public class InstallerQuest {
 
         // Print the result
         //System.out.println(stdOutResult + "");
-
-
 
         // Check each line for device connection status
         for (String line : (stdOutResult + "").split("\\r?\\n")) {
