@@ -86,8 +86,6 @@ jlink {
             tasks.named('build').configure {
                 dependsOn(jlink)
             }
-//TEST
-            //TEST
         }
     }
 }
