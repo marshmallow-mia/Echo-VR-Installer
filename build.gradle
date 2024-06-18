@@ -87,6 +87,7 @@ jlink {
                 dependsOn(jlink)
             }
 //TEST
+            //TEST
         }
     }
 }
