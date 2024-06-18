@@ -47,7 +47,7 @@ public class Downloader implements Runnable {
             theDir.mkdirs();
         }
         try (BufferedInputStream in = new BufferedInputStream(new URL(fileUrl).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream(localFilePath + "\\" + filename)) {
+             FileOutputStream fileOutputStream = new FileOutputStream(localFilePath + "/" + filename)) {
             System.out.println("3");
             long downloadProgress = 0;
             byte dataBuffer[] = new byte[1024];
