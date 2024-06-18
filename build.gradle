@@ -30,14 +30,13 @@ application {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
 }
 
 test {
     useJUnitPlatform()
 }
-
 
 jar {
     manifest {
@@ -49,23 +48,45 @@ jar {
     }
 }
 
+// Task to copy libjpeg.so.62
+task copyLibjpeg(type: Copy) {
+    from 'src/main/resources/libjpeg.so.62'
+    into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
+}
+
+
 jlink {
     jpackage {
         appVersion = '0.1'
         installerName = 'Echo_VR_Installer'
-        icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'
 
+        def os = org.gradle.internal.os.OperatingSystem.current()
 
-        installerOptions = [
-                '--app-version', '0.1',
-                '--vendor', 'bl00dy-c0d3',
-                '--name', 'Echo_VR_Installer',
-                '--install-dir', 'EchoVRInstaller',
-                '--icon', 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico',
-                '--win-dir-chooser',
-                '--win-shortcut',
-                '--win-menu',
-                '--win-menu-group', 'EchoVRInstaller',
-        ]
+        if (os.isWindows()) {
+            icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'  // Update path
+            installerOptions = [
+                    '--app-version', '0.1',
+                    '--vendor', 'bl00dy-c0d3',
+                    '--name', 'Echo_VR_Installer',
+                    '--install-dir', 'EchoVRInstaller',
+                    '--icon', 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico',  // Update path
+                    '--win-dir-chooser',
+                    '--win-shortcut',
+                    '--win-menu',
+                    '--win-menu-group', 'EchoVRInstaller',
+            ]
+        } else {
+            icon = 'icon.png'  // Update path if needed
+            // Ensure copyLibjpeg runs after jpackage
+            tasks.named('jpackage').configure {
+                finalizedBy(copyLibjpeg)
+            }
+
+            // Ensure build depends on jlink
+            tasks.named('build').configure {
+                dependsOn(jlink)
+            }
+
+        }
     }
 }

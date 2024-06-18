@@ -85,7 +85,6 @@ public class FrameQuestDownload extends JDialog {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
                 downloader = new Downloader();
                 downloader.startDownload("https://echo.marceldomain.de:6969/Echo_patched.apk", targetPath + "", "Echo_patched.apk", labelQuestProgress2, outFrame, 2);
-                System.out.println(targetPath + "");
                 downloader2 = new Downloader();
                 downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, outFrame, 2);
                 //TODO THE DOWNLOADS RUN SIMULTANEOUSLY. THATS KINDA TRASH!!!
