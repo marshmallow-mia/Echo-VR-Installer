@@ -10,23 +10,18 @@ import java.nio.file.StandardCopyOption;
 //This Class will uninstall echo, install echo and copy obb
 public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+    static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     String[] fileList;
     String[] fileList2;
     String[] fileList3;
     Path targetPath;
     Path targetPath2;
     Path targetPath3;
+    String folder;
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
-
-
-
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
         InstallerQuest outFrame = this;
-
-
-
-
 
         if (isWindows) {
             String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
@@ -34,7 +29,6 @@ public class InstallerQuest {
             if (!file.exists()){
                 file.mkdirs();
             }
-
             fileList = new String[]{"adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe", "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe", "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
             //TODO read filelist from the folder instead of that
             for (int a = 0; a < fileList.length; a++) {
@@ -49,30 +43,39 @@ public class InstallerQuest {
             }
         }
         else{
-            String dir = System.getProperty("java.io.tmpdir") + "/platform-tools-linux/";
+            if (mac){
+                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/libc++.dylib");
+                folder = "platform-tools-mac";
+            }
+            else{
+                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/libc++.so");
+                folder = "platform-tools-linux";
+            }
+            String dir = System.getProperty("java.io.tmpdir") + "/" + folder + "/";
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
             }
-            String dir2 = System.getProperty("java.io.tmpdir") + "/platform-tools-linux/lib64/";
+            String dir2 = System.getProperty("java.io.tmpdir") + "/" + folder + "/lib64/";
             File file2 = new File(dir2);
             if (!file2.exists()){
                 file2.mkdirs();
             }
             try {
-                targetPath2 = Paths.get(tempPath + "/platform-tools-linux/lib64/libc++.so");
-                InputStream stream2 = getClass().getClassLoader().getResourceAsStream("platform-tools-linux/lib64/libc++.so");
+                //targetPath2 is set up in the distro check
+                InputStream stream2 = getClass().getClassLoader().getResourceAsStream(folder + "/lib64/libc++.so");
                 Files.copy(stream2, targetPath2, StandardCopyOption.REPLACE_EXISTING);
+
 
                 fileList3 = new String[]{"adb", "fastboot", "make_f2fs_casefold", "mke2fs.conf", "source.properties", "etc1tool", "hprof-conv", "make_f2fs", "mke2fs", "NOTICE.txt", "sqlite3"};
                 //TODO read filelist from the folder instead of that
                 for (int b = 0; b < fileList3.length; b++) {
-                    targetPath3 = Paths.get(tempPath + "/platform-tools-linux/" + fileList3[b]);
-                        InputStream stream3 = getClass().getClassLoader().getResourceAsStream("platform-tools-linux/" + fileList3[b]);
-                        Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-                        stream2.close();
+                    targetPath3 = Paths.get(tempPath + "/" + folder + "/" + fileList3[b]);
+                    InputStream stream3 = getClass().getClassLoader().getResourceAsStream(folder + "/" + fileList3[b]);
+                    Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
+                    stream2.close();
                 }
-                runShellCommand("chmod -R +x " + tempPath + "/platform-tools-linux/", 1);
+                runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
             } catch (Exception e) {
                 e.printStackTrace();
 
