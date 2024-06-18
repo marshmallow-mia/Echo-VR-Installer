@@ -57,12 +57,13 @@ task copyLibjpeg(type: Copy) {
 
 jlink {
     jpackage {
-        appVersion = '0.1'
+
         installerName = 'Echo_VR_Installer'
 
         def os = org.gradle.internal.os.OperatingSystem.current()
 
         if (os.isWindows()) {
+            appVersion = '0.1'
             icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'  // Update path
             installerOptions = [
                     '--app-version', '0.1',
@@ -75,7 +76,15 @@ jlink {
                     '--win-menu',
                     '--win-menu-group', 'EchoVRInstaller',
             ]
-        } else {
+        }
+            else if (os.isMacOsX()) {
+            appVersion = '1.0'
+            installerOptions = [
+                '--mac-package-identifier', 'IhateApple',
+            ]
+        }
+        else {
+            appVersion = '0.1'
             icon = 'icon.png'  // Update path if needed
             // Ensure copyLibjpeg runs after jpackage
             tasks.named('jpackage').configure {
