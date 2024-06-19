@@ -25,6 +25,7 @@ public class FrameSteamPatcher extends JDialog {
         this.frameMain = frameMain;
         initComponents();
         this.setVisible(true);
+        this.setModal(true);
     }
 
 
@@ -50,6 +51,8 @@ public class FrameSteamPatcher extends JDialog {
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
         this.setTitle("Echo VR Installer v0.1");
+        this.setModal(true);
+
 
         Background back = new Background("echo_combat1.png");
         back.setLayout(null);

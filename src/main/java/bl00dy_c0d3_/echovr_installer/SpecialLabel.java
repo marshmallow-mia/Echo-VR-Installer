@@ -26,7 +26,6 @@ public class SpecialLabel extends JLabel {
         //this.setBorder(BorderFactory.createLineBorder(new Color(80, 100, 130), 2));
         this.setHorizontalAlignment(SwingConstants.CENTER);
         this.setVerticalAlignment(SwingConstants.CENTER);
-
     }
 
 }

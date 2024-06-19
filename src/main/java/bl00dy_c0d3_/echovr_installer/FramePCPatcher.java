@@ -29,6 +29,7 @@ public class FramePCPatcher extends JDialog {
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
         this.setTitle("Echo VR Installer v0.1");
+        this.setModal(true);
 
         Background back = new Background("echo-in-arena.png");
         back.setLayout(null);

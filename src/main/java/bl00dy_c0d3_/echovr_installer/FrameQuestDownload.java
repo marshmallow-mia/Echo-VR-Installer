@@ -49,6 +49,7 @@ public class FrameQuestDownload extends JDialog {
         Background back = new Background("Echo2.jpg");
         back.setLayout(null);
         this.setContentPane(back);
+        this.setModal(true);
 
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you don't own Echo on your account don't use this Installer! Use the \"No licence patch\"<br>down below on the main menu instead and just close the next window!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
