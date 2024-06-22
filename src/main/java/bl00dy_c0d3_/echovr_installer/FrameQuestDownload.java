@@ -19,6 +19,7 @@ public class FrameQuestDownload extends JDialog {
     public int firstDownloadDone = 0;
     //Get the temp path
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
+    String configPath = "Optional: Choose config.json on the left";
 
     //Constructor
     public FrameQuestDownload(FrameMain frameMain){
@@ -55,7 +56,7 @@ public class FrameQuestDownload extends JDialog {
         JOptionPane.showMessageDialog(this, "<html>If you don't own Echo on your account don't use this Installer! Use the \"No licence patch\"<br>down below on the main menu instead and just close the next window!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelQuestProgress1 = new SpecialLabel("Progress = ", 17);
-        labelQuestProgress1.setLocation(282,100);
+        labelQuestProgress1.setLocation(282,60);
         labelQuestProgress1.setSize(240, 38);
         labelQuestProgress1.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress1.setForeground(Color.BLACK);
@@ -64,7 +65,7 @@ public class FrameQuestDownload extends JDialog {
 
         SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
         labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress2.setLocation(522,100);
+        labelQuestProgress2.setLocation(522,60);
         labelQuestProgress2.setSize(130, 19);
         labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress2.setForeground(Color.BLACK);
@@ -72,7 +73,7 @@ public class FrameQuestDownload extends JDialog {
 
         SpecialLabel labelQuestProgress3 = new SpecialLabel(" 0%", 15);
         labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress3.setLocation(522,119);
+        labelQuestProgress3.setLocation(522,79);
         labelQuestProgress3.setSize(130, 19);
         labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress3.setForeground(Color.BLACK);
@@ -80,7 +81,7 @@ public class FrameQuestDownload extends JDialog {
 
 
         SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
-        questStartDownload.setLocation(50, 100);
+        questStartDownload.setLocation(50, 60);
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
@@ -93,11 +94,27 @@ public class FrameQuestDownload extends JDialog {
         });
         back.add(questStartDownload);
 
+        SpecialLabel labelConfigPath = new SpecialLabel(configPath, 14);
+        labelConfigPath.setLocation(280,140);
+        labelConfigPath.setSize(410, 38);
+        labelConfigPath.setBackground(new Color(255, 255, 255, 200));
+        labelConfigPath.setForeground(Color.BLACK);
+        back.add(labelConfigPath);
+
+        SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        chooseConfig.setLocation(50, 140);
+        chooseConfig.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                fileChooser(labelConfigPath);
+            }
+        });
+        back.add(chooseConfig);
+
 
 
         SpecialLabel labelQuestInstallProgress = new SpecialLabel("Not started yet", 20);
         labelQuestInstallProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestInstallProgress.setLocation(350,200);
+        labelQuestInstallProgress.setLocation(350,250);
         labelQuestInstallProgress.setSize(330, 50);
         labelQuestInstallProgress.setBackground(new Color(255, 255, 255, 200));
         labelQuestInstallProgress.setForeground(Color.BLACK);
@@ -105,7 +122,7 @@ public class FrameQuestDownload extends JDialog {
 
 
         SpecialButton questStartPatching = new SpecialButton("Install Echo to Quest", "button_up.png", "button_down.png", "button_highlighted.png", 15);
-        questStartPatching.setLocation(50, 200);
+        questStartPatching.setLocation(50, 250);
         questStartPatching.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 String apkfileName = "Echo_patched.apk";
@@ -129,6 +146,32 @@ public class FrameQuestDownload extends JDialog {
         this.setLocation(x, y);
     }
 
+    private void fileChooser(SpecialLabel labelPcDownloadPath){
+        JFileChooser chooser;
+        int result;
+
+        chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new java.io.File("."));
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        //
+        // disable the "All files" option.
+        //
+        chooser.setAcceptAllFileFilterUsed(false);
+        //
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            this.repaint();
+            System.out.println("getSelectedFile() : "
+                    +  chooser.getSelectedFile());
+            configPath = chooser.getSelectedFile().getPath();
+            labelPcDownloadPath.setText(configPath);
+
+        }
+        else {
+            System.out.println("No Selection ");
+        }
+
+    }
+    //TODO Create Class from the fileChooser function
 
 
     //Lädt eine GUI-Grafik und gibt sie zurück:
