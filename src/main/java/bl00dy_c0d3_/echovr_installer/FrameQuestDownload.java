@@ -174,6 +174,7 @@ public class FrameQuestDownload extends JDialog {
     //TODO Create Class from the fileChooser function
 
 
+
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
         URL imageURL = getClass().getClassLoader().getResource(imageName);
