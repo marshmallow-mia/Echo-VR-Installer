@@ -61,10 +61,10 @@ jlink {
         def os = org.gradle.internal.os.OperatingSystem.current()
 
         if (os.isWindows()) {
-            appVersion = '0.1'
+            appVersion = '0.2'
             icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'  // Update path
             installerOptions = [
-                    '--app-version', '0.1',
+                    '--app-version', '0.2',
                     '--vendor', 'bl00dy-c0d3',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
@@ -75,12 +75,12 @@ jlink {
                     '--win-menu-group', 'EchoVRInstaller',
             ]
         } else if (os.isMacOsX()) {
-            appVersion = '1.0'
+            appVersion = '1.1'
             installerOptions = [
                     '--mac-package-identifier', 'IhateApple',
             ]
         } else {
-            appVersion = '0.1'
+            appVersion = '0.2'
             icon = 'icon.png'  // Update path if needed
             // Ensure copyLibjpeg runs after jpackage
             tasks.named('jpackage').configure {
