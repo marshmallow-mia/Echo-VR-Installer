@@ -128,7 +128,8 @@ public class FrameSteamPatcher extends JDialog {
                 File echoPath = new File(path + "/bin/win10");
 
                 if (!echoPath.exists() && !echoPath.isDirectory()) {
-                    ErrorDialog.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena");
+                    ErrorDialog error = new ErrorDialog();
+                    error.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                 }
                 else {
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);

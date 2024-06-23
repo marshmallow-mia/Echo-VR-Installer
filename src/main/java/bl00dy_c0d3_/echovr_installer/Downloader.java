@@ -31,7 +31,8 @@ public class Downloader implements Runnable {
             new Thread(this).start();
         }
         else {
-            ErrorDialog.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.");
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.", 0);
         }
     }
 
@@ -78,7 +79,8 @@ public class Downloader implements Runnable {
         } catch (IOException e) {
             // handle exception
             System.out.println("4");
-            ErrorDialog.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.");
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.", 0);
 
 
         }

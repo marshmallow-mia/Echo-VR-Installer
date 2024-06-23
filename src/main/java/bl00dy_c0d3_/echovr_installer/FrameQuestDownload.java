@@ -5,11 +5,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 
 import static java.lang.Thread.sleep;
 
@@ -22,7 +25,7 @@ public class FrameQuestDownload extends JDialog {
     public int firstDownloadDone = 0;
     //Get the temp path
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
-    String configPath = "Optional: Choose config.json on the left";
+    String configPath = "Optional: Choose config.json on the button above";
 
     //Constructor
     public FrameQuestDownload(FrameMain frameMain){
@@ -59,7 +62,7 @@ public class FrameQuestDownload extends JDialog {
         JOptionPane.showMessageDialog(this, "<html>If you don't own Echo on your account don't use this Installer! Use the \"No licence patch\"<br>down below on the main menu instead and just close the next window!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelQuestProgress1 = new SpecialLabel("Progress = ", 17);
-        labelQuestProgress1.setLocation(282,60);
+        labelQuestProgress1.setLocation(282,40);
         labelQuestProgress1.setSize(240, 38);
         labelQuestProgress1.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress1.setForeground(Color.BLACK);
@@ -68,7 +71,7 @@ public class FrameQuestDownload extends JDialog {
 
         SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
         labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress2.setLocation(522,60);
+        labelQuestProgress2.setLocation(522,40);
         labelQuestProgress2.setSize(130, 19);
         labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress2.setForeground(Color.BLACK);
@@ -76,7 +79,7 @@ public class FrameQuestDownload extends JDialog {
 
         SpecialLabel labelQuestProgress3 = new SpecialLabel(" 0%", 15);
         labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress3.setLocation(522,79);
+        labelQuestProgress3.setLocation(522,59);
         labelQuestProgress3.setSize(130, 19);
         labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress3.setForeground(Color.BLACK);
@@ -84,7 +87,7 @@ public class FrameQuestDownload extends JDialog {
 
 
         SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
-        questStartDownload.setLocation(50, 60);
+        questStartDownload.setLocation(50, 40);
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
@@ -98,14 +101,15 @@ public class FrameQuestDownload extends JDialog {
         back.add(questStartDownload);
 
         SpecialLabel labelConfigPath = new SpecialLabel(configPath, 14);
-        labelConfigPath.setLocation(280,140);
-        labelConfigPath.setSize(410, 38);
+        labelConfigPath.setLocation(50,160);
+        labelConfigPath.setSize(600, 25);
         labelConfigPath.setBackground(new Color(255, 255, 255, 200));
         labelConfigPath.setForeground(Color.BLACK);
+
         back.add(labelConfigPath);
 
         SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
-        chooseConfig.setLocation(50, 140);
+        chooseConfig.setLocation(50, 111);
         chooseConfig.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 fileChooser(labelConfigPath);
@@ -116,7 +120,7 @@ public class FrameQuestDownload extends JDialog {
 
         SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Check this to use the custom config", 17);
         checkBoxConfig.setSize(500,30);
-        checkBoxConfig.setLocation(50, 185);
+        checkBoxConfig.setLocation(50, 190);
 
         //JCheckBoxen werden Panel hinzugefügt
         back.add(checkBoxConfig);
@@ -140,12 +144,21 @@ public class FrameQuestDownload extends JDialog {
                 if (checkBoxConfig.isSelected()){
                     int result = checkIfJavaIsInstalled();
                     if (result == 0){
-                        ErrorDialog.errorDialog(outFrame, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>");
+                        ErrorDialog error = new ErrorDialog();
+                        error.errorDialog(outFrame, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>", 2);
+                        return;
                     }
 
-                    return;
-
-                    //apkfileName = "Echo_patched.apk";
+                    File f = new File(targetPath + "/Echo_patched.apk");
+                    if(f.exists() && !f.isDirectory()) {
+                        PatchAPK patchAPK = new PatchAPK();
+                        patchAPK.patchAPK(targetPath + "", "Echo_patched.apk", labelConfigPath.getText(), labelConfigPath, outFrame);
+                    }
+                    else {
+                        ErrorDialog error2 = new ErrorDialog();
+                        error2.errorDialog(outFrame, "Echo not found", "Echo wasn't found. Please use the top Button first", 2);
+                    }
+                    apkfileName = "changedConfig-aligned-debugSigned.apk";
                 }
                 else {
                     apkfileName = "Echo_patched.apk";
@@ -177,7 +190,7 @@ public class FrameQuestDownload extends JDialog {
     private int checkIfJavaIsInstalled(){
         Process process = null;
         try {
-            process = new ProcessBuilder("javas", "-version").start();
+            process = new ProcessBuilder("java", "-version").start();
         } catch (IOException e) {
             return 0;
         }
@@ -207,7 +220,9 @@ public class FrameQuestDownload extends JDialog {
 
         chooser = new JFileChooser();
         chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files", "json");
+        chooser.setFileFilter(filter);
         //
         // disable the "All files" option.
         //

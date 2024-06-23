@@ -25,7 +25,7 @@ public class InstallerQuest {
         InstallerQuest outFrame = this;
 
         if (isWindows) {
-            String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
+            String dir = tempPath + "platform-tools/";
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
@@ -99,7 +99,8 @@ public class InstallerQuest {
             File obbFile = new File(pathToApkObb + "/" + obbfileName);
             if(!apkFile.exists() ||  !obbFile.exists()) {
                 System.out.println("APK or OBB FILE NOT FOUND");
-                ErrorDialog.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ON STEP 4/5!");
+                ErrorDialog error = new ErrorDialog();
+                error.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ON STEP 4/5!", 0);
 
                 return;
             }
@@ -132,7 +133,8 @@ public class InstallerQuest {
             }
         }
         else if (deviceConnected == 1) {
-            ErrorDialog.errorDialog(parrentFrame, "Not authorized", "<html>You need to allow this PC to use adb on your Quest. <br>Replug the cable and check inside your Quest. You should get asked if you allow the connection.</html>");
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(parrentFrame, "Not authorized", "<html>You need to allow this PC to use adb on your Quest. <br>Replug the cable and check inside your Quest. You should get asked if you allow the connection.</html>", 0);
             System.out.println("Device is unauthorized!");
         }
         else if (deviceConnected == -1) {
@@ -140,9 +142,8 @@ public class InstallerQuest {
             ErrorDialog errorDialog = new ErrorDialog();
 
             // Show the error dialog
-            errorDialog.errorDialog(parrentFrame, "No Device detected", "<html>Either your Quest is not connected, or you don't have the Developer Mode enabled</html>");
+            errorDialog.errorDialog(parrentFrame, "No Device detected", "<html>Either your Quest is not connected, or you don't have the Developer Mode enabled</html>", 1);
 
-            errorDialog.debugMode();
             System.out.println("No device is connected.");
         }
 

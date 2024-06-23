@@ -39,7 +39,8 @@ public class UnzipFile {
             System.out.println("done");
             zipIn.close();
         } catch (Exception e){
-            ErrorDialog.errorDialog(frame, "Error while unzipping", "Couldn't finish Download. Please check storage Space.");
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(frame, "Error while unzipping", "Couldn't finish Download. Please check storage Space.", 0);
             unzipFrame.setClosable();
         }
 
