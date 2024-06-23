@@ -142,8 +142,6 @@ public class FrameSteamPatcher extends JDialog {
                     downloader4 = new Downloader();
                     downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, 1);
                 }
-
-
             }
         });
         back.add(pcStartDownload);

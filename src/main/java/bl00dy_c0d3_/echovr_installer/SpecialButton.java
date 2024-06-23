@@ -18,7 +18,6 @@ public class SpecialButton extends JPanel {
     private JLabel label = null;
 
 
-
     //Konstruktor:
     public SpecialButton(String text, String imageUp, String imageDown, String imageHighlighted, int textSize) {
         //Grundeinstellungen...

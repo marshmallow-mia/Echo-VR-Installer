@@ -32,7 +32,6 @@ private SpecialLabel zipLabel4;
             back.add(zipLabel3);
             back.add(zipLabel4);
             back.repaint();
-
         }}
 
 

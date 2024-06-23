@@ -38,7 +38,6 @@ public class PatchAPK {
         }
         //TODO ^
 
-
         //COPY THE APK BEFORE CHANGING IT
         Path sourcePath = Paths.get(pathToApkObb + "/" + apkfileName);
         Path destinationPath = Paths.get(pathToApkObb + "/changedConfig.apk");

@@ -27,5 +27,4 @@ public class SpecialLabel extends JLabel {
         this.setHorizontalAlignment(SwingConstants.CENTER);
         this.setVerticalAlignment(SwingConstants.CENTER);
     }
-
 }

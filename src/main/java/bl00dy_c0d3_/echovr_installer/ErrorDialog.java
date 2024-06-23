@@ -46,9 +46,6 @@ public class ErrorDialog {
             javaRuntimeLink();
         }
         errorDialog.setVisible(true);
-
-
-
     }
 
     public void debugMode(){

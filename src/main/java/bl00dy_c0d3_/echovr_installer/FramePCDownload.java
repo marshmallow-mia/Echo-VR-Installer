@@ -44,15 +44,12 @@ public class FramePCDownload extends JDialog {
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
-
-
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
         labelPcDownloadPath.setLocation(170,100);
         labelPcDownloadPath.setSize(490, 25);
         labelPcDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcDownloadPath.setForeground(Color.BLACK);
         back.add(labelPcDownloadPath);
-
 
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
         pcChoosePath.setLocation(20, 100);

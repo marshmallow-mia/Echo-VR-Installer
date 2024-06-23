@@ -158,7 +158,6 @@ public class FramePCPatcher extends JDialog {
                 }
 
 
-
             }
         });
         back.add(pcStartPatch);

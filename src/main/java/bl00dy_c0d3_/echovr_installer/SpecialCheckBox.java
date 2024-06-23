@@ -23,6 +23,4 @@ public class SpecialCheckBox extends JCheckBox{
         this.setBorderPaintedFlat(false);
 
     }
-
-
 }

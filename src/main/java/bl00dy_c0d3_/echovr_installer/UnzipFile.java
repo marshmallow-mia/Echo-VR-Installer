@@ -43,7 +43,6 @@ public class UnzipFile {
             error.errorDialog(frame, "Error while unzipping", "Couldn't finish Download. Please check storage Space.", 0);
             unzipFrame.setClosable();
         }
-
     }
 
     private static void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
@@ -55,5 +54,4 @@ public class UnzipFile {
         }
         bos.close();
     }
-
 }

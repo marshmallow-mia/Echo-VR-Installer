@@ -21,5 +21,4 @@ public class SpecialTextfield extends JTextField{
 
         this.setFont(font);
     }
-
 }
