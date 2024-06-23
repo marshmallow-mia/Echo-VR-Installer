@@ -242,10 +242,15 @@ public class FrameQuestPatcher extends JDialog {
                     if(f.exists() && !f.isDirectory()) {
                         PatchAPK patchAPK = new PatchAPK();
                         patchAPK.patchAPK(targetPath + "", "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, outFrame);
+                        Object resultPatcher = patchAPK.patchAPK(targetPath + "", "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, outFrame);
+                        if (resultPatcher.equals(-1)){
+                            return;
+                        }
                     }
                     else {
                         ErrorDialog error2 = new ErrorDialog();
                         error2.errorDialog(outFrame, "Echo not found", "Echo wasn't found. Please use the Download Button first", 2);
+                        return;
                     }
                     apkfileName = "changedConfig-aligned-debugSigned.apk";
                 }

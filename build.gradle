@@ -5,9 +5,9 @@ plugins {
 }
 
 version '0.1'
-
 group 'org.example'
-version '1.0-SNAPSHOT'
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 repositories {
     mavenCentral()
@@ -18,9 +18,6 @@ ext {
     junitVersion = '5.8.1'
 }
 
-sourceCompatibility = '17'
-targetCompatibility = '17'
-
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
 }
@@ -28,13 +25,14 @@ tasks.withType(JavaCompile) {
 application {
     mainModule = 'bl00dy_c0d3_.echovr_installer'
     mainClass = 'bl00dy_c0d3_.echovr_installer.EchoVRInstaller'
+    applicationDefaultJvmArgs = ['--add-modules', 'jdk.zipfs']
 }
 
 dependencies {
+    implementation 'org.openjfx:javafx-controls:17.0.1'
+    implementation 'org.openjfx:javafx-fxml:17.0.1'
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
-
-
 }
 
 test {
@@ -43,9 +41,8 @@ test {
 
 jar {
     manifest {
-        attributes "Main-Class": "bl00dy_c0d3_.echovr_installer.EchoVRInstaller"
+        attributes 'Main-Class': application.mainClass
     }
-
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
@@ -57,12 +54,10 @@ task copyLibjpeg(type: Copy) {
     into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
 }
 
-
 jlink {
+    options = ['--add-modules', 'jdk.zipfs']
     jpackage {
-
         installerName = 'Echo_VR_Installer'
-
         def os = org.gradle.internal.os.OperatingSystem.current()
 
         if (os.isWindows()) {
@@ -79,14 +74,12 @@ jlink {
                     '--win-menu',
                     '--win-menu-group', 'EchoVRInstaller',
             ]
-        }
-            else if (os.isMacOsX()) {
+        } else if (os.isMacOsX()) {
             appVersion = '1.0'
             installerOptions = [
-                '--mac-package-identifier', 'IhateApple',
+                    '--mac-package-identifier', 'IhateApple',
             ]
-        }
-        else {
+        } else {
             appVersion = '0.1'
             icon = 'icon.png'  // Update path if needed
             // Ensure copyLibjpeg runs after jpackage

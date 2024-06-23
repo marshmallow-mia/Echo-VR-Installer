@@ -12,14 +12,14 @@ public class PatchAPK {
     Path targetPath;
 
 
-    public void patchAPK(String pathToApkObb, String apkfileName, String configPath, SpecialLabel progressLabel, JDialog parrentFrame){
+    public int patchAPK(String pathToApkObb, String apkfileName, String configPath, SpecialLabel progressLabel, JDialog parrentFrame){
 
         String dir = tempPath + "/uber/";
 
         if (configPath.startsWith("Optional")){
             ErrorDialog errorDialog = new ErrorDialog();
             errorDialog.errorDialog(parrentFrame, "Path to config.json incorrect", "The path to the config.json is incorrect. Set above", 0);
-            return;
+            return -1;
         }
 
         File file = new File(dir);
@@ -60,7 +60,6 @@ public class PatchAPK {
         /* Specify the path to the ZIP File that you want to read as a File System */
         URI zip_disk = URI.create("jar:file:" + pathToApkObb + "/changedConfig.apk");
         System.out.println(zip_disk);
-
         // Create ZIP file System
         try (FileSystem zipfs = FileSystems.newFileSystem(zip_disk, zip_properties)) {
             // Create a Path in ZIP File
@@ -78,7 +77,7 @@ public class PatchAPK {
         //SIGN THE APK
         patchAPK(pathToApkObb);
 
-
+        return 0;
 
 
     }
@@ -87,8 +86,10 @@ public class PatchAPK {
     private void patchAPK(String pathToApkObb){
         Process process = null;
         try {
+            System.out.println("java" + "-jar" +  tempPath + "/uber/uber-apk-signer-1.3.0.jar" + "--apks" + pathToApkObb + "/changedConfig.apk");
             process = new ProcessBuilder("java", "-jar", tempPath + "/uber/uber-apk-signer-1.3.0.jar", "--apks", pathToApkObb + "/changedConfig.apk").start();
         } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // StringBuilder to accumulate the output
