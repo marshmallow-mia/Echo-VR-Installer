@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -111,6 +114,14 @@ public class FrameQuestDownload extends JDialog {
         back.add(chooseConfig);
 
 
+        SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Check this to use the custom config", 17);
+        checkBoxConfig.setSize(500,30);
+        checkBoxConfig.setLocation(50, 185);
+
+        //JCheckBoxen werden Panel hinzugefügt
+        back.add(checkBoxConfig);
+
+
 
         SpecialLabel labelQuestInstallProgress = new SpecialLabel("Not started yet", 20);
         labelQuestInstallProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
@@ -125,10 +136,24 @@ public class FrameQuestDownload extends JDialog {
         questStartPatching.setLocation(50, 250);
         questStartPatching.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                String apkfileName = "Echo_patched.apk";
+                String apkfileName;
+                if (checkBoxConfig.isSelected()){
+                    int result = checkIfJavaIsInstalled();
+                    if (result == 0){
+                        ErrorDialog.errorDialog(outFrame, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>");
+                    }
+
+                    return;
+
+                    //apkfileName = "Echo_patched.apk";
+                }
+                else {
+                    apkfileName = "Echo_patched.apk";
+                }
                 String obbfileName = "main.4987566.com.readyatdawn.r15.obb";
                 InstallerQuest installtoQuest = new InstallerQuest();
                 installtoQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
+
             }
         });
         back.add(questStartPatching);
@@ -144,6 +169,36 @@ public class FrameQuestDownload extends JDialog {
         int x = frameMain.getX() + (frameMain.getWidth() - this.getWidth()) / 2;
         int y = frameMain.getY() + (frameMain.getHeight() - this.getHeight()) / 2;
         this.setLocation(x, y);
+    }
+
+
+
+    //This function checks if java is installed
+    private int checkIfJavaIsInstalled(){
+        Process process = null;
+        try {
+            process = new ProcessBuilder("javas", "-version").start();
+        } catch (IOException e) {
+            return 0;
+        }
+        // StringBuilder to accumulate the output
+        StringBuilder stdErrResult = new StringBuilder();
+
+        // Read the output from the process's input stream
+        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+            String stdout;
+            while ((stdout = stdInput.readLine()) != null) {
+                stdErrResult.append(stdout).append("\n"); // Append each line and a newline character
+            }
+            // Check if the stderr contains the word "version"
+            if (stdErrResult.toString().toLowerCase().contains("version")) {
+                System.out.println("Java is installed. Version information: " + stdErrResult);
+                return 1; // Java is installed
+            }
+        }
+        catch (IOException e){}
+        //TODO ^
+        return 0;
     }
 
     private void fileChooser(SpecialLabel labelPcDownloadPath){

@@ -18,6 +18,8 @@ public class ErrorDialog {
         back = new Background("Marcelus.png");
         back.setLayout(null);
         errorDialog.setContentPane(back);
+        errorDialog.setModal(true);
+
 
         SpecialLabel errorText = new SpecialLabel(errorText_st, 14);
         int XPos2 = ( ( errorDialog.getWidth() - errorText.getWidth() )   /2) - 4 ;
