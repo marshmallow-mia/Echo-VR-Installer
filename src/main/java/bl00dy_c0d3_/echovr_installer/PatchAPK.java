@@ -12,6 +12,7 @@ public class PatchAPK {
     Path targetPath;
 
 
+
     public int patchAPK(String pathToApkObb, String apkfileName, String configPath, SpecialLabel progressLabel, JDialog parrentFrame){
 
         String dir = tempPath + "/uber/";
@@ -51,34 +52,28 @@ public class PatchAPK {
         }
 
 
-        //CHANGE THE CONFIG.JSON
-        Map<String, String> zip_properties = new HashMap<>();
-        /* We want to read an existing ZIP File, so we set this to False */
-        zip_properties.put("create", "false");
-        /* Specify the encoding as UTF -8 */
-        zip_properties.put("encoding", "UTF-8");
-        /* Specify the path to the ZIP File that you want to read as a File System */
-        URI zip_disk = URI.create("jar:file:" + pathToApkObb + "/changedConfig.apk");
-        System.out.println(zip_disk);
-        // Create ZIP file System
-        try (FileSystem zipfs = FileSystems.newFileSystem(zip_disk, zip_properties)) {
-            // Create a Path in ZIP File
-            Path zipFilePath = zipfs.getPath("assets/_local/config.json");
-            // Path where the file to be added resides
+        // CHANGE THE CONFIG.JSON
+        Map<String, String> zipProperties = new HashMap<>();
+        zipProperties.put("create", "false");
+        zipProperties.put("encoding", "UTF-8");
+        URI zipDisk = URI.create("jar:file:/" + pathToApkObb.replace("\\", "/") + "/changedConfig.apk");
+        System.out.println(zipDisk);
+
+        // Create ZIP file system
+        try (FileSystem zipFs = FileSystems.newFileSystem(zipDisk, zipProperties)) {
+            Path zipFilePath = zipFs.getPath("assets/_local/config.json");
             Path addNewFile = Paths.get(configPath);
-            /* Ensure the parent directories exist in the ZIP file */
             Files.createDirectories(zipFilePath.getParent());
-            // Append file to ZIP File
             Files.copy(addNewFile, zipFilePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
+
+
         //SIGN THE APK
         patchAPK(pathToApkObb);
-
         return 0;
-
 
     }
 
