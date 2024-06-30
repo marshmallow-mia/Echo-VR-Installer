@@ -157,7 +157,7 @@ public class FrameMain extends JFrame {
         back.add(rahmen2);
 
         JLabel easteregg = new JLabel("", SwingConstants.CENTER);
-        easteregg.setOpaque(false);
+        easteregg.setOpaque(true);
         easteregg.setForeground(new Color(255, 255, 255));
         easteregg.setBackground(Color.BLUE);
         easteregg.setSize(100,100);
@@ -167,6 +167,7 @@ public class FrameMain extends JFrame {
         easteregg.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(outFrame, "Never device by 0!", "You found an Easter Egg", JOptionPane.INFORMATION_MESSAGE);
+                new TorrentDownloader();
 
             }
         });

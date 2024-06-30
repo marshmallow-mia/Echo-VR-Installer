@@ -1,5 +1,8 @@
 package bl00dy_c0d3_.echovr_installer;
 
+
+
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -28,6 +31,8 @@ public class FramePCDownload extends JDialog {
         }
         super.dispose();
     }
+
+
 
 
     private void initComponents(){
