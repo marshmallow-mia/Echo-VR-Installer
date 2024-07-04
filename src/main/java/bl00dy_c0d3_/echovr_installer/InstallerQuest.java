@@ -26,6 +26,7 @@ public class InstallerQuest {
 
         if (isWindows) {
             String dir = tempPath + "platform-tools/";
+            System.out.println(tempPath);
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
@@ -38,7 +39,7 @@ public class InstallerQuest {
                     InputStream stream = getClass().getClassLoader().getResourceAsStream("platform-tools/" + fileList[a]);
                     Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
                 //TODO ^
             }
