@@ -33,7 +33,7 @@ public class FrameMain extends JFrame {
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.4 [pre alpha]");
+        this.setTitle("Echo VR Installer v0.3 [pre alpha]");
         FrameMain outFrame = this;
 
         Background back = new Background("Echox720.png");

@@ -48,7 +48,7 @@ public class FrameQuestPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.4");
+        this.setTitle("Echo VR Installer v0.3");
         this.setModal(true);
         Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
         FrameQuestPatcher outFrame = this;
