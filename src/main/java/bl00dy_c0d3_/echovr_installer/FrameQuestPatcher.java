@@ -163,7 +163,7 @@ public class FrameQuestPatcher extends JDialog {
                     sessionManager.start();
 
                     downloader2 = new TorrentDownload(sessionManager);
-                    downloader2.startDownload("torrentFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, 2);
+                    downloader2.startDownload("p2pFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
                 }
                 else{
                     ErrorDialog error = new ErrorDialog();

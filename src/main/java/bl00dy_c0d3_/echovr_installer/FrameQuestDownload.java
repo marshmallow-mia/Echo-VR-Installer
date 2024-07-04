@@ -100,9 +100,9 @@ public class FrameQuestDownload extends JDialog {
                 sessionManager2.start();
 
                 downloader = new TorrentDownload(sessionManager);
-                downloader.startDownload("torrentFiles/apk.torrent", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, 2);
+                downloader.startDownload("p2pFiles/apk.torrent", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
                 downloader2 = new TorrentDownload(sessionManager2);
-                downloader2.startDownload("torrentFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, 2);
+                downloader2.startDownload("p2pFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
             }
         });
         back.add(questStartDownload);

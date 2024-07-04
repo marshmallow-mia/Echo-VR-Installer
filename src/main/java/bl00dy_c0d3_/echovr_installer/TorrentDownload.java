@@ -19,6 +19,7 @@ public class TorrentDownload implements Runnable {
     private String filename;
     private JLabel labelProgress;
     private JDialog frame;
+    private JFrame frameMain;
     private int platform = -1; // 0=PC, 1=don't unzip
     private boolean flg_CancelDownload = false;
     private SessionManager sessionManager;
@@ -27,12 +28,13 @@ public class TorrentDownload implements Runnable {
         this.sessionManager = sessionManager;
     }
 
-    public void startDownload(String torrentFile0, String localFilePath, String filename, JLabel labelProgress, JDialog frame, int platform) {
+    public void startDownload(String torrentFile0, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform) {
         this.torrentFile0 = torrentFile0;
         this.localFilePath = localFilePath;
         this.filename = filename;
         this.labelProgress = labelProgress;
         this.frame = frame;
+        this.frameMain = frameMain;
         this.platform = platform;
         this.flg_CancelDownload = false;
 
@@ -59,6 +61,9 @@ public class TorrentDownload implements Runnable {
                 switch (type) {
                     case ADD_TORRENT:
                         System.out.println("Torrent added");
+                        labelProgress.setText(" Wait!");
+                        frame.repaint();
+
                         ((AddTorrentAlert) alert).handle().resume();
                         break;
                     case BLOCK_FINISHED:
@@ -83,7 +88,7 @@ public class TorrentDownload implements Runnable {
                         }
                         signal.countDown();
                         if (platform == 0) {
-                            UnzipFile.unzip(frame, localFilePath + "\\" + filename, localFilePath);
+                            UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
                         }
                         break;
                     default:
@@ -96,6 +101,7 @@ public class TorrentDownload implements Runnable {
             TorrentInfo ti = new TorrentInfo(torrentFile);
             sessionManager.download(ti, new File(localFilePath));
             signal.await();
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

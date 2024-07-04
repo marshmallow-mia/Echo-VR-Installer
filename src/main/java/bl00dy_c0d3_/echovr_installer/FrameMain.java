@@ -157,9 +157,8 @@ public class FrameMain extends JFrame {
         back.add(rahmen2);
 
         JLabel easteregg = new JLabel("", SwingConstants.CENTER);
-        easteregg.setOpaque(true);
+        easteregg.setOpaque(false);
         easteregg.setForeground(new Color(255, 255, 255));
-        easteregg.setBackground(Color.BLUE);
         easteregg.setSize(100,100);
         easteregg.setLocation(590,430);
         back.add(easteregg);

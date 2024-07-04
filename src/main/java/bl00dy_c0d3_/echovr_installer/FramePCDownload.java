@@ -104,7 +104,7 @@ public class FramePCDownload extends JDialog {
                 sessionManager.start();
 
                 downloader = new TorrentDownload(sessionManager);
-                downloader.startDownload("torrentFiles/pc.torrent", path, "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, 0);
+                downloader.startDownload("p2pFiles/pc.torrent", path, "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0);
 
             }
         });
