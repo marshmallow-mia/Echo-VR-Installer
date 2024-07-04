@@ -26,7 +26,6 @@ public class FrameMain extends JFrame {
     }
 
 
-
     //Initialisiert Benutzeroberfläche:
     private void initComponents() {
         //Grundeinstellungen des Fensters...

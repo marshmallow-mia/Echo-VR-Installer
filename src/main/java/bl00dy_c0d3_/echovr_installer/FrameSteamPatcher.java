@@ -62,7 +62,6 @@ public class FrameSteamPatcher extends JDialog {
         JOptionPane.showMessageDialog(this, "<html>This patch is only needed if you want to use a not Oculus capable Headset like the Valve Index!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
 
-
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
         labelPcDownloadPath.setLocation(170,100);
         labelPcDownloadPath.setSize(490, 25);

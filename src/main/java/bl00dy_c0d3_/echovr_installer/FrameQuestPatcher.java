@@ -27,7 +27,6 @@ public class FrameQuestPatcher extends JDialog {
     String configPath = "Optional: Choose config.json on the button above";
 
 
-
     //Constructor
     public FrameQuestPatcher(){
         initComponents();
