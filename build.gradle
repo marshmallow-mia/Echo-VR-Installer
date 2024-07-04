@@ -4,42 +4,49 @@ plugins {
     id 'org.beryx.jlink' version '2.24.4'
 }
 
-version '0.1'
 group 'org.example'
-sourceCompatibility = '17'
-targetCompatibility = '17'
+version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven { url "https://jcenter.bintray.com/" }
+    maven { url "https://jitpack.io" }
 }
 
 ext {
     junitVersion = '5.8.1'
+    btVersion = '1.1.0' // Replace with the actual version
+    javafxVersion = '17.0.2'
 }
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    //options.compilerArgs += ['--module-path', 'libs', '--add-modules', 'jlibtorrent']
-
+    options.release.set(17)
 }
 
 application {
     mainModule = 'bl00dy_c0d3_.echovr_installer'
     mainClass = 'bl00dy_c0d3_.echovr_installer.EchoVRInstaller'
-    applicationDefaultJvmArgs = ['--add-modules', 'jdk.zipfs']
+    applicationDefaultJvmArgs = [
+            "-Djava.library.path=libs/",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-reads=jlibtorrent=java.logging"
+    ]
+
 }
 
 dependencies {
-    implementation 'org.openjfx:javafx-controls:17.0.1'
-    implementation 'org.openjfx:javafx-fxml:17.0.1'
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
-    //implementation files('libs/jlibtorrent-linux-1.2.17 .0.jar', 'libs/jlibtorrent-1.2.17.0.jar')
-
-    //implementation 'com.github.frostwire:frostwire-jlibtorrent:release~1.2.19.0'
-    //implementation group: 'com.frostwire', name: 'jlibtorrent', version: '1.2.0.17'
-    implementation 'com.frostwire:jlibtorrent:1.2.0.17'
-
+    implementation files('libs/jlibtorrent-1.2.19.0.jar')
+    implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
+    implementation "org.openjfx:javafx-controls:${javafxVersion}"
+    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
 }
 
 test {
@@ -48,56 +55,51 @@ test {
 
 jar {
     manifest {
-        attributes 'Main-Class': application.mainClass
+        attributes "Main-Class": "bl00dy_c0d3_.echovr_installer.EchoVRInstaller"
     }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-// Task to copy libjpeg.so.62
 task copyLibjpeg(type: Copy) {
     from 'src/main/resources/libjpeg.so.62'
     into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
 }
 
+task copyJLibTorrent(type: Copy) {
+    from 'libs'
+    into "$buildDir/jpackage/EchoVR_Installer/bin/libs"
+}
+
+task copyTorrentFiles(type: Copy) {
+    from 'torrentFiles'
+    into "$buildDir/jpackage/EchoVR_Installer/torrentFiles"
+}
+
 jlink {
-    options = ['--add-modules', 'jdk.zipfs']
     jpackage {
+        appVersion = '0.4'
         installerName = 'Echo_VR_Installer'
         def os = org.gradle.internal.os.OperatingSystem.current()
-
         if (os.isWindows()) {
-            appVersion = '0.2'
-            icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'  // Update path
+            icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'
             installerOptions = [
-                    '--app-version', '0.2',
+                    '--app-version', '0.4',
                     '--vendor', 'bl00dy-c0d3',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
-                    '--icon', 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico',  // Update path
+                    '--icon', 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico',
                     '--win-dir-chooser',
                     '--win-shortcut',
                     '--win-menu',
-                    '--win-menu-group', 'EchoVRInstaller',
-            ]
-        } else if (os.isMacOsX()) {
-            appVersion = '1.1'
-            installerOptions = [
-                    '--mac-package-identifier', 'IhateApple',
+                    '--win-menu-group', 'EchoVRInstaller'
             ]
         } else {
-            appVersion = '0.2'
-            icon = 'icon.png'  // Update path if needed
-            // Ensure copyLibjpeg runs after jpackage
-            tasks.named('jpackage').configure {
-                finalizedBy(copyLibjpeg)
-            }
-
-            // Ensure build depends on jlink
-            tasks.named('build').configure {
-                dependsOn(jlink)
-            }
+            icon = 'icon.png'
+            tasks.named('jpackage').configure { finalizedBy(copyLibjpeg) }
+            tasks.named('build').configure { dependsOn(jlink) }
         }
     }
 }
+
+
+tasks.jlink.finalizedBy(copyJLibTorrent)

@@ -1,5 +1,7 @@
 package bl00dy_c0d3_.echovr_installer;
 
+import com.frostwire.jlibtorrent.SessionManager;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -19,7 +21,7 @@ public class FrameQuestPatcher extends JDialog {
     String path = "C:\\\\EchoVR";
     //TODO use already used path from FramePCPatcher
     Downloader downloader = null;
-    Downloader downloader2 = null;
+    TorrentDownload downloader2 = null;
     //Get the temp path
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
     String configPath = "Optional: Choose config.json on the button above";
@@ -46,7 +48,7 @@ public class FrameQuestPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.4");
         this.setModal(true);
         Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
         FrameQuestPatcher outFrame = this;
@@ -157,9 +159,11 @@ public class FrameQuestPatcher extends JDialog {
                     System.out.println(fixedURL);
                     downloader.startDownload(fixedURL, targetPath + "", "personilizedechoapk.apk", labelQuestProgress2, outFrame, 2);
                     System.out.println(targetPath + "");
-                    downloader2 = new Downloader();
-                    downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, outFrame, 2);
-                    //TODO THE DOWNLOADS RUN SIMULTANEOUSLY. THATS KINDA TRASH!!!
+                    SessionManager sessionManager = new SessionManager();
+                    sessionManager.start();
+
+                    downloader2 = new TorrentDownload(sessionManager);
+                    downloader2.startDownload("torrentFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, 2);
                 }
                 else{
                     ErrorDialog error = new ErrorDialog();

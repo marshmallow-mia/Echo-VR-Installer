@@ -33,7 +33,7 @@ public class FrameMain extends JFrame {
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.2 [pre alpha]");
+        this.setTitle("Echo VR Installer v0.4 [pre alpha]");
         FrameMain outFrame = this;
 
         Background back = new Background("Echox720.png");
@@ -167,7 +167,6 @@ public class FrameMain extends JFrame {
         easteregg.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(outFrame, "Never device by 0!", "You found an Easter Egg", JOptionPane.INFORMATION_MESSAGE);
-                new TorrentDownloader();
 
             }
         });

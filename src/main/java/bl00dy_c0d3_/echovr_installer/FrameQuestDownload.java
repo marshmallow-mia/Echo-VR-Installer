@@ -1,5 +1,7 @@
 package bl00dy_c0d3_.echovr_installer;
 
+import com.frostwire.jlibtorrent.SessionManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -17,8 +19,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import static java.lang.Thread.sleep;
 
 public class FrameQuestDownload extends JDialog {
-    Downloader downloader = null;
-    Downloader downloader2 = null;
+    TorrentDownload downloader = null;
+    TorrentDownload downloader2 = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 400;
@@ -50,7 +52,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.4");
         FrameQuestDownload outFrame = this;
 
         Background back = new Background("Echo2.jpg");
@@ -91,11 +93,16 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
-                downloader = new Downloader();
-                downloader.startDownload("https://echo.marceldomain.de:6969/Echo_patched.apk", targetPath + "", "Echo_patched.apk", labelQuestProgress2, outFrame, 2);
-                downloader2 = new Downloader();
-                downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, outFrame, 2);
-                //TODO THE DOWNLOADS RUN SIMULTANEOUSLY. THATS KINDA TRASH!!!
+                //Added SessionManager as the TorrentDownloader isnt able to download more then file at the same time otherwise
+                SessionManager sessionManager = new SessionManager();
+                sessionManager.start();
+                SessionManager sessionManager2 = new SessionManager();
+                sessionManager2.start();
+
+                downloader = new TorrentDownload(sessionManager);
+                downloader.startDownload("torrentFiles/apk.torrent", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, 2);
+                downloader2 = new TorrentDownload(sessionManager2);
+                downloader2.startDownload("torrentFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, 2);
             }
         });
         back.add(questStartDownload);

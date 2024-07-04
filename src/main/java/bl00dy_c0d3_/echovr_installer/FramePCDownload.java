@@ -3,6 +3,8 @@ package bl00dy_c0d3_.echovr_installer;
 
 
 
+import com.frostwire.jlibtorrent.SessionManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -10,7 +12,7 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 
 public class FramePCDownload extends JDialog {
-    Downloader downloader = null;
+    TorrentDownload downloader = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 394;
@@ -39,7 +41,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.4");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -95,9 +97,15 @@ public class FramePCDownload extends JDialog {
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
-                downloader = new Downloader();
-                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
-                //downloader.startDownload("http://localhost:8000/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
+                //downloader = new Downloader();
+                //downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
+
+                SessionManager sessionManager = new SessionManager();
+                sessionManager.start();
+
+                downloader = new TorrentDownload(sessionManager);
+                downloader.startDownload("torrentFiles/pc.torrent", path, "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, 0);
+
             }
         });
         back.add(pcStartDownload);
