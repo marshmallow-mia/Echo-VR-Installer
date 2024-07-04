@@ -40,8 +40,5 @@ public class SpecialHyperlink extends JLabel{
             }
         });
         this.setSize(this.getPreferredSize());
-
-
     }
-
 }

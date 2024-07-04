@@ -7,9 +7,10 @@ import java.awt.event.MouseEvent;
 
 public class ErrorDialog {
     static Background back; // Declare back as an instance variable
+    JDialog errorDialog = new JDialog();
 
-    static void errorDialog(JDialog frame, String errorTitle_st, String errorText_st){
-        JDialog errorDialog = new JDialog();
+    //the hyperlink int makes sure to add a hyperlink if needed and also selects which
+    public void errorDialog(JDialog frame, String errorTitle_st, String errorText_st, int hyperlink){
         errorDialog.setTitle(errorTitle_st);
         errorDialog.setSize(800,200);
         int XPos1 = ( frame.getX() + frame.getWidth() / 2 - errorDialog.getWidth()/2) ;
@@ -18,6 +19,8 @@ public class ErrorDialog {
         back = new Background("Marcelus.png");
         back.setLayout(null);
         errorDialog.setContentPane(back);
+        errorDialog.setModal(true);
+
 
         SpecialLabel errorText = new SpecialLabel(errorText_st, 14);
         int XPos2 = ( ( errorDialog.getWidth() - errorText.getWidth() )   /2) - 4 ;
@@ -36,9 +39,13 @@ public class ErrorDialog {
         });
         back.add(btn_errorClose);
 
+        if (hyperlink == 1) {
+            debugMode();
+        }
+        else if (hyperlink == 2) {
+            javaRuntimeLink();
+        }
         errorDialog.setVisible(true);
-
-
     }
 
     public void debugMode(){
@@ -48,6 +55,14 @@ public class ErrorDialog {
         hyperlinkPC.setBackground(Color.WHITE);
 
         back.add(hyperlinkPC);
+    }
 
+    public void javaRuntimeLink(){
+        SpecialHyperlink hyperlinkPC = new SpecialHyperlink(112, 70, "Click on me to go to the Java Runtime Download Page", "https://www.java.com/de/download/manual.jsp", 16);
+        hyperlinkPC.setOpaque(true); // Make the label opaque
+        hyperlinkPC.setForeground(Color.BLUE); // Set text color to white
+        hyperlinkPC.setBackground(Color.WHITE);
+
+        back.add(hyperlinkPC);
     }
 }

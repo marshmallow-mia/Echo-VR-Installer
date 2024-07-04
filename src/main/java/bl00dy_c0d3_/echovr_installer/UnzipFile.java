@@ -6,19 +6,22 @@ import java.util.zip.*;
 
 public class UnzipFile {
 
-    public static void unzip(JDialog frame, String zipFilePath, String destDirectory) {
+    public static void unzip(JDialog frame, JFrame frameMain, String zipFilePath, String destDirectory) {
         File destDir = new File(destDirectory);
         if (!destDir.exists()) {
             destDir.mkdir();
         }
 
-        UnzipDialog unzipFrame = new UnzipDialog();
-        unzipFrame.unzipFrame(frame);
+        frame.dispose();
+        UnzipDialog unzipFrame = new UnzipDialog(frameMain);
+
+        SwingUtilities.invokeLater(() -> {
+            unzipFrame.setVisible(true);
+        });
 
         System.out.println("extract");
 
         try {
-
             ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
             ZipEntry entry = zipIn.getNextEntry();
             while (entry != null) {
@@ -38,11 +41,11 @@ public class UnzipFile {
             unzipFrame.setClosable();
             System.out.println("done");
             zipIn.close();
-        } catch (Exception e){
-            ErrorDialog.errorDialog(frame, "Error while unzipping", "Couldn't finish Download. Please check storage Space.");
+        } catch (Exception e) {
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(frame, "Error while unzipping", "Couldn't finish unzipping. Please check storage Space.", 0);
             unzipFrame.setClosable();
         }
-
     }
 
     private static void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
@@ -54,5 +57,4 @@ public class UnzipFile {
         }
         bos.close();
     }
-
 }

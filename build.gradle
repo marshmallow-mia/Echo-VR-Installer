@@ -4,17 +4,19 @@ plugins {
     id 'org.beryx.jlink' version '2.24.4'
 }
 
-version '0.1'
-
 group 'org.example'
 version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven { url "https://jcenter.bintray.com/" }
+    maven { url "https://jitpack.io" }
 }
 
 ext {
     junitVersion = '5.8.1'
+    btVersion = '1.1.0' // Replace with the actual version
+    javafxVersion = '17.0.2'
 }
 
 sourceCompatibility = '17'
@@ -22,16 +24,28 @@ targetCompatibility = '17'
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.release.set(17)
 }
 
 application {
     mainModule = 'bl00dy_c0d3_.echovr_installer'
     mainClass = 'bl00dy_c0d3_.echovr_installer.EchoVRInstaller'
+    applicationDefaultJvmArgs = [
+            "-Djava.library.path=libs/",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.util=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-reads=jlibtorrent=java.logging"
+    ]
 }
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    implementation files('libs/jlibtorrent-1.2.19.0.jar')
+    implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
+    implementation "org.openjfx:javafx-controls:${javafxVersion}"
+    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
 }
 
 test {
@@ -42,40 +56,43 @@ jar {
     manifest {
         attributes "Main-Class": "bl00dy_c0d3_.echovr_installer.EchoVRInstaller"
     }
-
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-// Task to copy libjpeg.so.62
 task copyLibjpeg(type: Copy) {
     from 'src/main/resources/libjpeg.so.62'
     into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
 }
 
+def os = org.gradle.internal.os.OperatingSystem.current()
 
 jlink {
+    options = ['--add-modules', 'jdk.zipfs']
     jpackage {
-        appVersion = '0.1'
         installerName = 'Echo_VR_Installer'
 
-        def os = org.gradle.internal.os.OperatingSystem.current()
-
         if (os.isWindows()) {
-            icon = 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico'  // Update path
+            appVersion = '0.3'
+            icon = 'icon.ico'  // Update path
+
             installerOptions = [
-                    '--app-version', '0.1',
+                    '--app-version', '0.3',
                     '--vendor', 'bl00dy-c0d3',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
-                    '--icon', 'C:\\Users\\Marcel\\Documents\\Java\\EchoVR_Installer\\icon.ico',  // Update path
+                    '--icon', 'icon.ico',  // Update path
                     '--win-dir-chooser',
                     '--win-shortcut',
                     '--win-menu',
                     '--win-menu-group', 'EchoVRInstaller',
             ]
+        } else if (os.isMacOsX()) {
+            appVersion = '1.3'
+            installerOptions = [
+                    '--mac-package-identifier', 'IhateApple',
+            ]
         } else {
+            appVersion = '0.3'
             icon = 'icon.png'  // Update path if needed
             // Ensure copyLibjpeg runs after jpackage
             tasks.named('jpackage').configure {
@@ -86,7 +103,35 @@ jlink {
             tasks.named('build').configure {
                 dependsOn(jlink)
             }
-
         }
     }
+}
+
+task copyJLibTorrent(type: Copy) {
+    from 'libs'
+    if (os.isWindows()) {
+        into "$buildDir/jpackage/EchoVR_Installer/libs/"
+    } else {
+        into "$buildDir/jpackage/EchoVR_Installer/bin/libs"
+    }
+}
+
+task copyTorrentFiles(type: Copy) {
+    from 'p2pFiles'
+    if (os.isWindows()) {
+        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles/"
+    } else {
+        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles"
+    }
+}
+
+// Ensure copy tasks run after jpackage
+tasks.jpackage {
+    finalizedBy(copyJLibTorrent)
+    finalizedBy(copyTorrentFiles)
+}
+
+// Ensure build depends on jlink
+tasks.named('build').configure {
+    dependsOn(jlink)
 }

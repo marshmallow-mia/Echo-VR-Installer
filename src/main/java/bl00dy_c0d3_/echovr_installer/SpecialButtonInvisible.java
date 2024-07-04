@@ -17,9 +17,6 @@ public class SpecialButtonInvisible extends JPanel {
         this.setLayout(new BorderLayout());
         this.setOpaque(true);
 
-
-
-
         //Label hinzufügen...
         JLabel label = new JLabel("wedfewf", SwingConstants.CENTER);
 

@@ -22,13 +22,13 @@ public class FramePCPatcher extends JDialog {
     }
 
 
-
     private void initComponents(){
 
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.3");
+        this.setModal(true);
 
         Background back = new Background("echo-in-arena.png");
         back.setLayout(null);
@@ -141,7 +141,8 @@ public class FramePCPatcher extends JDialog {
                 if (link.matches("https://cdn.discordapp.com/attachments/.*/pnsovr.dll.*")){
                     File echoPath = new File(labelPcPatchDownloadPath.getText() + "/bin/win10");
                     if (!echoPath.exists() && !echoPath.isDirectory()) {
-                        ErrorDialog.errorDialog(outframe, "Incorrect path to EchoVR", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena");
+                        ErrorDialog error = new ErrorDialog();
+                        error.errorDialog(outframe, "Incorrect path to EchoVR", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                     }
                     else {
                         System.out.println(link);
@@ -150,10 +151,10 @@ public class FramePCPatcher extends JDialog {
                     }
                 }
                 else{
-                    ErrorDialog.errorDialog(outframe, "Wrong URL provided", "Your provided Download Link is wrong. Please check!");
+                    ErrorDialog error = new ErrorDialog();
+                    error.errorDialog(outframe, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
 
                 }
-
 
 
             }

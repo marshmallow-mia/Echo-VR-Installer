@@ -26,15 +26,13 @@ public class FrameMain extends JFrame {
     }
 
 
-
-
     //Initialisiert Benutzeroberfläche:
     private void initComponents() {
         //Grundeinstellungen des Fensters...
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1 [pre alpha]");
+        this.setTitle("Echo VR Installer v0.3 [pre alpha]");
         FrameMain outFrame = this;
 
         Background back = new Background("Echox720.png");
@@ -160,7 +158,6 @@ public class FrameMain extends JFrame {
         JLabel easteregg = new JLabel("", SwingConstants.CENTER);
         easteregg.setOpaque(false);
         easteregg.setForeground(new Color(255, 255, 255));
-        easteregg.setBackground(Color.BLUE);
         easteregg.setSize(100,100);
         easteregg.setLocation(590,430);
         back.add(easteregg);

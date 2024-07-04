@@ -9,7 +9,6 @@ public class Background extends JPanel {
     private Image image = null;
 
 
-
     //Konstruktor:
     public Background(String imageName) {
         this.image = loadGUI(imageName);

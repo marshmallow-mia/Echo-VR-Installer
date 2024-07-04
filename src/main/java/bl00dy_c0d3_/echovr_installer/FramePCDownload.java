@@ -1,5 +1,10 @@
 package bl00dy_c0d3_.echovr_installer;
 
+
+
+
+import com.frostwire.jlibtorrent.SessionManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -7,7 +12,7 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 
 public class FramePCDownload extends JDialog {
-    Downloader downloader = null;
+    TorrentDownload downloader = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 394;
@@ -34,7 +39,8 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.3");
+        this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
         back.setLayout(null);
@@ -43,15 +49,12 @@ public class FramePCDownload extends JDialog {
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
-
-
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
         labelPcDownloadPath.setLocation(170,100);
         labelPcDownloadPath.setSize(490, 25);
         labelPcDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcDownloadPath.setForeground(Color.BLACK);
         back.add(labelPcDownloadPath);
-
 
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
         pcChoosePath.setLocation(20, 100);
@@ -92,9 +95,15 @@ public class FramePCDownload extends JDialog {
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
-                downloader = new Downloader();
-                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
-                //downloader.startDownload("http://localhost:8000/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
+                //downloader = new Downloader();
+                //downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", path, "\\echovr.zip", labelPcProgress2, thisFrame, 0);
+
+                SessionManager sessionManager = new SessionManager();
+                sessionManager.start();
+
+                downloader = new TorrentDownload(sessionManager);
+                downloader.startDownload("p2pFiles/pc.torrent", path, "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0);
+
             }
         });
         back.add(pcStartDownload);

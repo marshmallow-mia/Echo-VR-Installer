@@ -25,6 +25,7 @@ public class FrameSteamPatcher extends JDialog {
         this.frameMain = frameMain;
         initComponents();
         this.setVisible(true);
+        this.setModal(true);
     }
 
 
@@ -49,7 +50,9 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.1");
+        this.setTitle("Echo VR Installer v0.3");
+        this.setModal(true);
+
 
         Background back = new Background("echo_combat1.png");
         back.setLayout(null);
@@ -57,7 +60,6 @@ public class FrameSteamPatcher extends JDialog {
 
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>This patch is only needed if you want to use a not Oculus capable Headset like the Valve Index!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-
 
 
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
@@ -125,7 +127,8 @@ public class FrameSteamPatcher extends JDialog {
                 File echoPath = new File(path + "/bin/win10");
 
                 if (!echoPath.exists() && !echoPath.isDirectory()) {
-                    ErrorDialog.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena");
+                    ErrorDialog error = new ErrorDialog();
+                    error.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                 }
                 else {
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
@@ -138,8 +141,6 @@ public class FrameSteamPatcher extends JDialog {
                     downloader4 = new Downloader();
                     downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, 1);
                 }
-
-
             }
         });
         back.add(pcStartDownload);
