@@ -24,24 +24,24 @@ https://github.com/BL00DY-C0D3/Echo-VR-Installer/releases
 # **2nd Step:**
 ### After downloading the application, you need to extract it.
 
-## * On Windows:
+## **On Windows:*
 Open the .zip file by double-clicking on it and drag & drop the folder to a location such as your Desktop.
 
-## * On macOS:
+## **On macOS:**
 macOS will automatically extract the file. Go to the next section.
 
-## * On Linux:
+## **On Linux:**
 Open the .zip file by double-clicking on it and drag & drop the folder to a location such as your Desktop.
 
 # **3rd Step:**
-## * On Windows:
+## **On Windows:**
 Open the extracted folder and double-click on **EchoVR_Installer.exe** Windows might warn you as this is an unknown app. Click on **More info** and **Run anyway**
 ** (Screenshot 1 below)**
 
-## * On macOS:
+## **On macOS:**
 As this is an unsigned application, you can't open the file with a simple double-click.
 You need to press the **Ctrl** button while right-clicking on the application. Then, click on **Open**.
 ** (Screenshot 2 below)**
 
-## * On Linux:
+## **On Linux:**
 Go into the `bin` folder inside the extracted folder and double-click on **EchoVR_Installer**.
