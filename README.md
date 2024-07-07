@@ -71,3 +71,8 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 - It's normally not needed and should only be used if you use a **Steam-only headset** like the **Valve Index**.
 - If you installed Echo in the path used by Oculus, you need to choose the path here. 
 **     (Screenshot 4 below)**
+
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199064633770044/WindowsAdmin.jpg?ex=668b78c3&is=668a2743&hm=fe64e43d6eca80cdc7e666f23d7412fdc35c58b2dfb341d70a4822c35c2e9e9a&)
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199212265017526/changePath1.jpg?ex=668b78e6&is=668a2766&hm=c93ff1d5599eb60648e6468be6102e237f3427c4cd7d5f1d5de0b721915ad09c&)
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199228882980925/changePath2.jpg?ex=668b78ea&is=668a276a&hm=a58da17ff3e16bbbc7033b4b0e53267ede68ce8e5ff00f50ae76b54cdc29351a&)
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199239368740927/changePath3.jpg?ex=668b78ed&is=668a276d&hm=9fb3adf0b7f348e952f2efc438b4ee9d7a42835cf2985e2cdfb269984a82abb2&)
