@@ -102,3 +102,10 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 - Go to #command-central at the EchoVR Lounge https://discord.gg/echo-vr-lounge and enter the code by using the link-headset command
 ``/link-headset [4 digit code]``
 https://discord.com/channels/779349159852769310/1227795372244729926
+
+# **6th Step: **
+
+# You are done!
+# Have fun playing Echo!
+
+![alt text](https://images.squarespace-cdn.com/content/v1/5fe0c8b7cf71ba049cd08a0d/1706462600733-MO7XXC4A6QJ4ZL8UTJE0/Echo_VR_title.jpg)
