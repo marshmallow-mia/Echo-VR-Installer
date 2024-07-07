@@ -80,7 +80,7 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 
 ### The right side is Quest specific. Here you can do the following:
 
-## * Quest Install Echo (If you don't own Echo on your Oculus account, use the step below, instead of this one! (No license patch)):
+## **Quest Install Echo (If you don't own Echo on your Oculus account, use the step below, instead of this one! (No license patch)):**
 - **It's important that you have your developer mode enabled! You can check here on how to do that: https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode**
 - In this menu, you can install Echo onto your Quest.
 - The first step is to click on the **Start Download** button and wait for the download to finish.
@@ -89,7 +89,7 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 - **Never press on restore inside your Quest!! It will remove Echo from your Quest.**
 
 
-## * No licence patch (Only needed if you don't own Echo on your account!):
+## **No licence patch (Only needed if you don't own Echo on your account!):**
 - **It's important that you have your developer mode enabled! You can check here on how to do that: https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode**
 - Here you can install a **personalized** Echo version onto your Quest. As mentioned, it's personalized!!! Never share the APK!
 - As all steps are explained in the installer, I will not do it here.
