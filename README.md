@@ -95,7 +95,7 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 - As all steps are explained in the installer, I will not do it here.
 - **Never press on restore inside your Quest!! It will remove Echo from your Quest.**
 
-# **5th Step: **
+# **5th Step:**
 
 - Start Echo.
 - You will see a code.
