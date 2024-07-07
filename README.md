@@ -45,3 +45,6 @@ You need to press the **Ctrl** button while right-clicking on the application. T
 
 ## **On Linux:**
 Go into the `bin` folder inside the extracted folder and double-click on **EchoVR_Installer**.
+
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259195668233322567/WindowsDefender.jpg?ex=668b759a&is=668a241a&hm=7ea7d7f6b24f65ef9bedf695756d39a1fa6d42422d4c7ba529610c56e9b52a85&)
+![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259195678983192636/macOSOpen.jpg?ex=668b759c&is=668a241c&hm=9d79399b17c76008bd916f3dba5a4d00d47ab744ff86ce65b47145ee3a94290d&)
