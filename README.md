@@ -24,7 +24,7 @@ https://github.com/BL00DY-C0D3/Echo-VR-Installer/releases
 # **2nd Step:**
 ### After downloading the application, you need to extract it.
 
-## **On Windows:*
+## **On Windows:**
 Open the .zip file by double-clicking on it and drag & drop the folder to a location such as your Desktop.
 
 ## **On macOS:**
