@@ -76,3 +76,28 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 ![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199212265017526/changePath1.jpg?ex=668b78e6&is=668a2766&hm=c93ff1d5599eb60648e6468be6102e237f3427c4cd7d5f1d5de0b721915ad09c&)
 ![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199228882980925/changePath2.jpg?ex=668b78ea&is=668a276a&hm=a58da17ff3e16bbbc7033b4b0e53267ede68ce8e5ff00f50ae76b54cdc29351a&)
 ![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199239368740927/changePath3.jpg?ex=668b78ed&is=668a276d&hm=9fb3adf0b7f348e952f2efc438b4ee9d7a42835cf2985e2cdfb269984a82abb2&)
+
+
+### The right side is Quest specific. Here you can do the following:
+
+## * Quest Install Echo (If you don't own Echo on your Oculus account, use the step below, instead of this one! (No license patch)):
+- **It's important that you have your developer mode enabled! You can check here on how to do that: https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode**
+- In this menu, you can install Echo onto your Quest.
+- The first step is to click on the **Start Download** button and wait for the download to finish.
+- The **OPTIONAL CONFIG** is, as it says, optional. If you need to have a different **config.json** than the one used for the Echo VR Lounge, you can do it here.
+- Now you can click on **Install Echo to Quest** and it will automatically install Echo on your Quest.
+- **Never press on restore inside your Quest!! It will remove Echo from your Quest.**
+
+
+## * No licence patch (Only needed if you don't own Echo on your account!):
+- **It's important that you have your developer mode enabled! You can check here on how to do that: https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode**
+- Here you can install a **personalized** Echo version onto your Quest. As mentioned, it's personalized!!! Never share the APK!
+- As all steps are explained in the installer, I will not do it here.
+- **Never press on restore inside your Quest!! It will remove Echo from your Quest.**
+
+# **5th Step: **
+
+- Start Echo.
+- You will see a code.
+- Go to #command-central at the EchoVR Lounge https://discord.gg/echo-vr-lounge and enter the code by using the link-headset command
+``/link-headset [4 digit code]``
