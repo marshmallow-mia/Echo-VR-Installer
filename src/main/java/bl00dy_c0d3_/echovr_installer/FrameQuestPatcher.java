@@ -312,38 +312,29 @@ public class FrameQuestPatcher extends JDialog {
         return 0;
     }
 
+    private void fileChooser(SpecialLabel labelPcDownloadPath) {
+        Frame frame = new Frame();
+        FileDialog fd = new FileDialog(frame, "Select a JSON file", FileDialog.LOAD);
 
+        fd.setFile("*.json");
+        fd.setVisible(true);
 
-    private void fileChooser(SpecialLabel labelPcDownloadPath){
-        JFileChooser chooser;
-        int result;
+        String directory = fd.getDirectory();
+        String filename = fd.getFile();
 
-        chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files", "json");
-        chooser.setFileFilter(filter);
-        //
-        // disable the "All files" option.
-        //
-        chooser.setAcceptAllFileFilterUsed(false);
-        //
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            this.repaint();
-            System.out.println("getSelectedFile() : "
-                    +  chooser.getSelectedFile());
-            configPath = chooser.getSelectedFile().getPath();
+        if (filename != null && filename.endsWith(".json")) {
+            File selectedFile = new File(directory, filename);
+            System.out.println("getSelectedFile() : " + selectedFile.getAbsolutePath());
+            configPath = selectedFile.getPath();
             labelPcDownloadPath.setText(configPath);
-
-        }
-        else {
-            System.out.println("No Selection ");
+        } else {
+            System.out.println("No Selection or not a JSON file");
         }
 
+        frame.dispose();
     }
+
     //TODO Create Class from the fileChooser function
-
-
 
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
