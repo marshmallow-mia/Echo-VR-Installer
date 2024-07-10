@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.URL;
 
+import static bl00dy_c0d3_.echovr_installer.Helpers.pathFolderChooser;
+
 public class FramePCPatcher extends JDialog {
     int frameWidth = 1280;
     int frameHeight = 720;
@@ -109,8 +111,7 @@ public class FramePCPatcher extends JDialog {
         pcPatchChoosePath.setLocation(582, 220);
         pcPatchChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                fileChooser(labelPcPatchDownloadPath);
-
+                pathFolderChooser(labelPcPatchDownloadPath);
             }
         });
         back.add(pcPatchChoosePath);
@@ -174,38 +175,6 @@ public class FramePCPatcher extends JDialog {
         int y = (d.height - this.getHeight()) / 2;
         this.setLocation(x, y);
     }
-
-
-
-
-    private void fileChooser(SpecialLabel labelPcDownloadPath){
-        JFileChooser chooser;
-        int result;
-
-        chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        //
-        // disable the "All files" option.
-        //
-        chooser.setAcceptAllFileFilterUsed(false);
-        //
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            this.repaint();
-            System.out.println("getSelectedFile() : "
-                    +  chooser.getSelectedFile());
-            path = chooser.getSelectedFile().getPath();
-            labelPcDownloadPath.setText(path);
-
-        }
-        else {
-            System.out.println("No Selection ");
-        }
-
-    }
-    //TODO Create Class from the fileChooser function
-
-
 
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {

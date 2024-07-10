@@ -46,6 +46,7 @@ dependencies {
     implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
     implementation "org.openjfx:javafx-controls:${javafxVersion}"
     implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    implementation 'org.jetbrains:annotations:24.1.0'
 }
 
 test {
@@ -59,7 +60,7 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-task copyLibjpeg(type: Copy) {
+tasks.register('copyLibjpeg', Copy) {
     from 'src/main/resources/libjpeg.so.62'
     into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
 }

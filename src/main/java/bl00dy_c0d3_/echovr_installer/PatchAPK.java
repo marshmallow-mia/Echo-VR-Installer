@@ -11,16 +11,13 @@ public class PatchAPK {
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
     Path targetPath;
 
-
-
-    public int patchAPK(String pathToApkObb, String apkfileName, String configPath, SpecialLabel progressLabel, JDialog parrentFrame){
-
+    public boolean patchAPK(String pathToApkObb, String apkfileName, String configPath, SpecialLabel progressLabel, JDialog parrentFrame){
         String dir = tempPath + "/uber/";
 
         if (configPath.startsWith("Optional")){
             ErrorDialog errorDialog = new ErrorDialog();
             errorDialog.errorDialog(parrentFrame, "Path to config.json incorrect", "The path to the config.json is incorrect. Set above", 0);
-            return -1;
+            return false;
         }
 
         File file = new File(dir);
@@ -73,7 +70,7 @@ public class PatchAPK {
 
         //SIGN THE APK
         patchAPK(pathToApkObb);
-        return 0;
+        return true;
 
     }
 
