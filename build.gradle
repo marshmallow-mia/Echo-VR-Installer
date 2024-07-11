@@ -95,44 +95,33 @@ jlink {
         } else {
             appVersion = '0.3'
             icon = 'icon.png'  // Update path if needed
+
             // Ensure copyLibjpeg runs after jpackage
             tasks.named('jpackage').configure {
                 finalizedBy(copyLibjpeg)
-            }
-
-            // Ensure build depends on jlink
-            tasks.named('build').configure {
-                dependsOn(jlink)
             }
         }
     }
 }
 
-task copyJLibTorrent(type: Copy) {
+tasks.register('copyJLibTorrent', Copy) {
     from 'libs'
-    if (os.isWindows()) {
-        into "$buildDir/jpackage/EchoVR_Installer/libs/"
-    } else {
-        into "$buildDir/jpackage/EchoVR_Installer/bin/libs"
-    }
+    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/libs/" : "$buildDir/jpackage/EchoVR_Installer/bin/libs"
 }
 
-task copyTorrentFiles(type: Copy) {
+tasks.register('copyTorrentFiles', Copy) {
     from 'p2pFiles'
-    if (os.isWindows()) {
-        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles/"
-    } else {
-        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles"
-    }
+    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/p2pFiles/" : "$buildDir/jpackage/EchoVR_Installer/p2pFiles"
 }
 
 // Ensure copy tasks run after jpackage
-tasks.jpackage {
-    finalizedBy(copyJLibTorrent)
-    finalizedBy(copyTorrentFiles)
+tasks.named('jpackage').configure {
+    finalizedBy('copyJLibTorrent')
+    finalizedBy('copyTorrentFiles')
 }
 
-// Ensure build depends on jlink
+// Ensure build depends on jlink and jpackage
 tasks.named('build').configure {
-    dependsOn(jlink)
+    dependsOn('jlink')
+    dependsOn('jpackage')
 }

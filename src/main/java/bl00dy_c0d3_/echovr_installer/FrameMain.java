@@ -134,18 +134,19 @@ public class FrameMain extends JFrame {
 
         Background rahmen1 = new Background("Rahmenbild.png");
         rahmen1.setLayout(null);
-        rahmen1.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2 - 10, 350);
-        rahmen1.setSize(steamPatchLabel.getPreferredSize().width + 20, 305);
+        rahmen1.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2 - 8, 350);
+        rahmen1.setSize(steamPatchLabel.getPreferredSize().width + 30, 305);
         rahmen1.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
         rahmen1.setBackground(new Color(255, 255, 255, 0));
         back.add(rahmen1);
 
         SpecialLabel optionalQuestLabel = createSpecialLabel("The following patches are optional", 20);
 
+
         Background rahmen2 = new Background("Rahmenbild.png");
         rahmen2.setLayout(null);
-        rahmen2.setLocation((FRAME_WIDTH / 4 * 3 + optionalQuestLabel.getPreferredSize().width) / 2 + 10, optionalQuestLabel.getY() - 10);
-        rahmen2.setSize(optionalQuestLabel.getPreferredSize().width + 20, 186);
+            rahmen2.setLocation((FRAME_WIDTH / 4 * 3 + optionalQuestLabel.getPreferredSize().width) / 2 + 18, 350);
+        rahmen2.setSize(optionalQuestLabel.getPreferredSize().width + 30, 186);
         rahmen2.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
         rahmen2.setBackground(new Color(255, 255, 255, 0));
         back.add(rahmen2);
