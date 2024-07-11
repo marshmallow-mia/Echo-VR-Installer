@@ -13,10 +13,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
-
-import static java.lang.Thread.sleep;
+import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
 
 public class FrameQuestDownload extends JDialog {
     TorrentDownload downloader = null;
@@ -119,7 +117,7 @@ public class FrameQuestDownload extends JDialog {
         chooseConfig.setLocation(50, 111);
         chooseConfig.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                fileChooser(labelConfigPath);
+                jsonFileChooser(labelConfigPath);
             }
         });
         back.add(chooseConfig);
@@ -225,36 +223,6 @@ public class FrameQuestDownload extends JDialog {
         //TODO ^
         return 0;
     }
-
-    private void fileChooser(SpecialLabel labelPcDownloadPath){
-        JFileChooser chooser;
-        int result;
-
-        chooser = new JFileChooser();
-        chooser.setCurrentDirectory(new java.io.File("."));
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files", "json");
-        chooser.setFileFilter(filter);
-        //
-        // disable the "All files" option.
-        //
-        chooser.setAcceptAllFileFilterUsed(false);
-        //
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            this.repaint();
-            System.out.println("getSelectedFile() : "
-                    +  chooser.getSelectedFile());
-            configPath = chooser.getSelectedFile().getPath();
-            labelPcDownloadPath.setText(configPath);
-
-        }
-        else {
-            System.out.println("No Selection ");
-        }
-
-    }
-    //TODO Create Class from the fileChooser function
-
 
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
