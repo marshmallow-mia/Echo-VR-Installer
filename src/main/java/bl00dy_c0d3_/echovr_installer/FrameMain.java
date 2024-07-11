@@ -36,10 +36,11 @@ public class FrameMain extends JFrame {
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
 
         JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
-                "This installer is not at all associated with them!<br>" +
+                "This installer is not at all associated with them!<br><br>" +
                 "Special thanks to Sick and SirDominik for some of the backgrounds!<br>" +
                 "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>" +
                 "I know you still feel shame when you have to look at my source code.<br>" +
+                "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
                 "This tool is still in early alpha!<br>" +
                 "If you have problems, contact me on Discord 'marcel_one_'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
     }
