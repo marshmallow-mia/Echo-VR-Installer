@@ -42,7 +42,7 @@ public class Helpers {
         frame.setLocation(x, y);
     }
 
-    public static void jsonFileChooser(SpecialLabel labelPcDownloadPath) {
+        public static void jsonFileChooser(SpecialLabel labelPcDownloadPath, JDialog outFrame) {
         FileDialog fd = new FileDialog((Frame) null, "Select a JSON file", FileDialog.LOAD);
         fd.setFile("*.json");
         fd.setVisible(true);
@@ -53,8 +53,28 @@ public class Helpers {
         if (filename != null && filename.endsWith(".json")) {
             String configPath = new File(directory, filename).getPath();
             labelPcDownloadPath.setText(configPath);
+            outFrame.repaint();
+        }
+        else{
+            new ErrorDialog().errorDialog(outFrame, "Wrong filetype provided", "Your provided file is not a config.json. Please check again!", 0);
         }
     }
+
+    /*
+    public static void pathFolderChooser(SpecialLabel labelPcDownloadPath, JDialog outFrame) {
+        FileDialog fd = new FileDialog((Frame) null, "Select a path to Install Echo in.", FileDialog.LOAD);
+        fd.setVisible(true);
+
+        String directory = fd.getDirectory();
+        String filename = fd.getFile();
+
+        if (filename != null && filename.endsWith(".json")) {
+            String configPath = new File(directory, filename).getPath();
+            labelPcDownloadPath.setText(configPath);
+            outFrame.repaint();
+        }
+    }
+    */
 
     public static void pathFolderChooser(SpecialLabel labelPcDownloadPath) {
         JFileChooser chooser = new JFileChooser();

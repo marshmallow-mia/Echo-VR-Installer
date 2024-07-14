@@ -24,7 +24,6 @@ public class FrameQuestPatcher extends JDialog {
     private final Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
 
     private SpecialTextfield textfieldQuestPatchLink;
-    private SpecialLabel labelQuestProgress2;
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
 
@@ -35,6 +34,8 @@ public class FrameQuestPatcher extends JDialog {
         initComponents();
         this.setVisible(true);
     }
+    JDialog outframe = this;
+
 
     @Override
     public void dispose() {
@@ -84,27 +85,23 @@ public class FrameQuestPatcher extends JDialog {
             SessionManager sessionManager = new SessionManager();
             sessionManager.start();
             downloader2 = new TorrentDownload(sessionManager);
-            downloader2.startDownload("p2pFiles/obb.torrent", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress2, this, null, 2);
+            downloader2.startDownload("p2pFiles/obb.torrent", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2);
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
     }
 
     private void handleChooseConfigClick() {
-        jsonFileChooser(labelConfigPath);
+        jsonFileChooser(labelConfigPath, outframe);
     }
 
     private void handlePatchingButtonClick() {
         String apkfileName;
         if (checkBoxConfig.isSelected()) {
-            if (checkIfJavaIsInstalled() == 0) {
-                new ErrorDialog().errorDialog(this, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>", 2);
-                return;
-            }
             File f = new File(targetPath + "/personilizedechoapk.apk");
             if (f.exists() && !f.isDirectory()) {
                 PatchAPK patchAPK = new PatchAPK();
-                if (patchAPK.patchAPK(targetPath.toString(), "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, this)) {
+                if (!patchAPK.patchAPK(targetPath.toString(), "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, this)) {
                     return;
                 }
             } else {
@@ -116,27 +113,9 @@ public class FrameQuestPatcher extends JDialog {
             apkfileName = "personilizedechoapk.apk";
         }
         InstallerQuest installtoQuest = new InstallerQuest();
-        installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelConfigPath, this);
+        installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress4, this);
     }
 
-    private int checkIfJavaIsInstalled() {
-        try {
-            Process process = new ProcessBuilder("java", "-version").start();
-            StringBuilder stdErrResult = new StringBuilder();
-            try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String stdout;
-                while ((stdout = stdInput.readLine()) != null) {
-                    stdErrResult.append(stdout).append("\n");
-                }
-            }
-            if (stdErrResult.toString().toLowerCase().contains("version")) {
-                return 1; // Java is installed
-            }
-        } catch (IOException e) {
-            return 0;
-        }
-        return 0; // Java is not installed
-    }
 
     private void addBackgroundImage(@NotNull JPanel back, String imagePath, int x, int y, int width, int height) {
         Background image = new Background(imagePath);
@@ -145,6 +124,11 @@ public class FrameQuestPatcher extends JDialog {
         image.setVisible(true);
         back.add(image);
     }
+
+
+    SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
+    SpecialLabel labelQuestProgress3 = new SpecialLabel(" 0%", 15);
+    SpecialLabel labelQuestProgress4 = new SpecialLabel("Not started yet", 18);
 
     private void addSpecialLabels(@NotNull JPanel back) {
         back.add(Helpers.createSpecialLabel("1. Join the Echo VR Patcher Discord Server:", 16, 40, 40));
@@ -158,12 +142,33 @@ public class FrameQuestPatcher extends JDialog {
         back.add(Helpers.createSpecialLabel("5(a). Optional config.json. Don't use if you don't need to:", 16, 582, 295));
         back.add(Helpers.createSpecialLabel("6. After the Download above is finished, start this button:", 16, 582, 490));
         back.add(Helpers.createSpecialLabel("Progress = ", 17, 810, 210, new Dimension(130, 38), Color.BLACK, Color.WHITE));
-        back.add(Helpers.createSpecialLabel(" 0%", 15, 940, 210, new Dimension(130, 19), Color.BLACK, Color.WHITE));
-        back.add(Helpers.createSpecialLabel(" 0%", 15, 940, 229, new Dimension(130, 19), Color.BLACK, Color.WHITE));
 
         String configPath = "Optional: Choose config.json on the button above";
         labelConfigPath = Helpers.createSpecialLabel(configPath, 14, 582, 455, new Dimension(600, 25), Color.BLACK, Color.WHITE);
         back.add(labelConfigPath);
+
+        //THIS NEED TO BE SET MANUALLY, AS I NEED TO ACCESS IT LATER
+        labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress2.setLocation(940,210);
+        labelQuestProgress2.setSize(130, 19);
+        labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress2.setForeground(Color.BLACK);
+        back.add(labelQuestProgress2);
+
+        labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress3.setLocation(940,229);
+        labelQuestProgress3.setSize(130, 19);
+        labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress3.setForeground(Color.BLACK);
+        back.add(labelQuestProgress3);
+
+        labelQuestProgress4.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress4.setLocation(885,587);
+        labelQuestProgress4.setSize(300, 50);
+        labelQuestProgress4.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress4.setForeground(Color.BLACK);
+        back.add(labelQuestProgress4);
+
     }
 
     private void addSpecialHyperlinks(@NotNull JPanel back) {

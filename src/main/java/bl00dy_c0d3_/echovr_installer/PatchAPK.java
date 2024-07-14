@@ -53,17 +53,39 @@ public class PatchAPK {
         Map<String, String> zipProperties = new HashMap<>();
         zipProperties.put("create", "false");
         zipProperties.put("encoding", "UTF-8");
-        URI zipDisk = URI.create("jar:file:/" + pathToApkObb.replace("\\", "/") + "/changedConfig.apk");
-        System.out.println(zipDisk);
 
-        // Create ZIP file system
-        try (FileSystem zipFs = FileSystems.newFileSystem(zipDisk, zipProperties)) {
-            Path zipFilePath = zipFs.getPath("assets/_local/config.json");
-            Path addNewFile = Paths.get(configPath);
-            Files.createDirectories(zipFilePath.getParent());
-            Files.copy(addNewFile, zipFilePath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        // Detect the operating system
+        String osName = System.getProperty("os.name").toLowerCase();
+        Path zipDiskPath;
+
+        if (osName.contains("win")) {
+            // Windows
+            URI zipDisk = URI.create("jar:file:/" + pathToApkObb.replace("\\", "/") + "/changedConfig.apk");
+            System.out.println(zipDisk);
+
+            // Create ZIP file system
+            try (FileSystem zipFs = FileSystems.newFileSystem(zipDisk, zipProperties)) {
+                Path zipFilePath = zipFs.getPath("assets/_local/config.json");
+                Path addNewFile = Paths.get(configPath);
+                Files.createDirectories(zipFilePath.getParent());
+                Files.copy(addNewFile, zipFilePath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // Linux or other OS
+            zipDiskPath = Paths.get(pathToApkObb.replace("\\", "/"), "changedConfig.apk");
+            System.out.println("ZIP Disk Path: " + zipDiskPath);
+
+            // Create ZIP file system
+            try (FileSystem zipFs = FileSystems.newFileSystem(zipDiskPath, zipProperties)) {
+                Path zipFilePath = zipFs.getPath("assets/_local/config.json");
+                Path addNewFile = Paths.get(configPath);
+                Files.createDirectories(zipFilePath.getParent());
+                Files.copy(addNewFile, zipFilePath, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 
@@ -74,19 +96,34 @@ public class PatchAPK {
 
     }
 
-    //Patch the APK
-    private void patchAPK(String pathToApkObb){
+
+    // Get the path to the "packed" Java Runtime Env
+    private static String getJavaExecutablePath() {
+        // This method should return the path to the bundled JRE's java executable
+        // Adjust this path according to how jpackage bundles the JRE
+        return new File(System.getProperty("java.home"), "bin/java").getAbsolutePath();
+    }
+
+    // Patch the APK
+    private void patchAPK(String pathToApkObb) {
         Process process = null;
+        ProcessBuilder processBuilder;
         try {
-            System.out.println("java" + "-jar" +  tempPath + "/uber/uber-apk-signer-1.3.0.jar" + "--apks" + pathToApkObb + "/changedConfig.apk");
-            process = new ProcessBuilder("java", "-jar", tempPath + "/uber/uber-apk-signer-1.3.0.jar", "--apks", pathToApkObb + "/changedConfig.apk").start();
+            String javaExecutablePath = getJavaExecutablePath();
+            String jarPath = new File(tempPath + "/uber/uber-apk-signer-1.3.0.jar").getAbsolutePath();
+            processBuilder = new ProcessBuilder(
+                    javaExecutablePath,
+                    "-jar",
+                    jarPath,
+                    "--apks",
+                    pathToApkObb + "/changedConfig.apk"
+            );
+            process = processBuilder.start();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         // StringBuilder to accumulate the output
         StringBuilder stdErrResult = new StringBuilder();
-
         // Read the output from the process's input stream
         try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
             String stdout;
@@ -94,12 +131,10 @@ public class PatchAPK {
                 stdErrResult.append(stdout).append("\n"); // Append each line and a newline character
             }
             System.out.println(stdErrResult + "");
-
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        //TODO ^
+        // TODO: ^
     }
 
 }

@@ -12,7 +12,7 @@ public class Downloader implements Runnable {
     private JLabel labelProgress;
     private JDialog frame;
     private String filename;
-    private int platform = -1; //0=PC, 1=don't unzip
+    private int platform = -1; //0=PC, 1=don't unzip //TODO not needed anymore
     private boolean flg_CancelDownload = false;
 
 
@@ -41,11 +41,17 @@ public class Downloader implements Runnable {
 
 
     public void run() {
-        System.out.println("1");
-        File theDir = new File(localFilePath);
-        if (!theDir.exists()){
-            System.out.println("2");
-            theDir.mkdirs();
+        File file = new File(localFilePath);
+        if (!file.exists()) {
+            if (file.mkdirs()) {
+                System.out.println("Directory created successfully");
+            } else {
+                System.out.println("Failed to create directory");
+                new ErrorDialog().errorDialog(frame, "Restart as Admin", "<html>You tried to download into a path that requires Admin rights.<br>Restart the App in Admin Mode!</html>", -1);
+                return; // Exit if the directory could not be created
+            }
+        } else {
+            System.out.println("Directory already exists");
         }
         try (BufferedInputStream in = new BufferedInputStream(new URL(fileUrl).openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(localFilePath + "/" + filename)) {
@@ -66,10 +72,11 @@ public class Downloader implements Runnable {
                 double  progressPercent = (100.0/fileSize*downloadProgress);
                 String.format("%.2f", progressPercent);
 
-                if (labelProgress != null) {
+
+                //if (labelProgress != null) {
                     labelProgress.setText(" " + String.format("%.2f", progressPercent) + "%");
                     frame.repaint();
-                }
+                //}
             }
 
 

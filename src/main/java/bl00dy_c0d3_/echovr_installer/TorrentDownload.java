@@ -46,6 +46,22 @@ public class TorrentDownload implements Runnable {
         File torrentFile = new File(torrentFile0);
         System.out.println("Using libtorrent version: " + LibTorrent.version());
 
+
+        File file = new File(localFilePath);
+        System.out.println(localFilePath);
+        // Attempt to create the directory and check the result
+        if (!file.exists()) {
+            if (file.mkdirs()) {
+                System.out.println("Directory created successfully");
+            } else {
+                System.out.println("Failed to create directory");
+                new ErrorDialog().errorDialog(frame, "Restart as Admin", "<html>You tried to download into a path that requires Admin rights<br>or the folder couldn't be created for another reason.<br>Try again orRestart the App in Admin Mode!</html>", -1);
+                return; // Exit if the directory could not be created
+            }
+        } else {
+            System.out.println("Directory already exists");
+        }
+
         final CountDownLatch signal = new CountDownLatch(1);
 
         sessionManager.addListener(new AlertListener() {

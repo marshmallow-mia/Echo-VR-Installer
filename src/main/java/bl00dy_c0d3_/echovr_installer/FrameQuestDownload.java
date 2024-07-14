@@ -117,7 +117,7 @@ public class FrameQuestDownload extends JDialog {
         chooseConfig.setLocation(50, 111);
         chooseConfig.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                jsonFileChooser(labelConfigPath);
+                jsonFileChooser(labelConfigPath, outFrame);
             }
         });
         back.add(chooseConfig);
@@ -147,21 +147,13 @@ public class FrameQuestDownload extends JDialog {
             public void mouseReleased(MouseEvent event) {
                 String apkfileName;
                 if (checkBoxConfig.isSelected()){
-                    int result = checkIfJavaIsInstalled();
-                    if (result == 0){
-                        ErrorDialog error = new ErrorDialog();
-                        error.errorDialog(outFrame, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>", 2);
-                        return;
-                    }
 
                     File f = new File(targetPath + "/Echo_patched.apk");
                     if(f.exists() && !f.isDirectory()) {
                         PatchAPK patchAPK = new PatchAPK();
-                        Object resultPatcher= patchAPK.patchAPK(targetPath + "", "Echo_patched.apk", labelConfigPath.getText(), labelConfigPath, outFrame);
-                        if (resultPatcher.equals(-1)){
+                        if (!patchAPK.patchAPK(targetPath + "", "Echo_patched.apk", labelConfigPath.getText(), labelConfigPath, outFrame)) {
                             return;
                         }
-
 
                     }
                     else {
@@ -195,34 +187,6 @@ public class FrameQuestDownload extends JDialog {
         this.setLocation(x, y);
     }
 
-
-    //This function checks if java is installed
-    private int checkIfJavaIsInstalled(){
-        Process process = null;
-        try {
-            process = new ProcessBuilder("java", "-version").start();
-        } catch (IOException e) {
-            return 0;
-        }
-        // StringBuilder to accumulate the output
-        StringBuilder stdErrResult = new StringBuilder();
-
-        // Read the output from the process's input stream
-        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-            String stdout;
-            while ((stdout = stdInput.readLine()) != null) {
-                stdErrResult.append(stdout).append("\n"); // Append each line and a newline character
-            }
-            // Check if the stderr contains the word "version"
-            if (stdErrResult.toString().toLowerCase().contains("version")) {
-                System.out.println("Java is installed. Version information: " + stdErrResult);
-                return 1; // Java is installed
-            }
-        }
-        catch (IOException e){}
-        //TODO ^
-        return 0;
-    }
 
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
