@@ -129,10 +129,12 @@ public class FrameQuestPatcher extends JDialog {
 
     private void addSpecialLabels(@NotNull JPanel back) {
         back.add(Helpers.createSpecialLabel("1. Join the Echo VR Patcher Discord Server:", 16, 40, 40));
-        back.add(Helpers.createSpecialLabel("2. React to the message on Discord by clicking on the smiley:", 16, 40, 135));
+        back.add(Helpers.createSpecialLabel("2. React to the message on Discord", 16, 40, 135));
+        back.add(Helpers.createSpecialLabel("by clicking on the smiley:", 16, 40, 165));
 
-        back.add(Helpers.createSpecialLabel("3. You will receive a private Message from the \"EchoSignUp\" Bot.", 16, 40, 335));
-        back.add(Helpers.createSpecialLabel("Right Click on the blue URL and select Copy Link. NOT COPY MESSAGE LINK!", 16, 40, 365));
+        back.add(Helpers.createSpecialLabel("3. You will receive a private Message from the", 16, 40, 335));
+        back.add(Helpers.createSpecialLabel("\"EchoSignUp\" Bot. Right Click on the blue URL ", 16, 40, 365));
+        back.add(Helpers.createSpecialLabel("and select Copy Link. NOT COPY MESSAGE LINK!", 16, 40, 395));
 
         back.add(Helpers.createSpecialLabel("4. Paste the link with CTRL-V:", 16, 582, 40));
         back.add(Helpers.createSpecialLabel("5. Start the Download Process:", 16, 582, 170));
@@ -173,7 +175,7 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void addImages(JPanel back) {
-        addBackgroundImage(back, "quest_react.png", 40, 200, 182, 108);
+        addBackgroundImage(back, "quest_react.png", 40, 215, 182, 108);
         addBackgroundImage(back, "copy_linkQuest.png", 40, 465, 279, 177);
     }
 

@@ -67,8 +67,8 @@ public class Downloader implements Runnable {
                 }
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
                 downloadProgress = downloadProgress + bytesRead;
-                System.out.println(downloadProgress);
-                System.out.println(fileSize);
+                //System.out.println(downloadProgress);
+                //System.out.println(fileSize);
                 double  progressPercent = (100.0/fileSize*downloadProgress);
                 String.format("%.2f", progressPercent);
 

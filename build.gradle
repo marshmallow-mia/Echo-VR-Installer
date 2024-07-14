@@ -111,7 +111,7 @@ tasks.register('copyJLibTorrent', Copy) {
 
 tasks.register('copyTorrentFiles', Copy) {
     from 'p2pFiles'
-    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/p2pFiles/" : "$buildDir/jpackage/EchoVR_Installer/p2pFiles"
+    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/p2pFiles/" : "$buildDir/jpackage/EchoVR_Installer/bin/p2pFiles"
 }
 
 // Ensure copy tasks run after jpackage
