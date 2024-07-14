@@ -20,7 +20,7 @@ public class FramePCDownload extends JDialog {
     int frameWidth = 700;
     int frameHeight = 394;
     String path = "C:/EchoVR";
-
+    JDialog outFrame = this;
 
     //Constructor
     public FramePCDownload(FrameMain frameMain){
@@ -64,7 +64,7 @@ public class FramePCDownload extends JDialog {
         pcChoosePath.setLocation(20, 100);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                pathFolderChooser(labelPcDownloadPath);
+                pathFolderChooser(labelPcDownloadPath, outFrame);
             }
         });
         back.add(pcChoosePath);

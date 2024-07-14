@@ -3,11 +3,13 @@ package bl00dy_c0d3_.echovr_installer;
 import com.frostwire.jlibtorrent.AlertListener;
 import com.frostwire.jlibtorrent.LibTorrent;
 import com.frostwire.jlibtorrent.SessionManager;
+import com.frostwire.jlibtorrent.SettingsPack;
 import com.frostwire.jlibtorrent.TorrentInfo;
 import com.frostwire.jlibtorrent.alerts.AddTorrentAlert;
 import com.frostwire.jlibtorrent.alerts.Alert;
 import com.frostwire.jlibtorrent.alerts.AlertType;
 import com.frostwire.jlibtorrent.alerts.BlockFinishedAlert;
+import com.frostwire.jlibtorrent.swig.settings_pack;
 
 import javax.swing.*;
 import java.io.File;
@@ -41,12 +43,10 @@ public class TorrentDownload implements Runnable {
         new Thread(this).start();
     }
 
-
     @Override
     public void run() {
         File torrentFile = new File(torrentFile0);
         System.out.println("Using libtorrent version: " + LibTorrent.version());
-
 
         File file = new File(localFilePath);
         System.out.println(localFilePath);
@@ -56,7 +56,7 @@ public class TorrentDownload implements Runnable {
                 System.out.println("Directory created successfully");
             } else {
                 System.out.println("Failed to create directory");
-                new ErrorDialog().errorDialog(frame, "Restart as Admin", "<html>You tried to download into a path that requires Admin rights<br>or the folder couldn't be created for another reason.<br>Try again orRestart the App in Admin Mode!</html>", -1);
+                new ErrorDialog().errorDialog(frame, "Restart as Admin", "<html>You tried to download into a path that requires Admin rights<br>or the folder couldn't be created for another reason.<br>Try again or Restart the App in Admin Mode!</html>", -1);
                 return; // Exit if the directory could not be created
             }
         } else {
@@ -87,9 +87,9 @@ public class TorrentDownload implements Runnable {
                         BlockFinishedAlert a = (BlockFinishedAlert) alert;
                         double p = a.handle().status().progress() * 100;
                         String formatted_p = String.format("%.2f", p);
-                        System.out.println("Progress: " + formatted_p + " for torrent name: " + a.torrentName());
+                        //System.out.println("Progress: " + formatted_p + " for torrent name: " + a.torrentName());
                         if (labelProgress != null) {
-                            labelProgress.setText(" " + formatted_p + "%");
+                            labelProgress.setText(formatted_p + "%");
                             frame.repaint();
                         }
                         if (flg_CancelDownload) {
@@ -115,6 +115,16 @@ public class TorrentDownload implements Runnable {
         });
 
         try {
+            // Configure session settings to disable local peer discovery
+            settings_pack sp = new settings_pack();
+            sp.set_bool(settings_pack.bool_types.enable_lsd.swigValue(), false); // Disable local peer discovery
+            sp.set_bool(settings_pack.bool_types.enable_dht.swigValue(), true); // Enable DHT if needed
+            sp.set_bool(settings_pack.bool_types.enable_upnp.swigValue(), false); // Disable UPnP
+            sp.set_bool(settings_pack.bool_types.enable_natpmp.swigValue(), false); // Disable NAT-PMP
+
+            SettingsPack settings = new SettingsPack(sp);
+            sessionManager.applySettings(settings);
+
             TorrentInfo ti = new TorrentInfo(torrentFile);
             sessionManager.download(ti, new File(localFilePath));
             signal.await();

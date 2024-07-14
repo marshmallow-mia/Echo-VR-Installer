@@ -20,13 +20,10 @@ public class FrameQuestPatcher extends JDialog {
     private static final int FRAME_WIDTH = 1280;
     private static final int FRAME_HEIGHT = 720;
     private static final String DEFAULT_PATH = "C:\\EchoVR";
-
     private final Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
-
     private SpecialTextfield textfieldQuestPatchLink;
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
-
     private Downloader downloader = null;
     private TorrentDownload downloader2 = null;
 

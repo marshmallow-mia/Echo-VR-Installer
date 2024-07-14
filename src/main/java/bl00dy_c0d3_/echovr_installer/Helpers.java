@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
@@ -61,29 +62,15 @@ public class Helpers {
     }
 
 
-    /*
     public static void pathFolderChooser(SpecialLabel labelPcDownloadPath, JDialog outFrame) {
-        FileDialog fd = new FileDialog((Frame) null, "Select a path to Install Echo in.", FileDialog.LOAD);
-        fd.setVisible(true);
-
-        String directory = fd.getDirectory();
-        String filename = fd.getFile();
-
-        if (filename != null && filename.endsWith(".json")) {
-            String configPath = new File(directory, filename).getPath();
-            labelPcDownloadPath.setText(configPath);
-            outFrame.repaint();
-        }
-    }
-    */
-
-    public static void pathFolderChooser(SpecialLabel labelPcDownloadPath) {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
         if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             String directory = chooser.getSelectedFile().getPath();
             labelPcDownloadPath.setText(directory);
+            outFrame.repaint();
         }
     }
+
 }

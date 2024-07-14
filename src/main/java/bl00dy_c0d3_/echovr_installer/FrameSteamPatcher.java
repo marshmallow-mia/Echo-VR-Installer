@@ -75,7 +75,7 @@ public class FrameSteamPatcher extends JDialog {
         pcChoosePath.setLocation(20, 100);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                pathFolderChooser(labelPcDownloadPath);
+                pathFolderChooser(labelPcDownloadPath, outframe);
             }
         });
         back.add(pcChoosePath);

@@ -110,7 +110,7 @@ public class FramePCPatcher extends JDialog {
         pcPatchChoosePath.setLocation(582, 220);
         pcPatchChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                pathFolderChooser(labelPcPatchDownloadPath);
+                pathFolderChooser(labelPcPatchDownloadPath, outframe);
             }
         });
         back.add(pcPatchChoosePath);

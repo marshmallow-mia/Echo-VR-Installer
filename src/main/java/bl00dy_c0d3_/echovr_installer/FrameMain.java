@@ -77,7 +77,7 @@ public class FrameMain extends JFrame {
         noLincencePCLabel.setLocation((FRAME_WIDTH / 2 - noLincencePCLabel.getPreferredSize().width) / 2, 500);
         back.add(noLincencePCLabel);
 
-        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch (Revive)", "button_up.png", "button_down.png", "button_highlighted.png", 19);
         btn_PCnoOVRHeadset.setLocation((FRAME_WIDTH / 2 - btn_PCnoOVRHeadset.getWidth()) / 2, 560);
         btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
