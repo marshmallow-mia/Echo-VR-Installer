@@ -47,7 +47,6 @@ public class FrameSteamPatcher extends JDialog {
         super.dispose();
     }
 
-
     private void initComponents(){
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);

@@ -87,8 +87,6 @@ public class InstallerQuest {
         }
 
 
-
-
         // Check if any device is connected
         int deviceConnected = checkQuestStatus();
         if (deviceConnected == 0) {

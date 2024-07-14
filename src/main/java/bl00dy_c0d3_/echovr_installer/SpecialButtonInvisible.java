@@ -9,8 +9,6 @@ import java.io.InputStream;
 import java.net.URL;
 
 public class SpecialButtonInvisible extends JPanel {
-
-
     //Konstruktor:
     public SpecialButtonInvisible() {
         //Grundeinstellungen...

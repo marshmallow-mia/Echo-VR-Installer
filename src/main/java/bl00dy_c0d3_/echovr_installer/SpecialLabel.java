@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 public class SpecialLabel extends JLabel {
 
+
     // Constructor
     public SpecialLabel(String labelText, int textSize) {
         //Schriftart laden...

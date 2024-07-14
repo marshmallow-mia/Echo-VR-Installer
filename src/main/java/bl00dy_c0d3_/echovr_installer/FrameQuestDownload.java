@@ -131,7 +131,6 @@ public class FrameQuestDownload extends JDialog {
         back.add(checkBoxConfig);
 
 
-
         SpecialLabel labelQuestInstallProgress = new SpecialLabel("Not started yet", 20);
         labelQuestInstallProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
         labelQuestInstallProgress.setLocation(350,250);

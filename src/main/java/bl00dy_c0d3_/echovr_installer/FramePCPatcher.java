@@ -23,7 +23,6 @@ public class FramePCPatcher extends JDialog {
         this.setVisible(true);
     }
 
-
     private void initComponents(){
 
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

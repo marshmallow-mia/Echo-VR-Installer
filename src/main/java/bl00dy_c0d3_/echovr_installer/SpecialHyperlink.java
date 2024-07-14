@@ -11,6 +11,7 @@ public class SpecialHyperlink extends JLabel{
 
     public SpecialHyperlink(int x, int y, String text, String url, int textsize){
 
+
         // Create the label with a hyperlink
         this.setText(text);
         this.setCursor(new Cursor(Cursor.HAND_CURSOR));

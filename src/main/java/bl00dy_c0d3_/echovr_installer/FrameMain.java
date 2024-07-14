@@ -16,6 +16,7 @@ public class FrameMain extends JFrame {
         this.setVisible(true);
     }
 
+
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);

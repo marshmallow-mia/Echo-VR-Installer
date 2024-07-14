@@ -79,7 +79,6 @@ public class Downloader implements Runnable {
                 //}
             }
 
-
         } catch (IOException e) {
             // handle exception
             System.out.println("4");

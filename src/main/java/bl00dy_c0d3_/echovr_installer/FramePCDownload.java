@@ -49,6 +49,7 @@ public class FramePCDownload extends JDialog {
         back.setLayout(null);
         this.setContentPane(back);
 
+
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 

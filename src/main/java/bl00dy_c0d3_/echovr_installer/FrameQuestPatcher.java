@@ -213,6 +213,7 @@ public class FrameQuestPatcher extends JDialog {
         back.add(questStartDownload);
     }
 
+
     private void addChooseConfigButton(@NotNull JPanel back) {
         SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
         chooseConfig.setLocation(582, 405);
