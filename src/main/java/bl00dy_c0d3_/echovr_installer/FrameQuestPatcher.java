@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -79,7 +80,11 @@ public class FrameQuestPatcher extends JDialog {
             downloader = new Downloader();
             String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
             downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, 2);
-            SessionManager sessionManager = new SessionManager();
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }            SessionManager sessionManager = new SessionManager();
             sessionManager.start();
             downloader2 = new TorrentDownload(sessionManager);
             downloader2.startDownload("p2pFiles/obb.torrent", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2);

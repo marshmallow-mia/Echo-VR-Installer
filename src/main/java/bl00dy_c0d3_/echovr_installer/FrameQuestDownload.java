@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
@@ -38,13 +39,13 @@ public class FrameQuestDownload extends JDialog {
 
 
     public void dispose(){
+        super.dispose();
         if (downloader != null){
             downloader.cancelDownload();
         }
         if (downloader2 != null){
             downloader2.cancelDownload();
         }
-        super.dispose();
     }
 
 
@@ -97,6 +98,11 @@ public class FrameQuestDownload extends JDialog {
 
         downloader = new TorrentDownload(sessionManager);
         downloader.startDownload("p2pFiles/apk.torrent", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+           e.printStackTrace();
+        }
         downloader2 = new TorrentDownload(sessionManager2);
         downloader2.startDownload("p2pFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
     }

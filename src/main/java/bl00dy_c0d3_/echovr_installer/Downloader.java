@@ -74,7 +74,7 @@ public class Downloader implements Runnable {
 
 
                 //if (labelProgress != null) {
-                    labelProgress.setText(" " + String.format("%.2f", progressPercent) + "%");
+                    labelProgress.setText(String.format("%.2f", progressPercent) + "%");
                     frame.repaint();
                 //}
             }
