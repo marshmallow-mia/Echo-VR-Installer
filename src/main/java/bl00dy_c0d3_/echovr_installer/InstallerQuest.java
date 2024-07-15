@@ -25,12 +25,12 @@ public class InstallerQuest {
         InstallerQuest outFrame = this;
 
         if (isWindows) {
-            String dir = tempPath + "platform-tools/";
-            System.out.println(tempPath);
+            String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
             }
+
             fileList = new String[]{"adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe", "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe", "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
             //TODO read filelist from the folder instead of that
             for (int a = 0; a < fileList.length; a++) {
@@ -39,7 +39,7 @@ public class InstallerQuest {
                     InputStream stream = getClass().getClassLoader().getResourceAsStream("platform-tools/" + fileList[a]);
                     Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {
-                    e.printStackTrace();
+
                 }
                 //TODO ^
             }
