@@ -10,7 +10,7 @@ Work in Progress!
 This is my pre alpha release.
 
 
-![alt text](https://cdn.discordapp.com/attachments/1251149651785158677/1259201959731396618/main.jpg?ex=668ad2b6&is=66898136&hm=15f2205041edcbd82459acd68ac714eb72b79c867c4f014118ae20883c5e66f4&)
+![alt text](https://cdn.discordapp.com/attachments/1251149651785158677/1259201959731396618/main.jpg?ex=669758f6&is=66960776&hm=fd666f6c215b9904b58e0cba55bee2319c282ecbf7f8598f488fe21ad331037c&)
 
 **We are happy to announce the new way of installing Echo on PC and Quest. I developed an easy to use installer. 
 You will need a PC with Windows, macOS or Linux for it. With a bit of work also ChromeBooks with ChromeOS can work. An Guide for that will follow! **
