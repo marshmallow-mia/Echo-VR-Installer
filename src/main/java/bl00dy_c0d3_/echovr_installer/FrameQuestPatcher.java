@@ -27,12 +27,12 @@ public class FrameQuestPatcher extends JDialog {
     private SpecialCheckBox checkBoxConfig;
     private Downloader downloader = null;
     private TorrentDownload downloader2 = null;
+    JDialog outFrame = this;
 
     public FrameQuestPatcher() {
         initComponents();
         this.setVisible(true);
     }
-    JDialog outframe = this;
 
 
     @Override
@@ -94,10 +94,12 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void handleChooseConfigClick() {
-        jsonFileChooser(labelConfigPath, outframe);
+        jsonFileChooser(labelConfigPath, outFrame);
     }
 
     private void handlePatchingButtonClick() {
+        labelQuestProgress4.setText("Installation started! Wait!");
+        JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
         String apkfileName;
         if (checkBoxConfig.isSelected()) {
             File f = new File(targetPath + "/personilizedechoapk.apk");
@@ -116,6 +118,9 @@ public class FrameQuestPatcher extends JDialog {
         }
         InstallerQuest installtoQuest = new InstallerQuest();
         installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress4, this);
+        labelQuestProgress4.setText("Installation is complete!");
+        JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+
     }
 
 

@@ -7,13 +7,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
@@ -30,6 +29,10 @@ public class FrameQuestDownload extends JDialog {
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
     String configPath = "Optional: Choose config.json on the button above";
     JDialog outFrame = this;
+    static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+
+
     //Constructor
     public FrameQuestDownload(FrameMain frameMain){
         this.frameMain = frameMain;
@@ -89,30 +92,78 @@ public class FrameQuestDownload extends JDialog {
     }
 
     private void handleDownloadButtonClick() {
-        JOptionPane.showMessageDialog(outFrame, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
+        // Get the base directory of the .app bundle
+        String appBundlePath = System.getProperty("user.dir");
+        System.out.println(appBundlePath);
+
+
+
+
+
+
+        String dir;
+        Path targetPath2;
+        Path targetPath3;
+        String apkPath;
+        String obbPath;
+        if (mac) {
+            dir = tempPath + "/p2pFiles/";
+
+            File file = new File(dir);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            targetPath2 = Paths.get(tempPath + "/p2pFiles/apk.torrent");
+            targetPath3 = Paths.get(tempPath + "/p2pFiles/obb.torrent");
+            System.out.println(targetPath2 + "");
+
+            try {
+                InputStream stream = getClass().getClassLoader().getResourceAsStream("apk.torrent");
+                InputStream stream2 = getClass().getClassLoader().getResourceAsStream("obb.torrent");
+                Files.copy(stream, targetPath2, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(stream2, targetPath3, StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //TODO ^
+            apkPath = targetPath2 + "";
+            obbPath = targetPath3 + "";
+        }
+        else {
+            apkPath = "p2pFiles/apk.torrent";
+            obbPath = "p2pFiles/obb.torrent";
+        }
+
+
+
+
+        JOptionPane.showMessageDialog(this, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
         //Added SessionManager as the TorrentDownloader isnt able to download more then file at the same time otherwise
         SessionManager sessionManager = new SessionManager();
         sessionManager.start();
         SessionManager sessionManager2 = new SessionManager();
         sessionManager2.start();
 
+
         downloader = new TorrentDownload(sessionManager);
-        downloader.startDownload("p2pFiles/apk.torrent", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
+        downloader.startDownload(apkPath, targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
         try {
             TimeUnit.SECONDS.sleep(1);
         } catch (InterruptedException e) {
-           e.printStackTrace();
+            e.printStackTrace();
         }
         downloader2 = new TorrentDownload(sessionManager2);
-        downloader2.startDownload("p2pFiles/obb.torrent", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
+        downloader2.startDownload(obbPath, targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
     }
 
 
 
     private void handleQuestStartPatchingButtonClick() {
         String apkfileName;
-        if (checkBoxConfig.isSelected()){
+        labelQuestInstallProgress.setText("Installation started! Wait!");
+        JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
+        if (checkBoxConfig.isSelected()){
             File f = new File(targetPath + "/Echo_patched.apk");
             if(f.exists() && !f.isDirectory()) {
                 PatchAPK patchAPK = new PatchAPK();
@@ -134,11 +185,13 @@ public class FrameQuestDownload extends JDialog {
         String obbfileName = "main.4987566.com.readyatdawn.r15.obb";
         InstallerQuest installToQuest = new InstallerQuest();
         installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
+        labelQuestInstallProgress.setText("Installation is complete!");
+        JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
     }
 
 
-        //Needs to be declared outside, as its needed outside
+    //Needs to be declared outside, as its needed outside
     SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
     SpecialLabel labelQuestProgress3 = new SpecialLabel(" 0%", 15);
     SpecialLabel labelConfigPath = new SpecialLabel(configPath, 14);
@@ -196,7 +249,7 @@ public class FrameQuestDownload extends JDialog {
 
     }
 
-        private void addStartDownloadButton(@NotNull JPanel back) {
+    private void addStartDownloadButton(@NotNull JPanel back) {
         SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
         questStartDownload.setLocation(50, 40);
         questStartDownload.addMouseListener(new MouseAdapter() {
@@ -232,11 +285,13 @@ public class FrameQuestDownload extends JDialog {
     }
 
 
-        //Lädt eine GUI-Grafik und gibt sie zurück:
+    //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
         URL imageURL = getClass().getClassLoader().getResource(imageName);
         if (imageURL == null) return null;
         else return (new ImageIcon(imageURL, imageName)).getImage();
     }
 
+
 }
+

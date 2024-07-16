@@ -23,7 +23,6 @@ public class InstallerQuest {
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
         InstallerQuest outFrame = this;
-
         if (isWindows) {
             String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
             File file = new File(dir);
@@ -102,10 +101,6 @@ public class InstallerQuest {
             }
 
 
-            if (progressLabel != null){
-                progressLabel.setText("Installation started! Wait!");
-                parrentFrame.repaint();
-            }
 
 
             if(isWindows) {
@@ -123,10 +118,7 @@ public class InstallerQuest {
 
             }
 
-            if (progressLabel != null){
-                progressLabel.setText("Installation done!");
-                parrentFrame.repaint();
-            }
+
         }
         else if (deviceConnected == 1) {
             ErrorDialog error = new ErrorDialog();
@@ -204,13 +196,9 @@ public class InstallerQuest {
     }
 
     private void runShellCommand(String shellCommand, int step){
-
-
-        if (step == 1){
-            JOptionPane.showMessageDialog(null, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-        }
         try {
             if (isWindows) {
+
                 Process process = Runtime.getRuntime().exec(shellCommand);
                 process.waitFor();
                 System.out.println("DONE");
@@ -219,10 +207,7 @@ public class InstallerQuest {
                 process.waitFor();
                 System.out.println("DONE");
             }
-            if (step == 4){
-                JOptionPane.showMessageDialog(null, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
-            }
         }
         catch (Exception e){
 
