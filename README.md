@@ -81,7 +81,6 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 
 
 
-
 ### The right side is Quest specific. Here you can do the following:
 
 ## **Quest Install Echo (If you don't own Echo on your Oculus account, use the step below, instead of this one! (No license patch)):**
