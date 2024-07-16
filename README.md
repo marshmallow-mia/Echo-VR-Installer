@@ -10,7 +10,7 @@ Work in Progress!
 This is my pre alpha release.
 
 
-![alt text](https://cdn.discordapp.com/attachments/1251149651785158677/1259201959731396618/main.jpg?ex=669758f6&is=66960776&hm=fd666f6c215b9904b58e0cba55bee2319c282ecbf7f8598f488fe21ad331037c&)
+![alt text](https://echo.marceldomain.de:6969/images/main.jpg)
 
 **We are happy to announce the new way of installing Echo on PC and Quest. I developed an easy to use installer. 
 You will need a PC with Windows, macOS or Linux for it. With a bit of work also ChromeBooks with ChromeOS can work. An Guide for that will follow! **
@@ -46,8 +46,9 @@ You need to press the **Ctrl** button while right-clicking on the application. T
 ## **On Linux:**
 Go into the `bin` folder inside the extracted folder and double-click on **EchoVR_Installer**.
 
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259195668233322567/WindowsDefender.jpg?ex=668b759a&is=668a241a&hm=7ea7d7f6b24f65ef9bedf695756d39a1fa6d42422d4c7ba529610c56e9b52a85&)
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259195678983192636/macOSOpen.jpg?ex=668b759c&is=668a241c&hm=9d79399b17c76008bd916f3dba5a4d00d47ab744ff86ce65b47145ee3a94290d&)
+![alt text](https://echo.marceldomain.de:6969/images/WindowsDefender.jpg)
+![alt text](https://echo.marceldomain.de:6969/images/macOSOpen.jpg)
+
 
 
 # **4th Step:**
@@ -72,10 +73,13 @@ Go into the `bin` folder inside the extracted folder and double-click on **EchoV
 - If you installed Echo in the path used by Oculus, you need to choose the path here. 
 **     (Screenshot 4 below)**
 
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199064633770044/WindowsAdmin.jpg?ex=668b78c3&is=668a2743&hm=fe64e43d6eca80cdc7e666f23d7412fdc35c58b2dfb341d70a4822c35c2e9e9a&)
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199212265017526/changePath1.jpg?ex=668b78e6&is=668a2766&hm=c93ff1d5599eb60648e6468be6102e237f3427c4cd7d5f1d5de0b721915ad09c&)
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199228882980925/changePath2.jpg?ex=668b78ea&is=668a276a&hm=a58da17ff3e16bbbc7033b4b0e53267ede68ce8e5ff00f50ae76b54cdc29351a&)
-![alt text](https://cdn.discordapp.com/attachments/1259166249804370040/1259199239368740927/changePath3.jpg?ex=668b78ed&is=668a276d&hm=9fb3adf0b7f348e952f2efc438b4ee9d7a42835cf2985e2cdfb269984a82abb2&)
+
+![alt text](https://echo.marceldomain.de:6969/images/WindowsAdmin.jpg)
+![alt text](https://echo.marceldomain.de:6969/images/changePath1.jpg)
+![alt text](https://echo.marceldomain.de:6969/images/changePath2.jpg)
+![alt text](https://echo.marceldomain.de:6969/images/changePath3.jpg)
+
+
 
 
 ### The right side is Quest specific. Here you can do the following:
