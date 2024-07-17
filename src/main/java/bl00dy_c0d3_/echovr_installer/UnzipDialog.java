@@ -9,7 +9,7 @@ public class UnzipDialog extends JDialog {
     private Background back;
     private SpecialLabel zipLabel1;
     private SpecialLabel zipLabel2;
-    private SpecialLabel zipLabel3;k,,
+    private SpecialLabel zipLabel3;
     private SpecialLabel zipLabel4;
 
     public UnzipDialog(JFrame parentFrame) {
