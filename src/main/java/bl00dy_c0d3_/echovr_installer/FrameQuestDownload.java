@@ -96,11 +96,6 @@ public class FrameQuestDownload extends JDialog {
         String appBundlePath = System.getProperty("user.dir");
         System.out.println(appBundlePath);
 
-
-
-
-
-
         String dir;
         Path targetPath2;
         Path targetPath3;
@@ -133,8 +128,6 @@ public class FrameQuestDownload extends JDialog {
             apkPath = "p2pFiles/apk.torrent";
             obbPath = "p2pFiles/obb.torrent";
         }
-
-
 
 
         JOptionPane.showMessageDialog(this, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);

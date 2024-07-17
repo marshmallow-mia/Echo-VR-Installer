@@ -7,12 +7,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
@@ -27,6 +26,8 @@ public class FrameQuestPatcher extends JDialog {
     private SpecialCheckBox checkBoxConfig;
     private Downloader downloader = null;
     private TorrentDownload downloader2 = null;
+    static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
     JDialog outFrame = this;
 
     public FrameQuestPatcher() {
@@ -75,6 +76,37 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void handleDownloadButtonClick() {
+        // Get the base directory of the .app bundle
+        String appBundlePath = System.getProperty("user.dir");
+        System.out.println(appBundlePath);
+
+        String dir;
+        Path targetPath3;
+        String obbPath;
+        if (mac) {
+            dir = tempPath + "/p2pFiles/";
+
+            File file = new File(dir);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            targetPath3 = Paths.get(tempPath + "/p2pFiles/obb.torrent");
+            System.out.println(targetPath3 + "");
+
+            try {
+                InputStream stream = getClass().getClassLoader().getResourceAsStream("obb.torrent");
+                Files.copy(stream, targetPath3, StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            //TODO ^
+            obbPath = targetPath3 + "";
+        }
+        else {
+            obbPath = "p2pFiles/obb.torrent";
+        }
+
+
         if (textfieldQuestPatchLink.getText().matches("https://tmpfiles.org.*")) {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
             downloader = new Downloader();
@@ -87,7 +119,7 @@ public class FrameQuestPatcher extends JDialog {
             }            SessionManager sessionManager = new SessionManager();
             sessionManager.start();
             downloader2 = new TorrentDownload(sessionManager);
-            downloader2.startDownload("p2pFiles/obb.torrent", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2);
+            downloader2.startDownload(obbPath, targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2);
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
