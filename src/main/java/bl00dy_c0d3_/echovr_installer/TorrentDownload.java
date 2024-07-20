@@ -8,14 +8,12 @@ import com.frostwire.jlibtorrent.TorrentInfo;
 import com.frostwire.jlibtorrent.alerts.*;
 import com.frostwire.jlibtorrent.swig.settings_pack;
 
-import com.frostwire.jlibtorrent.PeerInfo;
-import com.frostwire.jlibtorrent.TorrentHandle;
-
 import javax.swing.*;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
-
-import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class TorrentDownload implements Runnable {
@@ -28,6 +26,7 @@ public class TorrentDownload implements Runnable {
     private int platform = -1; // 0=PC, 1=don't unzip
     private boolean flg_CancelDownload = false;
     private SessionManager sessionManager;
+    private Downloader downloader;
 
     public TorrentDownload(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -42,7 +41,7 @@ public class TorrentDownload implements Runnable {
         this.frameMain = frameMain;
         this.platform = platform;
         this.flg_CancelDownload = false;
-
+        checkIfTorrentStarted();
         new Thread(this).start();
     }
 
@@ -111,22 +110,22 @@ public class TorrentDownload implements Runnable {
                         break;
                     case TORRENT_ERROR:
                         TorrentErrorAlert tea = (TorrentErrorAlert) alert;
-                        System.out.println("Torrent error: " + tea.error().message());
+                        //System.out.println("Torrent error: " + tea.error().message());
                         break;
                     case PEER_LOG:
                         PeerLogAlert pla = (PeerLogAlert) alert;
-                        System.out.println("Peer log: " + pla.message());
+                        //System.out.println("Peer log: " + pla.message());
                         break;
                     case FILE_ERROR:
                         FileErrorAlert fea = (FileErrorAlert) alert;
-                        System.out.println("File error: " + fea.error().message());
+                        //System.out.println("File error: " + fea.error().message());
                         break;
                     case STATE_UPDATE:
                         StateUpdateAlert sua = (StateUpdateAlert) alert;
-                        System.out.println("State update: " + sua.status().toString());
+                        //System.out.println("State update: " + sua.status().toString());
                         break;
                     default:
-                        System.out.println("Alert: " + alert.toString());
+                        //System.out.println("Alert: " + alert.toString());
                         break;
                 }
             }
@@ -139,7 +138,6 @@ public class TorrentDownload implements Runnable {
             sp.set_bool(settings_pack.bool_types.enable_dht.swigValue(), false); // Disable DHT
             sp.set_bool(settings_pack.bool_types.enable_upnp.swigValue(), false); // Disable UPnP
             sp.set_bool(settings_pack.bool_types.enable_natpmp.swigValue(), false); // Disable NAT-PMP
-
             SettingsPack settings = new SettingsPack(sp);
             sessionManager.applySettings(settings);
 
@@ -154,9 +152,14 @@ public class TorrentDownload implements Runnable {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public void cancelDownload() {
+        if (downloader != null) {
+            downloader.cancelDownload();
+        }
+
         flg_CancelDownload = true;
         new Thread(() -> {
             sessionManager.stop(); // Attempt to stop the session
@@ -170,5 +173,46 @@ public class TorrentDownload implements Runnable {
             // Check if the session is still running and force stop if needed
             // No force stop method available, relying on stop() for now
         }).start();
+    }
+
+    public void checkIfTorrentStarted() {
+
+        //Check after 30 sec if the torrent download started at all.
+        // ScheduledExecutorService to run tasks after a delay
+        ScheduledExecutorService checkIfTorrentWorks     = Executors.newScheduledThreadPool(1);
+        // Schedule a task to run after 30 seconds
+        checkIfTorrentWorks.schedule(new Runnable() {
+            @Override
+            public void run() {
+                if (labelProgress.getText().equals("Wait!")){
+                    cancelDownload();
+                    startDownlodWithoutTorrent();
+                }
+            }
+        }, 3, TimeUnit.SECONDS);
+
+
+    }
+
+
+    public void startDownlodWithoutTorrent(){
+        //Delete File
+        File myObj = new File(localFilePath + "/" + filename);
+        System.out.println(localFilePath + "/" + filename);
+        try {
+            if (myObj.delete()) {
+                System.out.println("Fallback to HTTP. Deleted the file: " + myObj.getName());
+            } else {
+                throw new Exception("Unknown error occurred.");
+            }
+        } catch (Exception e) {
+            String error = e.toString();
+            System.out.println(error);
+        }
+
+        downloader = new Downloader();
+        String fixedURL = "https://echo.marceldomain.de:6969/" + filename;
+        downloader.startDownload(fixedURL, localFilePath + filename, "personilizedechoapk.apk", labelProgress, frame, platform);
+
     }
 }

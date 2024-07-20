@@ -92,6 +92,16 @@ public class FrameQuestDownload extends JDialog {
     }
 
     private void handleDownloadButtonClick() {
+        if (downloader != null){
+            downloader.cancelDownload();
+            System.out.println("downloader1 stopped");
+        }
+        if (downloader2 != null){
+            downloader2.cancelDownload();
+            System.out.println("downloader2 stopped");
+        }
+
+
         // Get the base directory of the .app bundle
         String appBundlePath = System.getProperty("user.dir");
         System.out.println(appBundlePath);
