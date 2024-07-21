@@ -117,4 +117,10 @@ public class SpecialButtonSmall extends JPanel {
         if (imageURL == null) return 0;
         else return (new ImageIcon(imageURL, imageName)).getIconHeight();
     }
+
+    void changeText(String text){
+        label.setText(text);
+    }
+
+
 }

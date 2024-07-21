@@ -49,7 +49,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3");
+        this.setTitle("Echo VR Installer v0.3c");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -77,9 +77,9 @@ public class FramePCDownload extends JDialog {
         back.add(pcChoosePath);
 
 
-        SpecialLabel labelPcDownloadPathExplenation = new SpecialLabel("Specify the Path for the Echo Installation or leave it as it is.", 14);
-        labelPcDownloadPathExplenation.setLocation(20,130);
-        back.add(labelPcDownloadPathExplenation);
+        SpecialLabel labelPcDownloadPathExplaination = new SpecialLabel("Specify the Path for the Echo Installation or leave it as it is.", 14);
+        labelPcDownloadPathExplaination.setLocation(20,130);
+        back.add(labelPcDownloadPathExplaination);
 
 
         SpecialLabel labelPcProgress1 = new SpecialLabel("Progress =", 17);
@@ -106,41 +106,12 @@ public class FramePCDownload extends JDialog {
             public void mouseReleased(MouseEvent event) {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
 
-                // Get the base directory of the .app bundle
-                String appBundlePath = System.getProperty("user.dir");
-                System.out.println(appBundlePath);
-
-                String dir;
-                Path targetPath3;
-                String pcPath;
-                if (mac) {
-                    dir = tempPath + "/p2pFiles/";
-
-                    File file = new File(dir);
-                    if (!file.exists()) {
-                        file.mkdirs();
-                    }
-                    targetPath3 = Paths.get(tempPath + "/p2pFiles/pc.torrent");
-                    System.out.println(targetPath3 + "");
-
-                    try {
-                        InputStream stream = getClass().getClassLoader().getResourceAsStream("obb.torrent");
-                        Files.copy(stream, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    //TODO ^
-                    pcPath = targetPath3 + "";
-                }
-                else {
-                    pcPath = "p2pFiles/pc.torrent";
-                }
 
                 SessionManager sessionManager = new SessionManager();
                 sessionManager.start();
 
                 downloader = new TorrentDownload(sessionManager);
-                downloader.startDownload(pcPath, path, "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0);
+                downloader.startDownload("p2pFiles/pc.torrent", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0);
 
             }
         });

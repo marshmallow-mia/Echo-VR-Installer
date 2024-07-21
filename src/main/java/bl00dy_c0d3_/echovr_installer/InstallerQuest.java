@@ -95,7 +95,7 @@ public class InstallerQuest {
             if(!apkFile.exists() ||  !obbFile.exists()) {
                 System.out.println("APK or OBB FILE NOT FOUND");
                 ErrorDialog error = new ErrorDialog();
-                error.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ON STEP 4/5!", 0);
+                error.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ABOVE!", 0);
 
                 return;
             }

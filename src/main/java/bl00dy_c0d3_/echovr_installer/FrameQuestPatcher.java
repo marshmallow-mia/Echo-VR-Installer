@@ -51,7 +51,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.3");
+        setTitle("Echo VR Installer v0.3c");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -111,7 +111,7 @@ public class FrameQuestPatcher extends JDialog {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
             downloader = new Downloader();
             String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, 2);
+            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2);
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {

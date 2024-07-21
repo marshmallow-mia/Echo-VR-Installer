@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.URL;
 
 public class SpecialButtonInvisible extends JPanel {
+    JLabel label;
     //Konstruktor:
     public SpecialButtonInvisible() {
         //Grundeinstellungen...
@@ -16,7 +17,7 @@ public class SpecialButtonInvisible extends JPanel {
         this.setOpaque(true);
 
         //Label hinzufügen...
-        JLabel label = new JLabel("wedfewf", SwingConstants.CENTER);
+        label = new JLabel("wedfewf", SwingConstants.CENTER);
 
         label.setForeground(new Color(255, 255, 255));
         label.setBackground(Color.BLUE);
@@ -27,7 +28,9 @@ public class SpecialButtonInvisible extends JPanel {
 
     }
 
-
+    void changeText(String text){
+        label.setText(text);
+    }
 
 
 

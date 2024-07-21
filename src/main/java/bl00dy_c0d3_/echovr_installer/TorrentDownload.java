@@ -106,26 +106,30 @@ public class TorrentDownload implements Runnable {
                         signal.countDown();
                         if (platform == 0) {
                             UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
+                            JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        if (platform == 3) {
+                            JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
                         }
                         break;
                     case TORRENT_ERROR:
                         TorrentErrorAlert tea = (TorrentErrorAlert) alert;
-                        //System.out.println("Torrent error: " + tea.error().message());
+                        System.out.println("Torrent error: " + tea.error().message());
                         break;
                     case PEER_LOG:
                         PeerLogAlert pla = (PeerLogAlert) alert;
-                        //System.out.println("Peer log: " + pla.message());
+                        System.out.println("Peer log: " + pla.message());
                         break;
                     case FILE_ERROR:
                         FileErrorAlert fea = (FileErrorAlert) alert;
-                        //System.out.println("File error: " + fea.error().message());
+                        System.out.println("File error: " + fea.error().message());
                         break;
                     case STATE_UPDATE:
                         StateUpdateAlert sua = (StateUpdateAlert) alert;
-                        //System.out.println("State update: " + sua.status().toString());
+                        System.out.println("State update: " + sua.status().toString());
                         break;
                     default:
-                        //System.out.println("Alert: " + alert.toString());
+                        System.out.println("Alert: " + alert.toString());
                         break;
                 }
             }
@@ -186,19 +190,21 @@ public class TorrentDownload implements Runnable {
             public void run() {
                 if (labelProgress.getText().equals("Wait!")){
                     cancelDownload();
-                    startDownlodWithoutTorrent();
+                    startDownloadWithoutTorrent();
                 }
             }
-        }, 3, TimeUnit.SECONDS);
+        }, 30, TimeUnit.SECONDS);
 
 
     }
 
 
-    public void startDownlodWithoutTorrent(){
+    public void startDownloadWithoutTorrent(){
         //Delete File
         File myObj = new File(localFilePath + "/" + filename);
         System.out.println(localFilePath + "/" + filename);
+        System.out.println("Fallback to HTTP");
+
         try {
             if (myObj.delete()) {
                 System.out.println("Fallback to HTTP. Deleted the file: " + myObj.getName());
@@ -212,7 +218,7 @@ public class TorrentDownload implements Runnable {
 
         downloader = new Downloader();
         String fixedURL = "https://echo.marceldomain.de:6969/" + filename;
-        downloader.startDownload(fixedURL, localFilePath + filename, "personilizedechoapk.apk", labelProgress, frame, platform);
+        downloader.startDownload(fixedURL, localFilePath , filename, labelProgress, frame, frameMain, platform);
 
     }
 }

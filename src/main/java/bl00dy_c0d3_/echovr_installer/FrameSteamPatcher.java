@@ -51,7 +51,7 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3");
+        this.setTitle("Echo VR Installer v0.3c");
         this.setModal(true);
 
 
@@ -124,7 +124,7 @@ public class FrameSteamPatcher extends JDialog {
         pcStartDownload.setLocation(20, 230);
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                File echoPath = new File(path + "/bin/win10");
+                File echoPath = new File(labelPcDownloadPath.getText() + "/bin/win10");
 
                 if (!echoPath.exists() && !echoPath.isDirectory()) {
                     ErrorDialog error = new ErrorDialog();
@@ -133,13 +133,13 @@ public class FrameSteamPatcher extends JDialog {
                 else {
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
                     downloader1 = new Downloader();
-                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outframe, 1);
+                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outframe, null, 1);
                     downloader2 = new Downloader();
-                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outframe, 1);
+                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outframe, null, 1);
                     downloader3 = new Downloader();
-                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outframe, 1);
+                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outframe, null, 1);
                     downloader4 = new Downloader();
-                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, 1);
+                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, null, 3);
                 }
             }
         });

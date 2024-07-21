@@ -31,6 +31,7 @@ public class FrameQuestDownload extends JDialog {
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+    SpecialButton questStartDownload;
 
 
     //Constructor
@@ -56,7 +57,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3");
+        this.setTitle("Echo VR Installer v0.3c");
         FrameQuestDownload outFrame = this;
 
 
@@ -65,8 +66,6 @@ public class FrameQuestDownload extends JDialog {
 
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you don't own Echo on your account don't use this Installer! Use the \"No licence patch\"<br>down below on the main menu instead and just close the next window!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-
-
 
 
         //Alles fertig machen...
@@ -100,6 +99,7 @@ public class FrameQuestDownload extends JDialog {
             downloader2.cancelDownload();
             System.out.println("downloader2 stopped");
         }
+        questStartDownload.changeText("Restart Download");
 
 
         // Get the base directory of the .app bundle
@@ -146,7 +146,6 @@ public class FrameQuestDownload extends JDialog {
         sessionManager.start();
         SessionManager sessionManager2 = new SessionManager();
         sessionManager2.start();
-
 
         downloader = new TorrentDownload(sessionManager);
         downloader.startDownload(apkPath, targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
@@ -253,7 +252,7 @@ public class FrameQuestDownload extends JDialog {
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
-        SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
+        questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
         questStartDownload.setLocation(50, 40);
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
@@ -294,6 +293,7 @@ public class FrameQuestDownload extends JDialog {
         if (imageURL == null) return null;
         else return (new ImageIcon(imageURL, imageName)).getImage();
     }
+
 
 
 }

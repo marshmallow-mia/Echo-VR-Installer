@@ -11,16 +11,18 @@ public class Downloader implements Runnable {
     private String localFilePath;
     private JLabel labelProgress;
     private JDialog frame;
+    private JFrame frameMain;
     private String filename;
     private int platform = -1; //0=PC, 1=don't unzip //TODO not needed anymore
     private boolean flg_CancelDownload = false;
 
 
     // url, path, name, Label to change progress%, frame to know the position for errorDialog, platform=0=PC/unzip, 1=don't unzip
-    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, int platform){
+    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform){
         this.localFilePath = localFilePath;
         this.labelProgress = labelProgress;
         this.frame = frame;
+        this.frameMain = frameMain;
         this.fileUrl = fileUrl;
         this.filename = filename;
         this.platform = platform;
@@ -56,6 +58,9 @@ public class Downloader implements Runnable {
         try (BufferedInputStream in = new BufferedInputStream(new URL(fileUrl).openStream());
              FileOutputStream fileOutputStream = new FileOutputStream(localFilePath + "/" + filename)) {
             System.out.println("3");
+            System.out.println(localFilePath + "/" + filename);
+            System.out.println(localFilePath);
+            System.out.println(filename);
             long downloadProgress = 0;
             byte dataBuffer[] = new byte[1024];
             int bytesRead;
@@ -78,7 +83,13 @@ public class Downloader implements Runnable {
                     frame.repaint();
                 //}
             }
-
+            if (platform == 0) {
+                UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
+                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            }
+            if (platform == 3) {
+                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            }
         } catch (IOException e) {
             // handle exception
             System.out.println("4");
