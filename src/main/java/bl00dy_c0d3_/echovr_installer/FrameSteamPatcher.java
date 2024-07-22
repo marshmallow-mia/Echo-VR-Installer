@@ -131,15 +131,35 @@ public class FrameSteamPatcher extends JDialog {
                     error.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                 }
                 else {
+                    if (downloader1 != null){
+                        downloader1.cancelDownload();
+                        System.out.println("downloader1 Steam stopped");
+                    }
+                    if (downloader2 != null){
+                        downloader2.cancelDownload();
+                        System.out.println("downloader2 Steam stopped");
+                    }
+                    if (downloader3 != null){
+                        downloader3.cancelDownload();
+                        System.out.println("downloader3 Steam stopped");
+                    }
+                    if (downloader4 != null){
+                        downloader4.cancelDownload();
+                        System.out.println("downloader4 Steam stopped");
+                    }
+                    pcStartDownload.changeText("Restart Download");
+
+
+
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
                     downloader1 = new Downloader();
-                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outframe, null, 1);
+                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outframe, null, 1, 0);
                     downloader2 = new Downloader();
-                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outframe, null, 1);
+                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outframe, null, 1, 0);
                     downloader3 = new Downloader();
-                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outframe, null, 1);
+                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outframe, null, 1, 0);
                     downloader4 = new Downloader();
-                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, null, 3);
+                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, null, 3, 0);
                 }
             }
         });

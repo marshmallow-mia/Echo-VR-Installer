@@ -17,11 +17,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
-import static bl00dy_c0d3_.echovr_installer.Helpers.pathFolderChooser;
+import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
 public class FramePCDownload extends JDialog {
-    TorrentDownload downloader = null;
+    Downloader downloader = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 394;
@@ -104,14 +103,17 @@ public class FramePCDownload extends JDialog {
         pcStartDownload.setLocation(20, 200);
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
+                if (downloader != null){
+                    downloader.cancelDownload();
+                    pause(1);
+                }
+                pcStartDownload.changeText("Restart Download");
+
+
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
 
-
-                SessionManager sessionManager = new SessionManager();
-                sessionManager.start();
-
-                downloader = new TorrentDownload(sessionManager);
-                downloader.startDownload("p2pFiles/pc.torrent", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0);
+                downloader = new Downloader();
+                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, 0);
 
             }
         });

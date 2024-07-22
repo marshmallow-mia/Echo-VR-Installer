@@ -9,6 +9,7 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.File;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 public class Helpers {
     @Contract("_, _ -> new")
@@ -72,6 +73,16 @@ public class Helpers {
             outFrame.repaint();
         }
     }
+
+
+    public static void pause(int timeInSecond){
+        try {
+            TimeUnit.SECONDS.sleep(timeInSecond);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
 
 
 

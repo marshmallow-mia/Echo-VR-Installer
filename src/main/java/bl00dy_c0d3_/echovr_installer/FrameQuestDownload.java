@@ -1,6 +1,5 @@
 package bl00dy_c0d3_.echovr_installer;
 
-import com.frostwire.jlibtorrent.SessionManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -9,18 +8,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.concurrent.TimeUnit;
+
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
 public class FrameQuestDownload extends JDialog {
-    TorrentDownload downloader = null;
-    TorrentDownload downloader2 = null;
+    Downloader downloader = null;
+    Downloader downloader2 = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 400;
@@ -102,60 +99,17 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
 
 
-        // Get the base directory of the .app bundle
-        String appBundlePath = System.getProperty("user.dir");
-        System.out.println(appBundlePath);
-
-        String dir;
-        Path targetPath2;
-        Path targetPath3;
-        String apkPath;
-        String obbPath;
-        if (mac) {
-            dir = tempPath + "/p2pFiles/";
-
-            File file = new File(dir);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            targetPath2 = Paths.get(tempPath + "/p2pFiles/apk.torrent");
-            targetPath3 = Paths.get(tempPath + "/p2pFiles/obb.torrent");
-            System.out.println(targetPath2 + "");
-
-            try {
-                InputStream stream = getClass().getClassLoader().getResourceAsStream("apk.torrent");
-                InputStream stream2 = getClass().getClassLoader().getResourceAsStream("obb.torrent");
-                Files.copy(stream, targetPath2, StandardCopyOption.REPLACE_EXISTING);
-                Files.copy(stream2, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            //TODO ^
-            apkPath = targetPath2 + "";
-            obbPath = targetPath3 + "";
-        }
-        else {
-            apkPath = "p2pFiles/apk.torrent";
-            obbPath = "p2pFiles/obb.torrent";
-        }
-
 
         JOptionPane.showMessageDialog(this, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
-        //Added SessionManager as the TorrentDownloader isnt able to download more then file at the same time otherwise
-        SessionManager sessionManager = new SessionManager();
-        sessionManager.start();
-        SessionManager sessionManager2 = new SessionManager();
-        sessionManager2.start();
 
-        downloader = new TorrentDownload(sessionManager);
-        downloader.startDownload(apkPath, targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2);
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        downloader2 = new TorrentDownload(sessionManager2);
-        downloader2.startDownload(obbPath, targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2);
+
+        downloader = new Downloader();
+        downloader.startDownload("https://echo.marceldomain.de:6969/Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, -1);
+
+        pause(1);
+
+        downloader2 = new Downloader();
+        downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, -1);
     }
 
 

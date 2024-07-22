@@ -180,7 +180,9 @@ public class TorrentDownload implements Runnable {
     }
 
     public void checkIfTorrentStarted() {
-
+        cancelDownload();
+        startDownloadWithoutTorrent();
+        /*
         //Check after 30 sec if the torrent download started at all.
         // ScheduledExecutorService to run tasks after a delay
         ScheduledExecutorService checkIfTorrentWorks     = Executors.newScheduledThreadPool(1);
@@ -189,11 +191,12 @@ public class TorrentDownload implements Runnable {
             @Override
             public void run() {
                 if (labelProgress.getText().equals("Wait!")){
-                    cancelDownload();
-                    startDownloadWithoutTorrent();
+
                 }
             }
         }, 30, TimeUnit.SECONDS);
+
+         */
 
 
     }
@@ -218,7 +221,7 @@ public class TorrentDownload implements Runnable {
 
         downloader = new Downloader();
         String fixedURL = "https://echo.marceldomain.de:6969/" + filename;
-        downloader.startDownload(fixedURL, localFilePath , filename, labelProgress, frame, frameMain, platform);
+        downloader.startDownload(fixedURL, localFilePath , filename, labelProgress, frame, frameMain, platform, -1);
 
     }
 }

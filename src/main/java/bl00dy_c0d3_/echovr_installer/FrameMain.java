@@ -32,6 +32,7 @@ public class FrameMain extends JFrame {
         addQuestButtons(back, outFrame);
         addBackgroundFrames(back);
         addEasterEgg(back, outFrame);
+        addDeleteCached(back);
 
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
@@ -45,6 +46,46 @@ public class FrameMain extends JFrame {
                 "This tool is still in early alpha!<br>" +
                 "If you have problems, contact me on Discord 'marcel_one_'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
     }
+
+/*
+    private void addDeleteCached(JPanel back){
+        SpecialButton btn_deleteCache = new SpecialButton("", "delete.png", "delete3.png", "delete2.png", 20);
+        btn_deleteCache.setLocation((FRAME_WIDTH / 2 + 90), 620);
+        btn_deleteCache.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+
+            }
+        });
+        back.add(btn_deleteCache);
+
+        SpecialLabel deleteCacheLabel = createSpecialLabel("Delete known cached files", 20);
+        deleteCacheLabel.setLocation(btn_deleteCache.getX() + 40, btn_deleteCache.getY() - 3);
+        back.add(deleteCacheLabel);
+
+    }
+
+ */
+private void addDeleteCached(JPanel back) {
+    SpecialButton btn_deleteCache = new SpecialButton("Delete cache", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
+    btn_deleteCache.setLocation(818, 595);
+    btn_deleteCache.addMouseListener(new MouseAdapter() {
+        public void mouseReleased(MouseEvent event) {
+            // Create an instance of DeleteCache and call the executeDeletion method
+            DeleteCache deleteCache = new DeleteCache();
+            deleteCache.executeDeletion();
+        }
+    });
+    back.add(btn_deleteCache);
+
+    SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
+    addDeleteIcon.setLocation(770, 595);
+    back.add(addDeleteIcon);
+
+    SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
+    cacheLabel.setLocation(818, 640);
+    back.add(cacheLabel);
+}
+
 
     private void addPCButtons(JPanel back, FrameMain outFrame) {
         SpecialButton btn_PCInstallEcho = new SpecialButton("PC Install Echo", "button_up.png", "button_down.png", "button_highlighted.png", 20);

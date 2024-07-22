@@ -8,12 +8,14 @@ import java.io.File;
 import java.net.URL;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.pathFolderChooser;
+import static bl00dy_c0d3_.echovr_installer.Helpers.pause;
 
 public class FramePCPatcher extends JDialog {
     int frameWidth = 1280;
     int frameHeight = 720;
     String path = "C://EchoVR/ready-at-dawn-echo-arena";
     //TODO use already used path from FramePCPatcher
+    Downloader downloadPatch;
     FramePCPatcher outframe = this;
 
 
@@ -145,9 +147,15 @@ public class FramePCPatcher extends JDialog {
                         error.errorDialog(outframe, "Incorrect path to EchoVR", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                     }
                     else {
+                        if (downloadPatch != null){
+                            downloadPatch.cancelDownload();
+                            pause(1);
+                        }
+                        pcStartPatch.changeText("Restart Patching");
+
                         System.out.println(link);
-                        Downloader downloadPatch = new Downloader();
-                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outframe, null, 3);
+                        downloadPatch = new Downloader();
+                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outframe, null, 3, -1);
                     }
                 }
                 else{

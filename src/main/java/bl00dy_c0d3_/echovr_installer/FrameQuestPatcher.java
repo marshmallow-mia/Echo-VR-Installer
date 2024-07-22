@@ -1,6 +1,5 @@
 package bl00dy_c0d3_.echovr_installer;
 
-import com.frostwire.jlibtorrent.SessionManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -8,11 +7,9 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.concurrent.TimeUnit;
+
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -25,7 +22,8 @@ public class FrameQuestPatcher extends JDialog {
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
     private Downloader downloader = null;
-    private TorrentDownload downloader2 = null;
+    private Downloader downloader2 = null;
+    SpecialButton questStartDownload;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
     JDialog outFrame = this;
@@ -76,50 +74,28 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void handleDownloadButtonClick() {
-        // Get the base directory of the .app bundle
-        String appBundlePath = System.getProperty("user.dir");
-        System.out.println(appBundlePath);
-
-        String dir;
-        Path targetPath3;
-        String obbPath;
-        if (mac) {
-            dir = tempPath + "/p2pFiles/";
-
-            File file = new File(dir);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            targetPath3 = Paths.get(tempPath + "/p2pFiles/obb.torrent");
-            System.out.println(targetPath3 + "");
-
-            try {
-                InputStream stream = getClass().getClassLoader().getResourceAsStream("obb.torrent");
-                Files.copy(stream, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            //TODO ^
-            obbPath = targetPath3 + "";
-        }
-        else {
-            obbPath = "p2pFiles/obb.torrent";
-        }
-
 
         if (textfieldQuestPatchLink.getText().matches("https://tmpfiles.org.*")) {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
+            if (downloader != null){
+                downloader.cancelDownload();
+                System.out.println("downloader1 stopped");
+            }
+            if (downloader2 != null){
+                downloader2.cancelDownload();
+                System.out.println("downloader2 stopped");
+            }
+            questStartDownload.changeText("Restart Download");
+
+
             downloader = new Downloader();
             String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2);
-            try {
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }            SessionManager sessionManager = new SessionManager();
-            sessionManager.start();
-            downloader2 = new TorrentDownload(sessionManager);
-            downloader2.startDownload(obbPath, targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2);
+            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, -1);
+
+            pause(1);
+
+            downloader2 = new Downloader();
+            downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, 0);
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
@@ -243,7 +219,7 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
-        SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
+        questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
         questStartDownload.setLocation(582, 210);
         questStartDownload.addMouseListener(new MouseAdapter() {
             @Override
