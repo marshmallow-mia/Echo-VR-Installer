@@ -32,7 +32,7 @@ public class Downloader implements Runnable {
             new Thread(this).start();
         } else {
             ErrorDialog error = new ErrorDialog();
-            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.", 0);
+            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later. (ERR1)", 0);
         }
     }
 
@@ -53,47 +53,73 @@ public class Downloader implements Runnable {
         File outputFile = new File(localFilePath, filename);
         long existingFileSize = outputFile.exists() ? outputFile.length() : 0;
 
+
+
+
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(fileUrl).openConnection();
-            if (existingFileSize > 0) {
-                connection.setRequestProperty("Range", "bytes=" + existingFileSize + "-");
-            }
 
-            connection.connect();
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_PARTIAL) {
-                throw new IOException("Server responded with code: " + responseCode);
-            }
+            URL url = new URL(fileUrl);
+            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+            httpConn.setRequestMethod("HEAD");
+            httpConn.connect();
+            long contentLength = httpConn.getContentLength();
+            httpConn.disconnect();
 
-            try (BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
-                 RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+            if(existingFileSize < contentLength) {
+                        System.out.println("STARTED");
 
-                raf.seek(existingFileSize);
-                byte dataBuffer[] = new byte[1024];
-                int bytesRead;
-                long downloadProgress = existingFileSize;
+                HttpURLConnection connection = (HttpURLConnection) new URL(fileUrl).openConnection();
+                if (existingFileSize > 0) {
+                    connection.setRequestProperty("Range", "bytes=" + existingFileSize + "-");
+                }
 
-                while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-                    if (flg_CancelDownload) {
-                        return;
+                connection.connect();
+                int responseCode = connection.getResponseCode();
+                if (responseCode != HttpURLConnection.HTTP_OK && responseCode != HttpURLConnection.HTTP_PARTIAL) {
+                    throw new IOException("Server responded with code: " + responseCode);
+                }
+
+                try (BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
+                     RandomAccessFile raf = new RandomAccessFile(outputFile, "rw")) {
+
+                    raf.seek(existingFileSize);
+                    byte dataBuffer[] = new byte[1024];
+                    int bytesRead;
+                    long downloadProgress = existingFileSize;
+
+                    while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                        if (flg_CancelDownload) {
+                            return;
+                        }
+                        raf.write(dataBuffer, 0, bytesRead);
+                        downloadProgress += bytesRead;
+                        double progressPercent = (100.0 / fileSize * downloadProgress);
+                        labelProgress.setText(String.format("%.2f", progressPercent) + "%");
+                        frame.repaint();
                     }
-                    raf.write(dataBuffer, 0, bytesRead);
-                    downloadProgress += bytesRead;
-                    double progressPercent = (100.0 / fileSize * downloadProgress);
-                    labelProgress.setText(String.format("%.2f", progressPercent) + "%");
-                    frame.repaint();
                 }
 
-                if (platform == 0) {
-                    UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
-                    JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-                } else if (platform == 3) {
-                    JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-                }
             }
+            else{
+                System.out.println("Already downloaded");
+                labelProgress.setText("100.00%");
+                frame.repaint();
+            }
+
+
+            if (platform == 0) {
+                UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
+                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            } else if (platform == 3) {
+                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+
+
         } catch (IOException e) {
+            e.printStackTrace();
             ErrorDialog error = new ErrorDialog();
-            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later.", 0);
+            error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later. (ERR2)", 0);
         }
     }
 

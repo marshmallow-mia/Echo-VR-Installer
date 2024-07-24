@@ -32,7 +32,7 @@ public class FrameMain extends JFrame {
         addQuestButtons(back, outFrame);
         addBackgroundFrames(back);
         addEasterEgg(back, outFrame);
-        addDeleteCached(back);
+        addDeleteCached(back, outFrame);
 
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
@@ -65,14 +65,14 @@ public class FrameMain extends JFrame {
     }
 
  */
-private void addDeleteCached(JPanel back) {
+private void addDeleteCached(JPanel back, JFrame outFrame) {
     SpecialButton btn_deleteCache = new SpecialButton("Delete cache", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
     btn_deleteCache.setLocation(818, 595);
     btn_deleteCache.addMouseListener(new MouseAdapter() {
         public void mouseReleased(MouseEvent event) {
             // Create an instance of DeleteCache and call the executeDeletion method
             DeleteCache deleteCache = new DeleteCache();
-            deleteCache.executeDeletion();
+            deleteCache.executeDeletion(outFrame);
         }
     });
     back.add(btn_deleteCache);

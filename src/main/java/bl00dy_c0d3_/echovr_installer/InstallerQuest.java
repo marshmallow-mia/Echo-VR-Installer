@@ -11,6 +11,7 @@ import java.nio.file.StandardCopyOption;
 public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static boolean isChrome = chechIfChromeOs();
     String[] fileList;
     String[] fileList2;
     String[] fileList3;
@@ -22,6 +23,10 @@ public class InstallerQuest {
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
+        System.out.println(System.getProperty("os.name").toLowerCase());
+
+
+
         InstallerQuest outFrame = this;
         if (isWindows) {
             String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
@@ -77,7 +82,7 @@ public class InstallerQuest {
                     Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
                     stream2.close();
                 }
-                runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
+                //runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
             } catch (Exception e) {
                 e.printStackTrace();
 
@@ -109,13 +114,19 @@ public class InstallerQuest {
                 runShellCommand(tempPath + "/platform-tools/adb.exe " + "shell \"mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15\"", 3);
                 runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"", 4);
             }
+            else if(isChrome){
+                runShellCommand("adb " + "uninstall com.readyatdawn.r15", 1);
+                runShellCommand("adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
+                runShellCommand("adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
+                runShellCommand("adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
+            }
             else{
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
-
-
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15", 1);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
+                //TODO if macOS does not layer the frames correctly, change this
+                JOptionPane.showMessageDialog(parrentFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
             }
 
 
@@ -138,9 +149,27 @@ public class InstallerQuest {
     }
 
 
+
+    private static boolean chechIfChromeOs(){
+
+        // Create a File object
+        File file = new File("/opt/google/cros-containers/etc/lsb-release");
+
+        // Check if the file exists
+        if (file.exists()) {
+            System.out.println("OS is chromeOS.");
+            return true;
+
+        } else {
+            System.out.println("OS is NOT chromeOS.");
+            return false;
+        }
+    }
+
+
     //0 = connected, 1 = unauthorized, -1 not connected
     // Method to check if any device is connected based on the adb devices output
-    private static int checkQuestStatus() {
+    private static int checkQuestStatus(){
 
         // Start the process
         Process process = null;
@@ -148,11 +177,14 @@ public class InstallerQuest {
             if(isWindows) {
                 process = new ProcessBuilder(tempPath + "/platform-tools/adb.exe", "devices").start();
             }
-            else if(mac){
+            else if(mac) {
                 process = new ProcessBuilder(tempPath + "/platform-tools-mac/adb", "devices").start();
             }
+            else if(isChrome){
+                process = new ProcessBuilder(tempPath + "adb", "devices").start();
+            }
             else{
-                process = new ProcessBuilder(tempPath + "/platform-tools-linux/adb", "devices").start();
+                process = new ProcessBuilder("/lib64/ld-linux-x86-64.so.2", tempPath + "/platform-tools-linux/adb", "devices").start();
             }
 
         } catch (IOException e) {
@@ -198,7 +230,6 @@ public class InstallerQuest {
     private void runShellCommand(String shellCommand, int step){
         try {
             if (isWindows) {
-
                 Process process = Runtime.getRuntime().exec(shellCommand);
                 process.waitFor();
                 System.out.println("DONE");
@@ -206,6 +237,7 @@ public class InstallerQuest {
                 Process process = Runtime.getRuntime().exec(shellCommand);
                 process.waitFor();
                 System.out.println("DONE");
+
             }
 
         }
