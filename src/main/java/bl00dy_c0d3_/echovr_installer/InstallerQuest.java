@@ -126,7 +126,7 @@ public class InstallerQuest {
                 runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
                 runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
                 //TODO if macOS does not layer the frames correctly, change this
-                JOptionPane.showMessageDialog(parrentFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                //JOptionPane.showMessageDialog(parrentFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
             }
 
 
