@@ -181,7 +181,7 @@ public class InstallerQuest {
                 process = new ProcessBuilder(tempPath + "/platform-tools-mac/adb", "devices").start();
             }
             else if(isChrome){
-                process = new ProcessBuilder(tempPath + "adb", "devices").start();
+                process = new ProcessBuilder("adb", "devices").start();
             }
             else{
                 process = new ProcessBuilder("/lib64/ld-linux-x86-64.so.2", tempPath + "/platform-tools-linux/adb", "devices").start();
