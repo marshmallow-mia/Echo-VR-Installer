@@ -155,7 +155,7 @@ public class FramePCPatcher extends JDialog {
 
                         System.out.println(link);
                         downloadPatch = new Downloader();
-                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outframe, null, 3, -1);
+                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outframe, null, 3, true);
                     }
                 }
                 else{

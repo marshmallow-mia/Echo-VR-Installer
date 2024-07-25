@@ -113,7 +113,7 @@ public class FramePCDownload extends JDialog {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
 
                 downloader = new Downloader();
-                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, 0);
+                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false);
 
             }
         });

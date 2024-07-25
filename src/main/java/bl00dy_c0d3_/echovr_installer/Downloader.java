@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Downloader implements Runnable {
     private long fileSize = 0;
@@ -15,9 +18,10 @@ public class Downloader implements Runnable {
     private String filename;
     private int platform = -1; //0=PC, 1=don't unzip //TODO not needed anymore
     private boolean flg_CancelDownload = false;
+    boolean deleteFileBeforeDownloading;
 
     // url, path, name, Label to change progress%, frame to know the position for errorDialog, platform=0=PC/unzip, 1=don't unzip
-    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, int checkAvailability) {
+    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, boolean deleteFileBeforeDownloading) {
         this.localFilePath = localFilePath;
         this.labelProgress = labelProgress;
         this.frame = frame;
@@ -25,10 +29,11 @@ public class Downloader implements Runnable {
         this.fileUrl = fileUrl;
         this.filename = filename;
         this.platform = platform;
+        this.deleteFileBeforeDownloading = deleteFileBeforeDownloading;
         fileSize = getFileSize(fileUrl);
 
         if (fileSize > 0) {
-            System.out.println("File size: " + fileSize + " bytes");
+            System.out.println("Online File size: " + fileSize + " bytes");
             new Thread(this).start();
         } else {
             ErrorDialog error = new ErrorDialog();
@@ -37,6 +42,25 @@ public class Downloader implements Runnable {
     }
 
     public void run() {
+        System.out.println("Downloader Logs:");
+        System.out.println("File URL: " + fileUrl);
+        System.out.println("localFilePath: " + localFilePath);
+
+        if (deleteFileBeforeDownloading) {
+            try {
+                Path path = Paths.get(localFilePath + "/" + filename);
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                    System.out.println("File exists...deleted");
+                }
+            } catch (Exception e) {
+                System.out.println("Error wile checking for existing file or deleting");
+                e.printStackTrace();
+            }
+        }
+
+
+
         File file = new File(localFilePath);
         if (!file.exists()) {
             if (file.mkdirs()) {
@@ -58,14 +82,8 @@ public class Downloader implements Runnable {
 
         try {
 
-            URL url = new URL(fileUrl);
-            HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestMethod("HEAD");
-            httpConn.connect();
-            long contentLength = httpConn.getContentLength();
-            httpConn.disconnect();
 
-            if(existingFileSize < contentLength) {
+            if(existingFileSize < fileSize) {
                         System.out.println("STARTED");
 
                 HttpURLConnection connection = (HttpURLConnection) new URL(fileUrl).openConnection();
