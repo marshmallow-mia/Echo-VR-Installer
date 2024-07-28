@@ -16,21 +16,36 @@ public class Downloader implements Runnable {
     private JDialog frame;
     private JFrame frameMain;
     private String filename;
-    private int platform = -1; //0=PC, 1=don't unzip //TODO not needed anymore
+    private int platform = -1; //0=PC, 1=don't unzip
     private boolean flg_CancelDownload = false;
     boolean deleteFileBeforeDownloading;
+    int downloadServer;
 
     // url, path, name, Label to change progress%, frame to know the position for errorDialog, platform=0=PC/unzip, 1=don't unzip
-    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, boolean deleteFileBeforeDownloading) {
+    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, boolean deleteFileBeforeDownloading, int downloadServer) {
         this.localFilePath = localFilePath;
         this.labelProgress = labelProgress;
         this.frame = frame;
         this.frameMain = frameMain;
-        this.fileUrl = fileUrl;
         this.filename = filename;
         this.platform = platform;
         this.deleteFileBeforeDownloading = deleteFileBeforeDownloading;
+        this.downloadServer = downloadServer;
+
+        if (downloadServer == 0) {
+            String fastestServer = getDownloadSpeed();
+            ErrorDialog test = new ErrorDialog();
+            test.errorDialog(frame, "Error while Downloading", fastestServer, 0);
+            this.fileUrl = fastestServer + fileUrl;
+            fileUrl = this.fileUrl;
+        }
+        else{
+            this.fileUrl = fileUrl;
+        }
+
         fileSize = getFileSize(fileUrl);
+
+
 
         if (fileSize > 0) {
             System.out.println("Online File size: " + fileSize + " bytes");
@@ -42,6 +57,8 @@ public class Downloader implements Runnable {
     }
 
     public void run() {
+
+
         System.out.println("Downloader Logs:");
         System.out.println("File URL: " + fileUrl);
         System.out.println("localFilePath: " + localFilePath);
@@ -160,5 +177,39 @@ public class Downloader implements Runnable {
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    // Choose the fastest available http server
+    private static String getDownloadSpeed() {
+        String[] servers = new String[2];
+        servers[0] = "https://echo.marceldomain.de:6969/";
+        servers[1] = "https://evr.echo.taxi/";
+        String testFile = "randomDownloadTestFile";
+
+        String fastestServer = null;
+        long fastestTime = Long.MAX_VALUE;
+
+        for (String server : servers) {
+            long timeTaken = measureDownloadSpeed(server + testFile);
+            if (timeTaken < fastestTime) {
+                fastestTime = timeTaken;
+                fastestServer = server;
+            }
+        }
+
+        return fastestServer;
+    }
+
+    private static long measureDownloadSpeed(String fileUrl) {
+        long startTime = System.nanoTime();
+        try (BufferedInputStream in = new BufferedInputStream(new URL(fileUrl).openStream())) {
+            byte[] dataBuffer = new byte[1024];
+            while (in.read(dataBuffer, 0, 1024) != -1) {}
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Long.MAX_VALUE; // If there's an error, return a large number to skip this server
+        }
+        long endTime = System.nanoTime();
+        return endTime - startTime;
     }
 }

@@ -3,19 +3,13 @@ package bl00dy_c0d3_.echovr_installer;
 
 
 
-import com.frostwire.jlibtorrent.SessionManager;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -60,14 +54,34 @@ public class FramePCDownload extends JDialog {
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
-        labelPcDownloadPath.setLocation(170,100);
+        labelPcDownloadPath.setLocation(170,130);
         labelPcDownloadPath.setSize(490, 25);
         labelPcDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcDownloadPath.setForeground(Color.BLACK);
         back.add(labelPcDownloadPath);
 
+
+        SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+        pcChooseOriginalPath.setLocation(20, 70);
+        pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                String newPath = checkForAdmin(outFrame);
+                if (!newPath.matches("")) {
+                    labelPcDownloadPath.setText(newPath + "Software\\Software\\");
+                    outFrame.repaint();
+                }
+            }
+        });
+        back.add(pcChooseOriginalPath);
+
+
+        SpecialLabel labelPcOculusPathExplaination = new SpecialLabel("Choose this to use the original Oculus path", 14);
+        labelPcOculusPathExplaination.setLocation(252,70);
+        back.add(labelPcOculusPathExplaination);
+
+
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
-        pcChoosePath.setLocation(20, 100);
+        pcChoosePath.setLocation(20, 130);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 pathFolderChooser(labelPcDownloadPath, outFrame);
@@ -77,12 +91,12 @@ public class FramePCDownload extends JDialog {
 
 
         SpecialLabel labelPcDownloadPathExplaination = new SpecialLabel("Specify the Path for the Echo Installation or leave it as it is.", 14);
-        labelPcDownloadPathExplaination.setLocation(20,130);
+        labelPcDownloadPathExplaination.setLocation(20,160);
         back.add(labelPcDownloadPathExplaination);
 
 
         SpecialLabel labelPcProgress1 = new SpecialLabel("Progress =", 17);
-        labelPcProgress1.setLocation(252,200);
+        labelPcProgress1.setLocation(252,230);
         labelPcProgress1.setSize(155, 38);
         labelPcProgress1.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress1.setForeground(Color.BLACK);
@@ -91,7 +105,7 @@ public class FramePCDownload extends JDialog {
 
         SpecialLabel labelPcProgress2 = new SpecialLabel(" 0%", 17);
         labelPcProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelPcProgress2.setLocation(407,200);
+        labelPcProgress2.setLocation(407,230);
         labelPcProgress2.setSize(170, 38);
         labelPcProgress2.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress2.setForeground(Color.BLACK);
@@ -100,7 +114,7 @@ public class FramePCDownload extends JDialog {
 
         FramePCDownload thisFrame = this;
         SpecialButton pcStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-        pcStartDownload.setLocation(20, 200);
+        pcStartDownload.setLocation(20, 230);
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 if (downloader != null){
@@ -113,7 +127,7 @@ public class FramePCDownload extends JDialog {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
 
                 downloader = new Downloader();
-                downloader.startDownload("https://echo.marceldomain.de:6969/ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false);
+                downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0);
 
             }
         });
@@ -135,4 +149,6 @@ public class FramePCDownload extends JDialog {
         if (imageURL == null) return null;
         else return (new ImageIcon(imageURL, imageName)).getImage();
     }
+
+
 }

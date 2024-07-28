@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
-import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
+//import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
 public class FrameQuestDownload extends JDialog {
@@ -104,12 +104,12 @@ public class FrameQuestDownload extends JDialog {
 
 
         downloader = new Downloader();
-        downloader.startDownload("https://echo.marceldomain.de:6969/Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, false);
+        downloader.startDownload("Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
 
         pause(1);
 
         downloader2 = new Downloader();
-        downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false);
+        downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
     }
 
 

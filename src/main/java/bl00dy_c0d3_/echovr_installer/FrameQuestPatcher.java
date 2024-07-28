@@ -90,12 +90,12 @@ public class FrameQuestPatcher extends JDialog {
 
             downloader = new Downloader();
             String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true);
+            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
 
             pause(1);
 
             downloader2 = new Downloader();
-            downloader2.startDownload("https://echo.marceldomain.de:6969/main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false);
+            downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }

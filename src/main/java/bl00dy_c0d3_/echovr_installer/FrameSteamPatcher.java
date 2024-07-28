@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.URL;
 
+import static bl00dy_c0d3_.echovr_installer.Helpers.checkForAdmin;
 import static bl00dy_c0d3_.echovr_installer.Helpers.pathFolderChooser;
 
 public class FrameSteamPatcher extends JDialog {
@@ -18,7 +19,7 @@ public class FrameSteamPatcher extends JDialog {
     int frameWidth = 700;
     int frameHeight = 394;
     String path = "C://EchoVR/ready-at-dawn-echo-arena";
-    FrameSteamPatcher outframe = this;
+    FrameSteamPatcher outFrame = this;
 
 
 
@@ -71,11 +72,33 @@ public class FrameSteamPatcher extends JDialog {
         back.add(labelPcDownloadPath);
 
 
+
+        SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+        pcChooseOriginalPath.setLocation(20, 40);
+        pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                String newPath = checkForAdmin(outFrame);
+                if (!newPath.matches("")) {
+                    labelPcDownloadPath.setText(newPath + "Software\\Software\\ready-at-dawn-echo-arena");
+                    outFrame.repaint();
+                }
+            }
+        });
+        back.add(pcChooseOriginalPath);
+
+        SpecialLabel labelPcOculusPathExplaination = new SpecialLabel("Choose this to use the original Oculus path", 14);
+        labelPcOculusPathExplaination.setLocation(252,40);
+        back.add(labelPcOculusPathExplaination);
+
+
+
+
+
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
         pcChoosePath.setLocation(20, 100);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                pathFolderChooser(labelPcDownloadPath, outframe);
+                pathFolderChooser(labelPcDownloadPath, outFrame);
             }
         });
         back.add(pcChoosePath);
@@ -128,7 +151,7 @@ public class FrameSteamPatcher extends JDialog {
 
                 if (!echoPath.exists() && !echoPath.isDirectory()) {
                     ErrorDialog error = new ErrorDialog();
-                    error.errorDialog(outframe, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
+                    error.errorDialog(outFrame, "Incorrect path to EchoVE", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                 }
                 else {
                     if (downloader1 != null){
@@ -153,13 +176,13 @@ public class FrameSteamPatcher extends JDialog {
 
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
                     downloader1 = new Downloader();
-                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outframe, null, 1, true);
+                    downloader1.startDownload("https://echo.marceldomain.de:6969/LibRevive64.dll", echoPath + "", "/LibRevive64.dll", labelPatchProgress1, outFrame, null, 1, true, -1);
                     downloader2 = new Downloader();
-                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outframe, null, 1, true);
+                    downloader2.startDownload("https://echo.marceldomain.de:6969/openvr_api64.dll", echoPath + "", "/openvr_api64.dll", labelPatchProgress2, outFrame, null, 1, true, -1);
                     downloader3 = new Downloader();
-                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outframe, null, 1, true);
+                    downloader3.startDownload("https://echo.marceldomain.de:6969/xinput1_3.dll", echoPath + "", "/xinput1_3.dll", labelPatchProgress3, outFrame, null, 1, true, -1);
                     downloader4 = new Downloader();
-                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outframe, null, 3, true);
+                    downloader4.startDownload("https://echo.marceldomain.de:6969/xinput9_1_0.dll", echoPath + "", "/xinput9_1_0.dll", labelPatchProgress4, outFrame, null, 3, true, -1);
                 }
             }
         });

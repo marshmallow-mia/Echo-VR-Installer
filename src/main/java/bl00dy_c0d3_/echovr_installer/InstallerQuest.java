@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+
+import static bl00dy_c0d3_.echovr_installer.Helpers.*;
+
 //This Class will uninstall echo, install echo and copy obb
 public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
@@ -109,22 +112,22 @@ public class InstallerQuest {
 
 
             if(isWindows) {
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "shell \"mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15\"", 3);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"", 4);
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "uninstall com.readyatdawn.r15");
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "shell \"mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15\"");
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"");
             }
             else if(isChrome){
-                runShellCommand("adb " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand("adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand("adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
-                runShellCommand("adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
+                runShellCommand("adb " + "uninstall com.readyatdawn.r15");
+                runShellCommand("adb " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand("adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
+                runShellCommand("adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
             else{
-                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
-                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15");
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
 
 
@@ -148,21 +151,6 @@ public class InstallerQuest {
 
 
 
-    private static boolean chechIfChromeOs(){
-
-        // Create a File object
-        File file = new File("/opt/google/cros-containers/etc/lsb-release");
-
-        // Check if the file exists
-        if (file.exists()) {
-            System.out.println("OS is chromeOS.");
-            return true;
-
-        } else {
-            System.out.println("OS is NOT chromeOS.");
-            return false;
-        }
-    }
 
 
     //0 = connected, 1 = unauthorized, -1 not connected
@@ -225,24 +213,7 @@ public class InstallerQuest {
         return -1;
     }
 
-    private void runShellCommand(String shellCommand, int step){
-        try {
-            if (isWindows) {
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                process.waitFor();
-                System.out.println("DONE");
-            } else {
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                process.waitFor();
-                System.out.println("DONE");
 
-            }
-
-        }
-        catch (Exception e){
-
-        }
-    }
 
 
 

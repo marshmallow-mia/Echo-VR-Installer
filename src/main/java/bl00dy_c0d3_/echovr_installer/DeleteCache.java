@@ -8,6 +8,7 @@ public class DeleteCache{
     // Array of file and folder paths to be deleted
     private static final String[] pathsToDelete = {
             "C:/EchoVR/ready-at-dawn-echo-arena.zip",
+            "C:/Program Files/Oculus/Software/Software/ready-at-dawn-echo-arena.zip",
             Paths.get(System.getProperty("java.io.tmpdir"), "/echo/") + "",
             Paths.get(System.getProperty("java.io.tmpdir"), "/platform-tools/") + "",
             Paths.get(System.getProperty("java.io.tmpdir"), "/platform-tools-linux/") + "",

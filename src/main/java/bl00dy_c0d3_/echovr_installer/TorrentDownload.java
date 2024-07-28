@@ -221,7 +221,7 @@ public class TorrentDownload implements Runnable {
 
         downloader = new Downloader();
         String fixedURL = "https://echo.marceldomain.de:6969/" + filename;
-        downloader.startDownload(fixedURL, localFilePath , filename, labelProgress, frame, frameMain, platform, true);
+        downloader.startDownload(fixedURL, localFilePath , filename, labelProgress, frame, frameMain, platform, true, -1);
 
     }
 }
