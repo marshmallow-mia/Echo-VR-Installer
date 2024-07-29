@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 public class SpecialTextfield extends JTextField{
 
+
     public void specialTextfield(int width, int height, int x, int y, int textSize){
         this.setSize(width, height);
         this.setLocation(x, y);

@@ -1,18 +1,15 @@
 package bl00dy_c0d3_.echovr_installer;
 
-import com.frostwire.jlibtorrent.SessionManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -20,21 +17,22 @@ public class FrameQuestPatcher extends JDialog {
     private static final int FRAME_WIDTH = 1280;
     private static final int FRAME_HEIGHT = 720;
     private static final String DEFAULT_PATH = "C:\\EchoVR";
-
     private final Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
-
     private SpecialTextfield textfieldQuestPatchLink;
-    private SpecialLabel labelQuestProgress2;
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
-
     private Downloader downloader = null;
-    private TorrentDownload downloader2 = null;
+    private Downloader downloader2 = null;
+    SpecialButton questStartDownload;
+    static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+    JDialog outFrame = this;
 
     public FrameQuestPatcher() {
         initComponents();
         this.setVisible(true);
     }
+
 
     @Override
     public void dispose() {
@@ -51,7 +49,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.3");
+        setTitle("Echo VR Installer v0.3c");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -76,35 +74,47 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void handleDownloadButtonClick() {
+
         if (textfieldQuestPatchLink.getText().matches("https://tmpfiles.org.*")) {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
+            if (downloader != null){
+                downloader.cancelDownload();
+                System.out.println("downloader1 stopped");
+            }
+            if (downloader2 != null){
+                downloader2.cancelDownload();
+                System.out.println("downloader2 stopped");
+            }
+            questStartDownload.changeText("Restart Download");
+
+
             downloader = new Downloader();
             String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, 2);
-            SessionManager sessionManager = new SessionManager();
-            sessionManager.start();
-            downloader2 = new TorrentDownload(sessionManager);
-            downloader2.startDownload("p2pFiles/obb.torrent", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress2, this, null, 2);
+            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+
+            pause(1);
+
+            downloader2 = new Downloader();
+            downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
     }
 
     private void handleChooseConfigClick() {
-        jsonFileChooser(labelConfigPath);
+        jsonFileChooser(labelConfigPath, outFrame);
     }
 
     private void handlePatchingButtonClick() {
+        labelQuestProgress4.setText("Installation started! Wait!");
+        outFrame.repaint();
+        JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
         String apkfileName;
         if (checkBoxConfig.isSelected()) {
-            if (checkIfJavaIsInstalled() == 0) {
-                new ErrorDialog().errorDialog(this, "Java not Found", "<html>No Java Runtime found. For the Config patch to work, you need to install the \"Java Runtime\"</html>", 2);
-                return;
-            }
             File f = new File(targetPath + "/personilizedechoapk.apk");
             if (f.exists() && !f.isDirectory()) {
                 PatchAPK patchAPK = new PatchAPK();
-                if (patchAPK.patchAPK(targetPath.toString(), "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, this)) {
+                if (!patchAPK.patchAPK(targetPath.toString(), "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, this)) {
                     return;
                 }
             } else {
@@ -116,27 +126,13 @@ public class FrameQuestPatcher extends JDialog {
             apkfileName = "personilizedechoapk.apk";
         }
         InstallerQuest installtoQuest = new InstallerQuest();
-        installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelConfigPath, this);
+        installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress4, this);
+        labelQuestProgress4.setText("Installation is complete!");
+        outFrame.repaint();
+        JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+
     }
 
-    private int checkIfJavaIsInstalled() {
-        try {
-            Process process = new ProcessBuilder("java", "-version").start();
-            StringBuilder stdErrResult = new StringBuilder();
-            try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String stdout;
-                while ((stdout = stdInput.readLine()) != null) {
-                    stdErrResult.append(stdout).append("\n");
-                }
-            }
-            if (stdErrResult.toString().toLowerCase().contains("version")) {
-                return 1; // Java is installed
-            }
-        } catch (IOException e) {
-            return 0;
-        }
-        return 0; // Java is not installed
-    }
 
     private void addBackgroundImage(@NotNull JPanel back, String imagePath, int x, int y, int width, int height) {
         Background image = new Background(imagePath);
@@ -146,24 +142,52 @@ public class FrameQuestPatcher extends JDialog {
         back.add(image);
     }
 
+
+    SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
+    SpecialLabel labelQuestProgress3 = new SpecialLabel(" 0%", 15);
+    SpecialLabel labelQuestProgress4 = new SpecialLabel("Not started yet", 18);
+
     private void addSpecialLabels(@NotNull JPanel back) {
         back.add(Helpers.createSpecialLabel("1. Join the Echo VR Patcher Discord Server:", 16, 40, 40));
-        back.add(Helpers.createSpecialLabel("2. React to the message on Discord by clicking on the smiley:", 16, 40, 135));
+        back.add(Helpers.createSpecialLabel("2. React to the message on Discord", 16, 40, 135));
+        back.add(Helpers.createSpecialLabel("by clicking on the smiley:", 16, 40, 165));
 
-        back.add(Helpers.createSpecialLabel("3. You will receive a private Message from the \"EchoSignUp\" Bot.", 16, 40, 335));
-        back.add(Helpers.createSpecialLabel("Right Click on the blue URL and select Copy Link. NOT COPY MESSAGE LINK!", 16, 40, 365));
+        back.add(Helpers.createSpecialLabel("3. You will receive a private Message from the", 16, 40, 335));
+        back.add(Helpers.createSpecialLabel("\"EchoSignUp\" Bot. Right Click on the blue URL ", 16, 40, 365));
+        back.add(Helpers.createSpecialLabel("and select Copy Link. NOT COPY MESSAGE LINK!", 16, 40, 395));
 
         back.add(Helpers.createSpecialLabel("4. Paste the link with CTRL-V:", 16, 582, 40));
         back.add(Helpers.createSpecialLabel("5. Start the Download Process:", 16, 582, 170));
         back.add(Helpers.createSpecialLabel("5(a). Optional config.json. Don't use if you don't need to:", 16, 582, 295));
         back.add(Helpers.createSpecialLabel("6. After the Download above is finished, start this button:", 16, 582, 490));
         back.add(Helpers.createSpecialLabel("Progress = ", 17, 810, 210, new Dimension(130, 38), Color.BLACK, Color.WHITE));
-        back.add(Helpers.createSpecialLabel(" 0%", 15, 940, 210, new Dimension(130, 19), Color.BLACK, Color.WHITE));
-        back.add(Helpers.createSpecialLabel(" 0%", 15, 940, 229, new Dimension(130, 19), Color.BLACK, Color.WHITE));
 
         String configPath = "Optional: Choose config.json on the button above";
         labelConfigPath = Helpers.createSpecialLabel(configPath, 14, 582, 455, new Dimension(600, 25), Color.BLACK, Color.WHITE);
         back.add(labelConfigPath);
+
+        //THIS NEED TO BE SET MANUALLY, AS I NEED TO ACCESS IT LATER
+        labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress2.setLocation(940,210);
+        labelQuestProgress2.setSize(130, 19);
+        labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress2.setForeground(Color.BLACK);
+        back.add(labelQuestProgress2);
+
+        labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress3.setLocation(940,229);
+        labelQuestProgress3.setSize(130, 19);
+        labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress3.setForeground(Color.BLACK);
+        back.add(labelQuestProgress3);
+
+        labelQuestProgress4.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelQuestProgress4.setLocation(885,587);
+        labelQuestProgress4.setSize(300, 50);
+        labelQuestProgress4.setBackground(new Color(255, 255, 255, 200));
+        labelQuestProgress4.setForeground(Color.BLACK);
+        back.add(labelQuestProgress4);
+
     }
 
     private void addSpecialHyperlinks(@NotNull JPanel back) {
@@ -171,7 +195,7 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void addImages(JPanel back) {
-        addBackgroundImage(back, "quest_react.png", 40, 200, 182, 108);
+        addBackgroundImage(back, "quest_react.png", 40, 215, 182, 108);
         addBackgroundImage(back, "copy_linkQuest.png", 40, 465, 279, 177);
     }
 
@@ -197,7 +221,7 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
-        SpecialButton questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 18);
+        questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
         questStartDownload.setLocation(582, 210);
         questStartDownload.addMouseListener(new MouseAdapter() {
             @Override
@@ -207,6 +231,7 @@ public class FrameQuestPatcher extends JDialog {
         });
         back.add(questStartDownload);
     }
+
 
     private void addChooseConfigButton(@NotNull JPanel back) {
         SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);

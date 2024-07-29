@@ -7,14 +7,15 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.URL;
 
-import static bl00dy_c0d3_.echovr_installer.Helpers.pathFolderChooser;
+import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
 public class FramePCPatcher extends JDialog {
     int frameWidth = 1280;
     int frameHeight = 720;
-    String path = "C://EchoVR/ready-at-dawn-echo-arena";
+    String path = "C:/EchoVR/ready-at-dawn-echo-arena";
     //TODO use already used path from FramePCPatcher
-    FramePCPatcher outframe = this;
+    Downloader downloadPatch;
+    FramePCPatcher outFrame = this;
 
 
     //Constructor
@@ -23,13 +24,12 @@ public class FramePCPatcher extends JDialog {
         this.setVisible(true);
     }
 
-
     private void initComponents(){
 
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3");
+        this.setTitle("Echo VR Installer v0.3c");
         this.setModal(true);
 
         Background back = new Background("echo-in-arena.png");
@@ -100,41 +100,65 @@ public class FramePCPatcher extends JDialog {
 
 
         SpecialLabel labelPcPatchDownloadPath = new SpecialLabel(path, 14);
-        labelPcPatchDownloadPath.setLocation(740,220);
+        labelPcPatchDownloadPath.setLocation(740,285);
         labelPcPatchDownloadPath.setSize(450, 25);
         labelPcPatchDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcPatchDownloadPath.setForeground(Color.BLACK);
         back.add(labelPcPatchDownloadPath);
 
 
+        SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+        pcChooseOriginalPath.setLocation(582, 225);
+        pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                String newPath = checkForAdmin(outFrame);
+                if (!newPath.matches("")) {
+                    labelPcPatchDownloadPath.setText(newPath + "Software\\Software\\ready-at-dawn-echo-arena");
+                    outFrame.repaint();
+                }
+            }
+        });
+        back.add(pcChooseOriginalPath);
+
+        SpecialLabel labelPcOculusPathExplaination = new SpecialLabel("Choose this to use the original Oculus path", 14);
+        labelPcOculusPathExplaination.setLocation(814,225);
+        back.add(labelPcOculusPathExplaination);
+
+
+
+
+
+
+
+
         SpecialButton pcPatchChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
-        pcPatchChoosePath.setLocation(582, 220);
+        pcPatchChoosePath.setLocation(582, 285);
         pcPatchChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                pathFolderChooser(labelPcPatchDownloadPath);
+                pathFolderChooser(labelPcPatchDownloadPath, outFrame);
             }
         });
         back.add(pcPatchChoosePath);
 
         SpecialLabel startPatch_btn1 = new SpecialLabel("6. Start Patching by pressing", 16);
-        startPatch_btn1.setLocation(582, 268);
+        startPatch_btn1.setLocation(582, 333);
         back.add(startPatch_btn1);
 
         SpecialLabel startPatch_btn2 = new SpecialLabel("this button:", 16);
-        startPatch_btn2.setLocation(582, 298);
+        startPatch_btn2.setLocation(582, 363);
         back.add(startPatch_btn2);
 
 
         SpecialLabel patchProgress = new SpecialLabel(" 0%", 18);
         patchProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        patchProgress.setLocation(887,350);
+        patchProgress.setLocation(887,415);
         patchProgress.setSize(100, 50);
         patchProgress.setBackground(new Color(255, 255, 255, 200));
         patchProgress.setForeground(Color.BLACK);
         back.add(patchProgress);
 
         SpecialButton pcStartPatch = new SpecialButton("Start patching", "button_up.png", "button_down.png", "button_highlighted.png", 18);
-        pcStartPatch.setLocation(585, 350);
+        pcStartPatch.setLocation(585, 415);
         pcStartPatch.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 String link = textfieldPCPatchLink.getText();
@@ -143,17 +167,23 @@ public class FramePCPatcher extends JDialog {
                     File echoPath = new File(labelPcPatchDownloadPath.getText() + "/bin/win10");
                     if (!echoPath.exists() && !echoPath.isDirectory()) {
                         ErrorDialog error = new ErrorDialog();
-                        error.errorDialog(outframe, "Incorrect path to EchoVR", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
+                        error.errorDialog(outFrame, "Incorrect path to EchoVR", "Error: Choose the main directory of Echo. Like: C:\\echovr\\ready-at-dawn-echo-arena", 0);
                     }
                     else {
+                        if (downloadPatch != null){
+                            downloadPatch.cancelDownload();
+                            pause(1);
+                        }
+                        pcStartPatch.changeText("Restart Patching");
+
                         System.out.println(link);
-                        Downloader downloadPatch = new Downloader();
-                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outframe, 1);
+                        downloadPatch = new Downloader();
+                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outFrame, null, 3, true, -1);
                     }
                 }
                 else{
                     ErrorDialog error = new ErrorDialog();
-                    error.errorDialog(outframe, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
+                    error.errorDialog(outFrame, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
 
                 }
 

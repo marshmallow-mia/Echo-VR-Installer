@@ -26,7 +26,6 @@ public class Background extends JPanel {
     }
 
 
-
     //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
         URL imageURL = getClass().getClassLoader().getResource(imageName);

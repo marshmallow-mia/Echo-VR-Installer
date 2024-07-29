@@ -17,6 +17,7 @@ public class UnzipDialog extends JDialog {
         this.initialize();
     }
 
+
     private void initialize() {
         zipStart = this;
         this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

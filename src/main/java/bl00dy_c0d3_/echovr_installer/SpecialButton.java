@@ -18,6 +18,7 @@ public class SpecialButton extends JPanel {
     private JLabel label = null;
 
 
+
     //Konstruktor:
     public SpecialButton(String text, String imageUp, String imageDown, String imageHighlighted, int textSize) {
         //Grundeinstellungen...
@@ -116,4 +117,9 @@ public class SpecialButton extends JPanel {
         if (imageURL == null) return 0;
         else return (new ImageIcon(imageURL, imageName)).getIconHeight();
     }
+
+    void changeText(String text){
+        label.setText(text);
+    }
+
 }

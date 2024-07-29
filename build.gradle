@@ -43,7 +43,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     implementation files('libs/jlibtorrent-1.2.19.0.jar')
-    implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
+    //implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
     implementation "org.openjfx:javafx-controls:${javafxVersion}"
     implementation "org.openjfx:javafx-fxml:${javafxVersion}"
     implementation 'org.jetbrains:annotations:24.1.0'
@@ -106,13 +106,28 @@ jlink {
 
 tasks.register('copyJLibTorrent', Copy) {
     from 'libs'
-    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/libs/" : "$buildDir/jpackage/EchoVR_Installer/bin/libs"
+
+    if (os.isWindows()) {
+        into "$buildDir/jpackage/EchoVR_Installer/libs/"
+    } else if (os.isMacOsX()) {
+        into "$buildDir/jpackage/EchoVR_Installer.app/Contents/runtime/Contents/Home/lib/"
+    } else { // Assuming Linux or other Unix-like systems
+        into "$buildDir/jpackage/EchoVR_Installer/bin/libs"
+    }
 }
 
 tasks.register('copyTorrentFiles', Copy) {
     from 'p2pFiles'
-    into os.isWindows() ? "$buildDir/jpackage/EchoVR_Installer/p2pFiles/" : "$buildDir/jpackage/EchoVR_Installer/p2pFiles"
+
+    if (os.isWindows()) {
+        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles/"
+    } else if (os.isMacOsX()) {
+        into "$buildDir/jpackage/EchoVR_Installer.app/Contents/Resources/p2pFiles/"
+    } else { // Assuming Linux or other Unix-like systems
+        into "$buildDir/jpackage/EchoVR_Installer/bin/p2pFiles"
+    }
 }
+
 
 // Ensure copy tasks run after jpackage
 tasks.named('jpackage').configure {

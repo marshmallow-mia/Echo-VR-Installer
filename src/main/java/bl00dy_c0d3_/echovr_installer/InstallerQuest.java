@@ -7,10 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
+
+import static bl00dy_c0d3_.echovr_installer.Helpers.*;
+
 //This Class will uninstall echo, install echo and copy obb
 public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static boolean isChrome = chechIfChromeOs();
     String[] fileList;
     String[] fileList2;
     String[] fileList3;
@@ -22,15 +26,18 @@ public class InstallerQuest {
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
-        InstallerQuest outFrame = this;
+        System.out.println(System.getProperty("os.name").toLowerCase());
 
+
+
+        InstallerQuest outFrame = this;
         if (isWindows) {
-            String dir = tempPath + "platform-tools/";
-            System.out.println(tempPath);
+            String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
             File file = new File(dir);
             if (!file.exists()){
                 file.mkdirs();
             }
+
             fileList = new String[]{"adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe", "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe", "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
             //TODO read filelist from the folder instead of that
             for (int a = 0; a < fileList.length; a++) {
@@ -39,7 +46,7 @@ public class InstallerQuest {
                     InputStream stream = getClass().getClassLoader().getResourceAsStream("platform-tools/" + fileList[a]);
                     Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
                 } catch (Exception e) {
-                    e.printStackTrace();
+
                 }
                 //TODO ^
             }
@@ -78,15 +85,13 @@ public class InstallerQuest {
                     Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
                     stream2.close();
                 }
-                runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
+                //runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
             } catch (Exception e) {
                 e.printStackTrace();
 
             }
             //TODO ^
         }
-
-
 
 
         // Check if any device is connected
@@ -98,37 +103,34 @@ public class InstallerQuest {
             if(!apkFile.exists() ||  !obbFile.exists()) {
                 System.out.println("APK or OBB FILE NOT FOUND");
                 ErrorDialog error = new ErrorDialog();
-                error.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ON STEP 4/5!", 0);
+                error.errorDialog(parrentFrame, "File not found", "APK or OBB FILE NOT FOUND. PLEASE DOWNLOAD IT ABOVE!", 0);
 
                 return;
             }
 
 
-            if (progressLabel != null){
-                progressLabel.setText("Installation started! Wait!");
-                parrentFrame.repaint();
-            }
 
 
             if(isWindows) {
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "shell \"mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15\"", 3);
-                runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"", 4);
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "uninstall com.readyatdawn.r15");
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "shell \"mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15\"");
+                runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + pathToApkObb + "/" + obbfileName + " \"/storage/self/primary/Android/obb/com.readyatdawn.r15/\"");
+            }
+            else if(isChrome){
+                runShellCommand("adb " + "uninstall com.readyatdawn.r15");
+                runShellCommand("adb " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand("adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
+                runShellCommand("adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
             else{
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15", 1);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName, 2);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15", 3);
-                runShellCommand(tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/", 4);
-
-
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15");
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName);
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
+                runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
 
-            if (progressLabel != null){
-                progressLabel.setText("Installation done!");
-                parrentFrame.repaint();
-            }
+
         }
         else if (deviceConnected == 1) {
             ErrorDialog error = new ErrorDialog();
@@ -148,9 +150,12 @@ public class InstallerQuest {
     }
 
 
+
+
+
     //0 = connected, 1 = unauthorized, -1 not connected
     // Method to check if any device is connected based on the adb devices output
-    private static int checkQuestStatus() {
+    private static int checkQuestStatus(){
 
         // Start the process
         Process process = null;
@@ -158,11 +163,14 @@ public class InstallerQuest {
             if(isWindows) {
                 process = new ProcessBuilder(tempPath + "/platform-tools/adb.exe", "devices").start();
             }
-            else if(mac){
+            else if(mac) {
                 process = new ProcessBuilder(tempPath + "/platform-tools-mac/adb", "devices").start();
             }
+            else if(isChrome){
+                process = new ProcessBuilder("adb", "devices").start();
+            }
             else{
-                process = new ProcessBuilder(tempPath + "/platform-tools-linux/adb", "devices").start();
+                process = new ProcessBuilder("/lib64/ld-linux-x86-64.so.2", tempPath + "/platform-tools-linux/adb", "devices").start();
             }
 
         } catch (IOException e) {
@@ -205,31 +213,7 @@ public class InstallerQuest {
         return -1;
     }
 
-    private void runShellCommand(String shellCommand, int step){
 
-
-        if (step == 1){
-            JOptionPane.showMessageDialog(null, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-        }
-        try {
-            if (isWindows) {
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                process.waitFor();
-                System.out.println("DONE");
-            } else {
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                process.waitFor();
-                System.out.println("DONE");
-            }
-            if (step == 4){
-                JOptionPane.showMessageDialog(null, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-
-            }
-        }
-        catch (Exception e){
-
-        }
-    }
 
 
 

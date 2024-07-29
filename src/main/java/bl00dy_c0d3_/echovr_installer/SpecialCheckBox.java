@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 public class SpecialCheckBox extends JCheckBox{
 
+
     public SpecialCheckBox (String text, int textsize){
 
         InputStream fontStream = getClass().getClassLoader().getResourceAsStream("conthrax-sb.otf");
