@@ -34,8 +34,6 @@ public class Downloader implements Runnable {
 
         if (downloadServer == 0) {
             String fastestServer = getDownloadSpeed();
-            ErrorDialog test = new ErrorDialog();
-            test.errorDialog(frame, "Error while Downloading", fastestServer, 0);
             this.fileUrl = fastestServer + fileUrl;
             fileUrl = this.fileUrl;
         }

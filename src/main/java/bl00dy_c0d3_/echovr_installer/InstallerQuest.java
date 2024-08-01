@@ -2,10 +2,8 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
@@ -15,83 +13,15 @@ public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static boolean isChrome = chechIfChromeOs();
-    String[] fileList;
-    String[] fileList2;
-    String[] fileList3;
-    Path targetPath;
-    Path targetPath2;
-    Path targetPath3;
     String folder;
-    String libcName;
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public void installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
         System.out.println(System.getProperty("os.name").toLowerCase());
 
 
+        prepareAdb();
 
-        InstallerQuest outFrame = this;
-        if (isWindows) {
-            String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
-            File file = new File(dir);
-            if (!file.exists()){
-                file.mkdirs();
-            }
-
-            fileList = new String[]{"adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe", "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe", "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
-            //TODO read filelist from the folder instead of that
-            for (int a = 0; a < fileList.length; a++) {
-                targetPath = Paths.get(tempPath + "/platform-tools/" + fileList[a]);
-                try {
-                    InputStream stream = getClass().getClassLoader().getResourceAsStream("platform-tools/" + fileList[a]);
-                    Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e) {
-
-                }
-                //TODO ^
-            }
-        }
-        else{
-            if (mac){
-                folder = "platform-tools-mac";
-                libcName = "libc++.dylib";
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
-            }
-            else{
-                folder = "platform-tools-linux";
-                libcName = "libc++.so";
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
-            }
-            String dir = tempPath + "/" + folder + "/";
-            File file = new File(dir);
-            if (!file.exists()){
-                file.mkdirs();
-            }
-            String dir2 = tempPath + "/" + folder + "/lib64/";
-            File file2 = new File(dir2);
-            if (!file2.exists()){
-                file2.mkdirs();
-            }
-            try {
-                InputStream stream2 = getClass().getClassLoader().getResourceAsStream(folder + "/lib64/" + libcName);
-                Files.copy(stream2, targetPath2, StandardCopyOption.REPLACE_EXISTING);
-
-
-                fileList3 = new String[]{"adb", "fastboot", "make_f2fs_casefold", "mke2fs.conf", "source.properties", "etc1tool", "hprof-conv", "make_f2fs", "mke2fs", "NOTICE.txt", "sqlite3"};
-                //TODO read filelist from the folder instead of that
-                for (int b = 0; b < fileList3.length; b++) {
-                    targetPath3 = Paths.get(tempPath + "/" + folder + "/" + fileList3[b]);
-                    InputStream stream3 = getClass().getClassLoader().getResourceAsStream(folder + "/" + fileList3[b]);
-                    Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-                    stream2.close();
-                }
-                //runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
-            } catch (Exception e) {
-                e.printStackTrace();
-
-            }
-            //TODO ^
-        }
 
 
         // Check if any device is connected
@@ -174,7 +104,7 @@ public class InstallerQuest {
             }
 
         } catch (IOException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
         }
         //TODO ^
 
