@@ -54,7 +54,6 @@ public class InstallerQuest {
                 runShellCommand("adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
             else if(mac){
-                tempPath + "/platform-tools-mac/adb"
                 runShellCommand(tempPath + "/platform-tools-mac/adb " + "uninstall com.readyatdawn.r15");
                 runShellCommand(tempPath + "/platform-tools-mac/adb " + "install " + pathToApkObb + "/" + apkfileName);
                 runShellCommand(tempPath + "/platform-tools-mac/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
