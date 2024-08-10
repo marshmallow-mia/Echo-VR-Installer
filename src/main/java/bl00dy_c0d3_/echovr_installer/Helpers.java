@@ -237,7 +237,9 @@ public class Helpers {
                     Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
                     stream2.close();
                 }
-                //runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/", 1);
+                if (mac) {
+                    runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
 
