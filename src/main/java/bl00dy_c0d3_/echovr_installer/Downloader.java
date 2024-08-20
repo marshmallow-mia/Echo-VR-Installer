@@ -33,7 +33,7 @@ public class Downloader implements Runnable {
         this.downloadServer = downloadServer;
 
         if (downloadServer == 0) {
-            String fastestServer = getDownloadSpeed();
+            String fastestServer = getDownloadSpeed(labelProgress, frame);
             this.fileUrl = fastestServer + fileUrl;
             fileUrl = this.fileUrl;
         }
@@ -178,11 +178,14 @@ public class Downloader implements Runnable {
     }
 
     // Choose the fastest available http server
-    private static String getDownloadSpeed() {
+    private static String getDownloadSpeed(JLabel labelProgress, JDialog frame) {
         String[] servers = new String[2];
         servers[0] = "https://echo.marceldomain.de:6969/";
         servers[1] = "https://evr.echo.taxi/";
         String testFile = "randomDownloadTestFile";
+
+        labelProgress.setText("Server Test");
+        frame.repaint();
 
         String fastestServer = null;
         long fastestTime = Long.MAX_VALUE;

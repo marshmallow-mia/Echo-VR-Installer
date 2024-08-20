@@ -150,13 +150,14 @@ public class Helpers {
     }
 
 
-    public static String checkForAdmin(JDialog outFrame){
+    public static String checkForAdminAndOculusPath(JDialog outFrame){
         String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
         String output = runShellCommandWithOutput(command);
 
+        boolean checkAdmin = checkForAdmin();
 
         // Parse and display the result
-        if (output.trim().equalsIgnoreCase("False")) {
+        if (! checkAdmin) {
             System.out.println("The application is NOT running with administrative privileges.");
             ErrorDialog runAsAdmin = new ErrorDialog();
             runAsAdmin.errorDialog(outFrame, "Please restart as Admin", "<html>To use the Oculus original path, you need to restart this app as admin. To do that,<br>close the Installer completely. Then right click on EchoVR_Installer.exe<br>and click on Start as Admin.</html>", -1);
@@ -170,6 +171,21 @@ public class Helpers {
         }
 
     }
+
+
+    public static boolean checkForAdmin(){
+        String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
+        String output = runShellCommandWithOutput(command);
+
+        // Parse and display the result
+        if (output.trim().equalsIgnoreCase("False")) {
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+
 
 
     public static void prepareAdb(){

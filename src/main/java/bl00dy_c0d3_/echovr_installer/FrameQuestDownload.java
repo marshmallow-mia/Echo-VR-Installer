@@ -96,20 +96,35 @@ public class FrameQuestDownload extends JDialog {
             downloader2.cancelDownload();
             System.out.println("downloader2 stopped");
         }
-        questStartDownload.changeText("Restart Download");
 
 
 
         JOptionPane.showMessageDialog(this, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
 
+        questStartDownload.changeText("Restart Download");
+        Thread downloadThread = new Thread(() -> {
+            downloader = new Downloader();
+            downloader.startDownload("Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
+        });
 
-        downloader = new Downloader();
-        downloader.startDownload("Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
+        downloadThread.start();  // This runs the download in a separate thread
 
-        pause(1);
 
-        downloader2 = new Downloader();
-        downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
+        pause(2);
+
+
+
+
+        questStartDownload.changeText("Restart Download");
+        Thread downloadThread2 = new Thread(() -> {
+            downloader2 = new Downloader();
+            downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
+        });
+
+        downloadThread2.start();  // This runs the download in a separate thread
+
+
+
     }
 
 

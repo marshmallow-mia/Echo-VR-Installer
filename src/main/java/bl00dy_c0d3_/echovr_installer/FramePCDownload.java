@@ -65,7 +65,7 @@ public class FramePCDownload extends JDialog {
         pcChooseOriginalPath.setLocation(20, 70);
         pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                String newPath = checkForAdmin(outFrame);
+                String newPath = checkForAdminAndOculusPath(outFrame);
                 if (!newPath.matches("")) {
                     labelPcDownloadPath.setText(newPath + "Software\\Software\\");
                     outFrame.repaint();
@@ -123,12 +123,13 @@ public class FramePCDownload extends JDialog {
                 }
                 pcStartDownload.changeText("Restart Download");
 
-
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
+                Thread downloadThread1 = new Thread(() -> {
+                    downloader = new Downloader();
+                    downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0);
+                });
 
-                downloader = new Downloader();
-                downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0);
-
+                downloadThread1.start();  // This runs the download in a separate thread
             }
         });
         back.add(pcStartDownload);

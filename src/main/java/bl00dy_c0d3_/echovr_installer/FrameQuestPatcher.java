@@ -88,14 +88,33 @@ public class FrameQuestPatcher extends JDialog {
             questStartDownload.changeText("Restart Download");
 
 
-            downloader = new Downloader();
-            String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+
+            Thread downloadThread1 = new Thread(() -> {
+                downloader = new Downloader();
+                String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
+                downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+            });
+
+            downloadThread1.start();  // This runs the download in a separate thread
+
+
+
+
 
             pause(1);
 
-            downloader2 = new Downloader();
-            downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+
+            Thread downloadThread2 = new Thread(() -> {
+                downloader2 = new Downloader();
+                downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+            });
+
+            downloadThread2.start();  // This runs the download in a separate thread
+
+
+
+
+
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
