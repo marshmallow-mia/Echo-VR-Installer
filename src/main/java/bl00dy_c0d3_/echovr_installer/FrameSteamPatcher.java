@@ -43,7 +43,7 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3c");
+        this.setTitle("Echo VR Installer v0.4");
         this.setModal(true);
 
 
@@ -58,7 +58,7 @@ public class FrameSteamPatcher extends JDialog {
         SpecialLabel labelPatchProgress1 = new SpecialLabel(" 0%", 17);
         labelPatchProgress1.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
         labelPatchProgress1.setLocation(240,35);
-        labelPatchProgress1.setSize(170, 32);
+        labelPatchProgress1.setSize(170, 38);
         labelPatchProgress1.setBackground(new Color(255, 255, 255, 200));
         labelPatchProgress1.setForeground(Color.BLACK);
         back.add(labelPatchProgress1);

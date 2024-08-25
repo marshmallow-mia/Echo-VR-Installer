@@ -94,7 +94,7 @@ public class Helpers {
     }
 
 
-    public static boolean chechIfChromeOs(){
+    public static boolean checkIfChromeOs(){
 
         // Create a File object
         File file = new File("/opt/google/cros-containers/etc/lsb-release");
@@ -111,15 +111,38 @@ public class Helpers {
     }
 
 
-    public static void runShellCommand(String shellCommand){
+    public static String runShellCommand(String shellCommand) {
+        StringBuilder output = new StringBuilder();
+        StringBuilder errorOutput = new StringBuilder();
+
         try {
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                process.waitFor();
-                System.out.println("DONE");
-        }
-        catch (Exception e){
+            Process process = Runtime.getRuntime().exec(shellCommand);
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            // Read the output from the command
+            String s = null;
+            while ((s = stdInput.readLine()) != null) {
+                output.append(s).append("\n");
+            }
+
+            // Read any errors from the attempted command
+            while ((s = stdError.readLine()) != null) {
+                errorOutput.append(s).append("\n");
+            }
+
+            process.waitFor();
+            System.out.println("DONE");
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
+        // Combine standard output and error output (optional)
+        if (errorOutput.length() > 0) {
+            output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
+        }
+
+        return output.toString();
     }
 
 
@@ -264,6 +287,9 @@ public class Helpers {
         }
 
     }
+
+
+
 
 
 

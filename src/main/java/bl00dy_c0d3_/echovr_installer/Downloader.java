@@ -186,9 +186,11 @@ public class Downloader implements Runnable {
 
         labelProgress.setText("Server Test");
         frame.repaint();
+        System.out.println("Server Test started");
 
         String fastestServer = null;
         long fastestTime = Long.MAX_VALUE;
+
 
         for (String server : servers) {
             long timeTaken = measureDownloadSpeed(server + testFile);

@@ -21,7 +21,7 @@ public class FrameMain extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.3c [pre alpha]");
+        setTitle("Echo VR Installer v0.4 [pre alpha]");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
@@ -34,6 +34,8 @@ public class FrameMain extends JFrame {
         addEasterEgg(back, outFrame);
         addDeleteCached(back, outFrame);
         addGetLog(back, outFrame);
+        //addPlayButton(back);
+        //addStopButton(back);
 
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
@@ -46,7 +48,9 @@ public class FrameMain extends JFrame {
                 "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
                 "This tool is still in early alpha!<br>" +
                 "If you have problems, contact me on Discord 'marcel_one_'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+
     }
+
 
 
 
@@ -213,5 +217,49 @@ private void addDeleteCached(JPanel back, JFrame outFrame) {
             }
         });
         back.add(easteregg);
+
+
+
+
     }
+
+    private void addPlayButton(Background back){
+
+        JLabel playButton = addImageTransparent(back, "play.png", 590, 90, 30, 30);
+        playButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Trigger play action
+                PlayMusic.playMusic("C:/Users/marcel/IdeaProjects/Echo-VR-Installer/src/main/resources/EchoLobby.wav");
+            }
+        });
+
+    }
+    private void addStopButton(Background back) {
+        JLabel stopButton = addImageTransparent(back, "stop.png", 657, 90, 30, 30);
+        stopButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Trigger play action
+                PlayMusic.stopMusic();
+
+
+            }
+        });
+    }
+
+
+    private JLabel addImageTransparent(JPanel panel, String imagePath, int x, int y, int width, int height) {
+        ImageIcon icon = new ImageIcon(loadGUI(imagePath));
+        Image image = icon.getImage();
+        Image scaledImage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+
+        JLabel label = new JLabel(new ImageIcon(scaledImage));
+        label.setBounds(x, y, width, height);
+        label.setOpaque(false);  // Make sure the label is transparent
+        panel.add(label);
+        return label;  // Return the label so that it can be used by the caller
+    }
+
+
 }

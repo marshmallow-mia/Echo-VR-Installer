@@ -54,7 +54,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3c");
+        this.setTitle("Echo VR Installer v0.4");
         FrameQuestDownload outFrame = this;
 
 
@@ -107,13 +107,10 @@ public class FrameQuestDownload extends JDialog {
             downloader.startDownload("Echo_patched.apk", targetPath + "", "Echo_patched.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
         });
 
-        downloadThread.start();  // This runs the download in a separate thread
+        downloadThread.start();
 
 
         pause(2);
-
-
-
 
         questStartDownload.changeText("Restart Download");
         Thread downloadThread2 = new Thread(() -> {
@@ -121,9 +118,7 @@ public class FrameQuestDownload extends JDialog {
             downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath + "", "main.4987566.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
         });
 
-        downloadThread2.start();  // This runs the download in a separate thread
-
-
+        downloadThread2.start();
 
     }
 
@@ -156,10 +151,17 @@ public class FrameQuestDownload extends JDialog {
         }
         String obbfileName = "main.4987566.com.readyatdawn.r15.obb";
         InstallerQuest installToQuest = new InstallerQuest();
-        installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
-        labelQuestInstallProgress.setText("Installation is complete!");
-        outFrame.repaint();
-        JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
+
+        if (installState) {
+            labelQuestInstallProgress.setText("Installation is complete!");
+            outFrame.repaint();
+            JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        }
+        else{
+            labelQuestInstallProgress.setText("Installation did not finish!");
+            outFrame.repaint();
+        }
 
     }
 
