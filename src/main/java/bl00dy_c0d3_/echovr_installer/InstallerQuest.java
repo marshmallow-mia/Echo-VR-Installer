@@ -13,7 +13,6 @@ public class InstallerQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static boolean isChrome = checkIfChromeOs();
-    String folder;
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
     public boolean installAPK(String pathToApkObb, String apkfileName, String obbfileName, SpecialLabel progressLabel, JDialog parrentFrame)  {
@@ -61,10 +60,10 @@ public class InstallerQuest {
                 commandResult4 = runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
             else{
-                commandResult1 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "uninstall com.readyatdawn.r15");
-                commandResult2 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "install " + pathToApkObb + "/" + apkfileName);
-                commandResult3 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
-                commandResult4 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/" +  folder + "/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
+                commandResult1 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "uninstall com.readyatdawn.r15");
+                commandResult2 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "install " + pathToApkObb + "/" + apkfileName);
+                commandResult3 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "shell " + "mkdir /storage/self/primary/Android/obb/com.readyatdawn.r15");
+                commandResult4 = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "push " + pathToApkObb + "/" + obbfileName + " /storage/self/primary/Android/obb/com.readyatdawn.r15/");
             }
             System.out.println(commandResult1);
             System.out.println(commandResult2);
