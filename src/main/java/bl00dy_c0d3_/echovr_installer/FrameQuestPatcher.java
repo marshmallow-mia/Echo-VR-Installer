@@ -47,7 +47,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.4");
+        setTitle("Echo VR Installer v0.6");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -104,7 +104,7 @@ public class FrameQuestPatcher extends JDialog {
 
             Thread downloadThread2 = new Thread(() -> {
                 downloader2 = new Downloader();
-                downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+                            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
             });
 
             downloadThread2.start();  // This runs the download in a separate thread
@@ -143,7 +143,7 @@ public class FrameQuestPatcher extends JDialog {
             apkfileName = "personilizedechoapk.apk";
         }
         InstallerQuest installtoQuest = new InstallerQuest();
-        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress4, this);
+        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress4, this);
 
         if (installState) {
             labelQuestProgress4.setText("Installation is complete!");
