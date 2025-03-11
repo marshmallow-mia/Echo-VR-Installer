@@ -24,8 +24,6 @@ public class FrameQuestPatcher extends JDialog {
     private Downloader downloader = null;
     private Downloader downloader2 = null;
     SpecialButton questStartDownload;
-    static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
-    static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
     JDialog outFrame = this;
 
     public FrameQuestPatcher() {
@@ -49,7 +47,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.3c");
+        setTitle("Echo VR Installer v0.6");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -75,7 +73,7 @@ public class FrameQuestPatcher extends JDialog {
 
     private void handleDownloadButtonClick() {
 
-        if (textfieldQuestPatchLink.getText().matches("https://tmpfiles.org.*")) {
+        if (textfieldQuestPatchLink.getText().matches("https://echo.marceldomain.de.*")) {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
             if (downloader != null){
                 downloader.cancelDownload();
@@ -88,14 +86,33 @@ public class FrameQuestPatcher extends JDialog {
             questStartDownload.changeText("Restart Download");
 
 
-            downloader = new Downloader();
-            String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-            downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+
+            Thread downloadThread1 = new Thread(() -> {
+                downloader = new Downloader();
+                String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
+                downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+            });
+
+            downloadThread1.start();  // This runs the download in a separate thread
+
+
+
+
 
             pause(1);
 
-            downloader2 = new Downloader();
-            downloader2.startDownload("main.4987566.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+
+            Thread downloadThread2 = new Thread(() -> {
+                downloader2 = new Downloader();
+                            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+            });
+
+            downloadThread2.start();  // This runs the download in a separate thread
+
+
+
+
+
         } else {
             new ErrorDialog().errorDialog(this, "Wrong URL provided", "Your provided Download Link is wrong. Please check!", 0);
         }
@@ -126,21 +143,21 @@ public class FrameQuestPatcher extends JDialog {
             apkfileName = "personilizedechoapk.apk";
         }
         InstallerQuest installtoQuest = new InstallerQuest();
-        installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987566.com.readyatdawn.r15.obb", labelQuestProgress4, this);
-        labelQuestProgress4.setText("Installation is complete!");
-        outFrame.repaint();
-        JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress4, this);
 
+        if (installState) {
+            labelQuestProgress4.setText("Installation is complete!");
+            outFrame.repaint();
+            JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        }
+        else{
+            labelQuestProgress4.setText("Installation did not finish!");
+            outFrame.repaint();
+        }
     }
 
 
-    private void addBackgroundImage(@NotNull JPanel back, String imagePath, int x, int y, int width, int height) {
-        Background image = new Background(imagePath);
-        image.setLocation(x, y);
-        image.setSize(width, height);
-        image.setVisible(true);
-        back.add(image);
-    }
+
 
 
     SpecialLabel labelQuestProgress2 = new SpecialLabel(" 0%", 15);
@@ -193,6 +210,15 @@ public class FrameQuestPatcher extends JDialog {
     private void addSpecialHyperlinks(@NotNull JPanel back) {
         back.add(new SpecialHyperlink(40, 95, "Click on me to join the Echo VR Patcher Discord-Server", "https://discord.gg/bMpsva6fmA", 14));
     }
+
+    private void addBackgroundImage(@NotNull JPanel back, String imagePath, int x, int y, int width, int height) {
+        Background image = new Background(imagePath);
+        image.setLocation(x, y);
+        image.setSize(width, height);
+        image.setVisible(true);
+        back.add(image);
+    }
+
 
     private void addImages(JPanel back) {
         addBackgroundImage(back, "quest_react.png", 40, 215, 182, 108);

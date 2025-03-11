@@ -34,18 +34,18 @@ application {
             "-Djava.library.path=libs/",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-            "--add-reads=jlibtorrent=java.logging"
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+            //"--add-reads=jlibtorrent=java.logging"
     ]
 }
 
 dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
-    implementation files('libs/jlibtorrent-1.2.19.0.jar')
+    //implementation files('libs/jlibtorrent-1.2.19.0.jar')
     //implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
-    implementation "org.openjfx:javafx-controls:${javafxVersion}"
-    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    //implementation "org.openjfx:javafx-controls:${javafxVersion}"
+    //implementation "org.openjfx:javafx-fxml:${javafxVersion}"
     implementation 'org.jetbrains:annotations:24.1.0'
 }
 
@@ -73,11 +73,11 @@ jlink {
         installerName = 'Echo_VR_Installer'
 
         if (os.isWindows()) {
-            appVersion = '0.3'
+            appVersion = '0.6'
             icon = 'icon.ico'  // Update path
 
             installerOptions = [
-                    '--app-version', '0.3',
+                    '--app-version', '0.6',
                     '--vendor', 'bl00dy-c0d3',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
@@ -88,12 +88,12 @@ jlink {
                     '--win-menu-group', 'EchoVRInstaller',
             ]
         } else if (os.isMacOsX()) {
-            appVersion = '1.3'
+            appVersion = '1.6'
             installerOptions = [
                     '--mac-package-identifier', 'IhateApple',
             ]
         } else {
-            appVersion = '0.3'
+            appVersion = '0.6'
             icon = 'icon.png'  // Update path if needed
 
             // Ensure copyLibjpeg runs after jpackage
@@ -104,36 +104,7 @@ jlink {
     }
 }
 
-tasks.register('copyJLibTorrent', Copy) {
-    from 'libs'
 
-    if (os.isWindows()) {
-        into "$buildDir/jpackage/EchoVR_Installer/libs/"
-    } else if (os.isMacOsX()) {
-        into "$buildDir/jpackage/EchoVR_Installer.app/Contents/runtime/Contents/Home/lib/"
-    } else { // Assuming Linux or other Unix-like systems
-        into "$buildDir/jpackage/EchoVR_Installer/bin/libs"
-    }
-}
-
-tasks.register('copyTorrentFiles', Copy) {
-    from 'p2pFiles'
-
-    if (os.isWindows()) {
-        into "$buildDir/jpackage/EchoVR_Installer/p2pFiles/"
-    } else if (os.isMacOsX()) {
-        into "$buildDir/jpackage/EchoVR_Installer.app/Contents/Resources/p2pFiles/"
-    } else { // Assuming Linux or other Unix-like systems
-        into "$buildDir/jpackage/EchoVR_Installer/bin/p2pFiles"
-    }
-}
-
-
-// Ensure copy tasks run after jpackage
-tasks.named('jpackage').configure {
-    finalizedBy('copyJLibTorrent')
-    finalizedBy('copyTorrentFiles')
-}
 
 // Ensure build depends on jlink and jpackage
 tasks.named('build').configure {

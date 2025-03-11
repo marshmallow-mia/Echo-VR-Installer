@@ -29,7 +29,7 @@ public class FramePCPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.3c");
+        this.setTitle("Echo VR Installer v0.6");
         this.setModal(true);
 
         Background back = new Background("echo-in-arena.png");
@@ -111,7 +111,7 @@ public class FramePCPatcher extends JDialog {
         pcChooseOriginalPath.setLocation(582, 225);
         pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                String newPath = checkForAdmin(outFrame);
+                String newPath = checkForAdminAndOculusPath(outFrame);
                 if (!newPath.matches("")) {
                     labelPcPatchDownloadPath.setText(newPath + "Software\\Software\\ready-at-dawn-echo-arena");
                     outFrame.repaint();

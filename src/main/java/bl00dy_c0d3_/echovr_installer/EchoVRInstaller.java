@@ -28,10 +28,13 @@ public class EchoVRInstaller {
                 logFile = new File("log.log");
             }
 
-            if (logFile.exists()) {
-                logFile.delete();
+            //if (logFile.exists()) {
+            //    logFile.delete();
+            //}
+            if (!logFile.exists()) {
+                logFile.createNewFile();
             }
-            logFile.createNewFile();
+
 
             // Redirect stdout and stderr to log file
             PrintStream logStream = new PrintStream(new FileOutputStream(logFile, true));
