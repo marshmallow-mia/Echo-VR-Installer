@@ -54,7 +54,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.6");
+        this.setTitle("Echo VR Installer v0.7");
         FrameQuestDownload outFrame = this;
 
 
@@ -104,7 +104,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread = new Thread(() -> {
             downloader = new Downloader();
-            downloader.startDownload("Echo_patched_version_fix.apk", targetPath + "", "Echo_patched_version_fix.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
+            downloader.startDownload("Echo_patched_version_fix.apk", targetPath + "", "Echo_patched_version_fix.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread.start();
@@ -115,7 +115,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread2 = new Thread(() -> {
             downloader2 = new Downloader();
-            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath + "", "main.4987570.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
+            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath + "", "main.4987570.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread2.start();

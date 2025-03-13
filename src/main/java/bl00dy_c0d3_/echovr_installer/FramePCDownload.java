@@ -42,7 +42,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.6");
+        this.setTitle("Echo VR Installer v0.7");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -126,7 +126,25 @@ public class FramePCDownload extends JDialog {
                 JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
                 Thread downloadThread1 = new Thread(() -> {
                     downloader = new Downloader();
-                    downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0);
+                    downloader.setOnCompleteListener(() -> {
+                        SwingUtilities.invokeLater(() -> {
+                            String[] updateFiles = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/files", "updateFiles");
+                            String URL = "https://echo.marceldomain.de:6969/updates/";
+                            //Download all updated files
+                            for (String file : updateFiles) {
+                                System.out.println("Updatefile:" + file);
+
+                                Thread downloadThread2 = new Thread(() -> {
+                                    downloader = new Downloader();
+                                    downloader.startDownload(URL + file, labelPcDownloadPath.getText() + "/ready-at-dawn-echo-arena/bin/win10", file, labelPcProgress2, thisFrame, frameMain, 1, true, -1, true);
+                                });
+
+                                downloadThread2.start();  // This runs the download in a separate thread
+                                System.out.println("UPDATE after regular install is DONE");
+                            }
+                        });
+                    });
+                    downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0, false);
                 });
 
                 downloadThread1.start();  // This runs the download in a separate thread

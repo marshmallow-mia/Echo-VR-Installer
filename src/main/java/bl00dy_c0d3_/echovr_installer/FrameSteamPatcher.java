@@ -43,7 +43,7 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.6");
+        this.setTitle("Echo VR Installer v0.7");
         this.setModal(true);
 
 
@@ -80,8 +80,13 @@ public class FrameSteamPatcher extends JDialog {
 
                     JOptionPane.showMessageDialog(null, "The Download will start after pressing OK.", "Download started", JOptionPane.INFORMATION_MESSAGE);
                     downloader1 = new Downloader();
-                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/latest/download/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1);
-                    installRevive();
+                    downloader1.setOnCompleteListener(() -> {
+                        SwingUtilities.invokeLater(() -> {
+                            installRevive();
+                        });
+                    });
+                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/latest/download/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1, false);
+
                 }
                 else{
                     System.out.println("The application is NOT running with administrative privileges.");

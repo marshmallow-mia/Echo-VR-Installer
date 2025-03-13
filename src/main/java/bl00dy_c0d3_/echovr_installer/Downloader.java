@@ -2,11 +2,16 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.io.*;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import static bl00dy_c0d3_.echovr_installer.Helpers.getFileAndReturnArray;
 
 public class Downloader implements Runnable {
     private long fileSize = 0;
@@ -20,9 +25,12 @@ public class Downloader implements Runnable {
     private boolean flg_CancelDownload = false;
     boolean deleteFileBeforeDownloading;
     int downloadServer;
+    boolean checkHashForUpdateFiles;
+    private Runnable onComplete;
 
-    // url, path, name, Label to change progress%, frame to know the position for errorDialog, platform=0=PC/unzip, 1=don't unzip
-    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, boolean deleteFileBeforeDownloading, int downloadServer) {
+
+    // url, path, name, Label to change progress%, frame to know the position for errorDialog, platform=0=PC/unzip, 1=don't unzip, deleteFileBeforeDownloading, checkBestDownloadServer, check hashes (used for updates)
+    public void startDownload(String fileUrl, String localFilePath, String filename, JLabel labelProgress, JDialog frame, JFrame frameMain, int platform, boolean deleteFileBeforeDownloading, int downloadServer, boolean checkHashForUpdateFiles) {
         this.localFilePath = localFilePath;
         this.labelProgress = labelProgress;
         this.frame = frame;
@@ -31,6 +39,7 @@ public class Downloader implements Runnable {
         this.platform = platform;
         this.deleteFileBeforeDownloading = deleteFileBeforeDownloading;
         this.downloadServer = downloadServer;
+        this.checkHashForUpdateFiles = checkHashForUpdateFiles;
 
         if (downloadServer == 0) {
             String fastestServer = getDownloadSpeed(labelProgress, frame);
@@ -55,7 +64,6 @@ public class Downloader implements Runnable {
     }
 
     public void run() {
-
 
         System.out.println("Downloader Logs:");
         System.out.println("File URL: " + fileUrl);
@@ -139,6 +147,15 @@ public class Downloader implements Runnable {
                 frame.repaint();
             }
 
+            if (checkHashForUpdateFiles){
+                try {
+                    checkHash();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (NoSuchAlgorithmException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
             if (platform == 0) {
                 UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
@@ -154,10 +171,42 @@ public class Downloader implements Runnable {
             ErrorDialog error = new ErrorDialog();
             error.errorDialog(frame, "Error while Downloading", "Couldn't finish Download. Please check your Ethernet or try again later. (ERR2)", 0);
         }
+
+
+        if (onComplete != null) {
+            onComplete.run();
+        }
+    }
+
+    // Add a method to set the completion callback
+    public void setOnCompleteListener(Runnable onComplete) {
+        this.onComplete = onComplete;
     }
 
     public void cancelDownload() {
         flg_CancelDownload = true;
+    }
+
+    public void checkHash() throws IOException, NoSuchAlgorithmException {
+        String[] fileHash = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/" + filename + ".hash",filename  + ".hash");
+        Path filePath = Path.of(localFilePath + "/" + filename);
+        System.out.println("File to check hash: " + filePath);
+
+        byte[] data = Files.readAllBytes(filePath);
+        byte[] hash = MessageDigest.getInstance("SHA-256").digest(data);
+        String checksum = new BigInteger(1, hash).toString(16);
+        System.out.println(checksum);
+
+
+        if (fileHash[0].equals(checksum)){
+            System.out.println("Same hash of: " + filename);
+        }
+        else{
+            System.out.println("NOT the same hash of: " + filename);
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(frame, "Error while Downloading", "Error when checking hash of updated files. Please restart (ERR3)", 0);
+            cancelDownload();
+        }
     }
 
     private long getFileSize(String fileUrl) {
