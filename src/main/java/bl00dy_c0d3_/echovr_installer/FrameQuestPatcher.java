@@ -104,7 +104,7 @@ public class FrameQuestPatcher extends JDialog {
 
             Thread downloadThread2 = new Thread(() -> {
                 downloader2 = new Downloader();
-                            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0, false);
+                            downloader2.startDownload("_data.zip", targetPath.toString(), "_data.zip", labelQuestProgress3, this, null, 2, false, 0, false);
             });
 
             downloadThread2.start();  // This runs the download in a separate thread
@@ -143,7 +143,7 @@ public class FrameQuestPatcher extends JDialog {
             apkfileName = "personilizedechoapk.apk";
         }
         InstallerQuest installtoQuest = new InstallerQuest();
-        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress4, this);
+        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "_data.zip", labelQuestProgress4, this);
 
         if (installState) {
             labelQuestProgress4.setText("Installation is complete!");

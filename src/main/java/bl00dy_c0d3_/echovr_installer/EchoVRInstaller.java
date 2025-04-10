@@ -3,6 +3,8 @@ package bl00dy_c0d3_.echovr_installer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static java.lang.System.*;
 
@@ -28,9 +30,7 @@ public class EchoVRInstaller {
                 logFile = new File("log.log");
             }
 
-            //if (logFile.exists()) {
-            //    logFile.delete();
-            //}
+
             if (!logFile.exists()) {
                 logFile.createNewFile();
             }
@@ -40,6 +40,8 @@ public class EchoVRInstaller {
             PrintStream logStream = new PrintStream(new FileOutputStream(logFile, true));
             setOut(logStream);
             setErr(logStream);
+            LocalDateTime DATE = LocalDateTime.now();
+            System.out.println(DATE);
         } catch (Exception e) {
             e.printStackTrace();
         }

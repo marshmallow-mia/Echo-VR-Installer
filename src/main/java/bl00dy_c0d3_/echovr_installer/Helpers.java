@@ -147,10 +147,13 @@ public class Helpers {
         if (errorOutput.length() > 0) {
             output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
         }
+        System.out.println(output);
 
         return output.toString();
     }
 
+
+    //CAN SOMEONE PLEASE TELL ME WHY I HAVE TWO FUNCTIONS FOR PRETTY MUCH THE SAME SHIT?????
 
     public static String runShellCommandWithOutput(String command){
         Process process;
