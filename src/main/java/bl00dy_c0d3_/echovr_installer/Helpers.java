@@ -25,6 +25,7 @@ import java.io.IOException;
 public class Helpers {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static boolean linux = System.getProperty("os.name").toLowerCase().contains("linux");
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
 
@@ -121,34 +122,53 @@ public class Helpers {
         StringBuilder output = new StringBuilder();
         StringBuilder errorOutput = new StringBuilder();
 
-        try {
-            Process process = Runtime.getRuntime().exec(shellCommand);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        if (linux){
+            try {
+                ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
+                builder.redirectErrorStream(true); // merge stdout and stderr
+                Process process = builder.start();
 
-            // Read the output from the command
-            String s = null;
-            while ((s = stdInput.readLine()) != null) {
-                output.append(s).append("\n");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+
+                int exitCode = process.waitFor();
+                output.append("Process exited with code ").append(exitCode).append("\n");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                Process process = Runtime.getRuntime().exec(shellCommand);
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+                // Read the output from the command
+                String s = null;
+                while ((s = stdInput.readLine()) != null) {
+                    output.append(s).append("\n");
+                }
+
+                // Read any errors from the attempted command
+                while ((s = stdError.readLine()) != null) {
+                    errorOutput.append(s).append("\n");
+                }
+
+                process.waitFor();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            // Read any errors from the attempted command
-            while ((s = stdError.readLine()) != null) {
-                errorOutput.append(s).append("\n");
+            // Combine standard output and error output (optional)
+            if (errorOutput.length() > 0) {
+                output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
             }
-
-            process.waitFor();
-            System.out.println("DONE");
-        } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(output);
         }
-
-        // Combine standard output and error output (optional)
-        if (errorOutput.length() > 0) {
-            output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
-        }
-        System.out.println(output);
-
         return output.toString();
     }
 
@@ -387,6 +407,11 @@ public class Helpers {
                 if (mac) {
                     runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/");
                 }
+                if (linux) {
+                    System.out.println("**Linux prepareAdb: chmod +x " + tempPath + "/" + folder + "/adb");
+                    runShellCommand("chmod +x " + tempPath + "/" + folder + "/adb");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
 

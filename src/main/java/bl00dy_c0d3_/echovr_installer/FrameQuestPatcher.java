@@ -18,6 +18,7 @@ public class FrameQuestPatcher extends JDialog {
     private static final int FRAME_HEIGHT = 720;
     private static final String DEFAULT_PATH = "C:\\EchoVR";
     private final Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
+    static boolean isChrome = checkIfChromeOs();
     private SpecialTextfield textfieldQuestPatchLink;
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
@@ -127,6 +128,8 @@ public class FrameQuestPatcher extends JDialog {
         outFrame.repaint();
         JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
         String apkfileName;
+
+
         if (checkBoxConfig.isSelected()) {
             File f = new File(targetPath + "/personilizedechoapk.apk");
             if (f.exists() && !f.isDirectory()) {
@@ -142,10 +145,41 @@ public class FrameQuestPatcher extends JDialog {
         } else {
             apkfileName = "personilizedechoapk.apk";
         }
+
+
+
+
+
         InstallerQuest installtoQuest = new InstallerQuest();
         boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "_data.zip", labelQuestProgress4, this);
 
         if (installState) {
+
+            //TODO Doesnt work for the entitlement apk. I am tired as hell, so future thingy
+            /*
+            if (checkBoxConfig.isSelected()) {
+                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
+                if(isWindows) {
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(isChrome){
+                    System.out.println("**push config.json");
+                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(mac){
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else{
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+
+                }
+            }
+
+             */
+
             labelQuestProgress4.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);

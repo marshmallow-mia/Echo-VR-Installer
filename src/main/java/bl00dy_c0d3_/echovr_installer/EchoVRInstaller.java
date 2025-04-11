@@ -41,6 +41,8 @@ public class EchoVRInstaller {
             setOut(logStream);
             setErr(logStream);
             LocalDateTime DATE = LocalDateTime.now();
+            System.out.println();
+            System.out.println("Start Logging");
             System.out.println(DATE);
         } catch (Exception e) {
             e.printStackTrace();
