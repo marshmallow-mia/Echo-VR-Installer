@@ -48,7 +48,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.8");
+        setTitle("Echo VR Installer v0.8.1  ");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -155,9 +155,8 @@ public class FrameQuestPatcher extends JDialog {
 
         if (installState) {
 
-            //TODO Doesnt work for the entitlement apk. I am tired as hell, so future thingy
-            /*
-            if (checkBoxConfig.isSelected()) {
+            //TODO Doesnt work always. Kinda random...
+            if (checkBoxConfig.isSelected()){
                 System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
                 if(isWindows) {
                     System.out.println("**push config.json");
@@ -178,7 +177,6 @@ public class FrameQuestPatcher extends JDialog {
                 }
             }
 
-             */
 
             labelQuestProgress4.setText("Installation is complete!");
             outFrame.repaint();

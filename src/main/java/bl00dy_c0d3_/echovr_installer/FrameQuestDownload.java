@@ -55,7 +55,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8");
+        this.setTitle("Echo VR Installer v0.8.1");
         FrameQuestDownload outFrame = this;
 
 
@@ -134,7 +134,7 @@ public class FrameQuestDownload extends JDialog {
 
 
         //config.json is in /sdcard/Android/data/com.readyatdawn.r15/files/_local now
-/*
+
         if (checkBoxConfig.isSelected()){
             System.out.println("Custom Config Checkbox selected");
             File f = new File(targetPath + "/r15-v76-patch.apk");
@@ -157,10 +157,7 @@ public class FrameQuestDownload extends JDialog {
             apkfileName = "r15-v76-patch.apk";
         }
 
- */
 
-
-        apkfileName = "r15-v76-patch.apk";
 
 
         String obbfileName = "_data.zip";
@@ -168,7 +165,7 @@ public class FrameQuestDownload extends JDialog {
         boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
 
         if (installState) {
-                      if (checkBoxConfig.isSelected()){
+            if (checkBoxConfig.isSelected()){
                 System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
                 if(isWindows) {
                     System.out.println("**push config.json");

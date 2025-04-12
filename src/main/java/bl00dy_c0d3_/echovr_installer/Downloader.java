@@ -242,7 +242,9 @@ public class Downloader implements Runnable {
 
 
         for (String server : servers) {
+            System.out.println("Testing server: " + server);
             long timeTaken = measureDownloadSpeed(server + testFile);
+            System.out.println(server + ": " + timeTaken);
             if (timeTaken < fastestTime) {
                 fastestTime = timeTaken;
                 fastestServer = server;
