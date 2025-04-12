@@ -62,15 +62,17 @@ public class InstallerQuest {
                 System.out.println("**mkdir: /sdcard/Android/obb/com.readyatdawn.r15");
                 runShellCommand(tempPath + "/platform-tools/adb.exe shell \"mkdir /sdcard/Android/obb/com.readyatdawn.r15\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}\"");
+                //System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
+                //runShellCommand(tempPath + "/platform-tools/adb.exe shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}\"");
+
+                //System.out.println("**Fuck You Meta and your permissions (Setting -R 777 on data/*)");
+                //runShellCommand(tempPath + "/platform-tools/adb.exe shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/*\"");
 
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools/adb.exe install -g " + pathToApkObb + "/" + apkfileName);
 
                 System.out.println("**push zip");
                 runShellCommand(tempPath + "/platform-tools/adb.exe push " + pathToApkObb + "/" + obbfileName + " \"/sdcard/Android/obb/com.readyatdawn.r15/\"");
-
                 System.out.println("**unzip");
                 runShellCommand(tempPath + "/platform-tools/adb.exe shell \"cd /sdcard/Android/obb/com.readyatdawn.r15; unzip _data.zip\"");
 
@@ -96,8 +98,8 @@ public class InstallerQuest {
                 System.out.println("**mkdir: /sdcard/Android/obb/com.readyatdawn.r15");
                 runShellCommand("adb shell \"mkdir /sdcard/Android/obb/com.readyatdawn.r15\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
-                runShellCommand("adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}\"");
+                //System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
+                //runShellCommand("adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}\"");
 
                 System.out.println("**Install");
                 runShellCommand("adb install -g " + pathToApkObb + "/" + apkfileName);
@@ -130,8 +132,8 @@ public class InstallerQuest {
                 System.out.println("**mkdir: /sdcard/Android/obb/com.readyatdawn.r15");
                 runShellCommand(tempPath + "/platform-tools-mac/adb shell mkdir /sdcard/Android/obb/com.readyatdawn.r15");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
+                //System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
+                //runShellCommand(tempPath + "/platform-tools-mac/adb shell mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
 
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools-mac/adb install -g " + pathToApkObb + "/" + apkfileName);
@@ -164,8 +166,11 @@ public class InstallerQuest {
                 System.out.println("**mkdir: /sdcard/Android/obb/com.readyatdawn.r15");
                 runShellCommand(tempPath + "/platform-tools-linux/adb " + "shell 'mkdir /sdcard/Android/obb/com.readyatdawn.r15'");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
-                runShellCommand(tempPath + "/platform-tools-linux/adb " + "shell 'mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}'");
+                //System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
+                //runShellCommand(tempPath + "/platform-tools-linux/adb " + "shell 'mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}'");
+
+                //System.out.println("**Fuck You Meta and your permissions (Setting -R 777 on data/*)");
+                //runShellCommand(tempPath + "/platform-tools-linux/adb " + "shell " + "\"chmod -R a+rwx /sdcard/Android/data/com.readyatdawn.r15/*\"");
 
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools-linux/adb " + "install -g " + pathToApkObb + "/" + apkfileName);
