@@ -4,8 +4,6 @@ To use it, just go to the release page and download the specific build for eithe
 After download you need to extract it and start the application.
 The Installer itself should be pretty self explainable. If you have any questions, contact me on discord "marcel_one_"
 
-Check this up to date guide:
-https://discord.com/channels/779349159852769310/1259166249804370040
 
 You need to be on the Echo VR Lounge Discord Server:
 [https://discord.com/channels/779349159852769310/1259166249804370040](https://discord.com/channels/779349159852769310/1259166249804370040)
