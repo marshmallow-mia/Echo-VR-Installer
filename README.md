@@ -6,6 +6,8 @@ The Installer itself should be pretty self explainable. If you have any question
 
 Check this up to date guide:
 https://discord.com/channels/779349159852769310/1259166249804370040
+You need to be on the Echo VR Lounge Discord Server:
+https://discord.com/channels/779349159852769310/1259166249804370040
 
 Work in Progress!
 
