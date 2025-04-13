@@ -6,20 +6,27 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+import java.io.File;
+import java.util.List;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+
 
 public class Helpers {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static boolean linux = System.getProperty("os.name").toLowerCase().contains("linux");
+    static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
 
 
     @Contract("_, _ -> new")
@@ -115,36 +122,58 @@ public class Helpers {
         StringBuilder output = new StringBuilder();
         StringBuilder errorOutput = new StringBuilder();
 
-        try {
-            Process process = Runtime.getRuntime().exec(shellCommand);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        if (linux){
+            try {
+                ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
+                builder.redirectErrorStream(true); // merge stdout and stderr
+                Process process = builder.start();
 
-            // Read the output from the command
-            String s = null;
-            while ((s = stdInput.readLine()) != null) {
-                output.append(s).append("\n");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+
+                int exitCode = process.waitFor();
+                output.append("Process exited with code ").append(exitCode).append("\n");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        else {
+            try {
+                Process process = Runtime.getRuntime().exec(shellCommand);
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+                // Read the output from the command
+                String s = null;
+                while ((s = stdInput.readLine()) != null) {
+                    output.append(s).append("\n");
+                }
+
+                // Read any errors from the attempted command
+                while ((s = stdError.readLine()) != null) {
+                    errorOutput.append(s).append("\n");
+                }
+
+                process.waitFor();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            // Read any errors from the attempted command
-            while ((s = stdError.readLine()) != null) {
-                errorOutput.append(s).append("\n");
+            // Combine standard output and error output (optional)
+            if (errorOutput.length() > 0) {
+                output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
             }
-
-            process.waitFor();
-            System.out.println("DONE");
-        } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(output);
         }
-
-        // Combine standard output and error output (optional)
-        if (errorOutput.length() > 0) {
-            output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
-        }
-
         return output.toString();
     }
 
+
+    //CAN SOMEONE PLEASE TELL ME WHY I HAVE TWO FUNCTIONS FOR PRETTY MUCH THE SAME SHIT?????
 
     public static String runShellCommandWithOutput(String command){
         Process process;
@@ -195,6 +224,57 @@ public class Helpers {
 
     }
 
+    public static String checkForEchoOnKnownPaths(JDialog outFrame){
+        String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
+        String output = runShellCommandWithOutput(command);
+
+        boolean checkAdmin = checkForAdmin();
+
+        // Parse and display the result
+        if (! checkAdmin) {
+            System.out.println("The application is NOT running with administrative privileges.");
+            ErrorDialog runAsAdmin = new ErrorDialog();
+            runAsAdmin.errorDialog(outFrame, "Please restart as Admin", "<html>To auto choose the echovr.exe path, you need to restart this app as admin. To do that,<br>close the Installer completely. Then right click on EchoVR_Installer.exe<br>and click on Start as Admin.</html>", -1);
+            return "";
+        }
+        else{
+            String commandGetOculusPath = "powershell.exe -Command \"(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\WOW6432Node\\Oculus VR, LLC\\Oculus').Base\"";
+            String oculusPath = runShellCommandWithOutput(commandGetOculusPath);
+            String[] knownPaths = {"C:/EchoVR", oculusPath};
+
+            for (String path : knownPaths) {
+                File dir = new File(path);
+                if (dir.exists() && dir.isDirectory()) {
+                    File foundFile = findFileRecursive(dir, "echovr.exe");
+                    if (foundFile != null) {
+
+                        return foundFile.getAbsolutePath().replace("echovr.exe", ""); // Return first match
+                    }
+                }
+            }
+
+
+        }
+
+        return "";
+
+    }
+
+    private static File findFileRecursive(File dir, String filename) {
+        File[] files = dir.listFiles();
+        if (files == null) return null; // Check for access issues
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                File found = findFileRecursive(file, filename); // Recursively search subdirs
+                if (found != null) return found;
+            } else if (file.getName().equalsIgnoreCase(filename)) {
+                return file;
+            }
+        }
+        return null;
+    }
+
 
     public static boolean checkForAdmin(){
         String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
@@ -207,6 +287,54 @@ public class Helpers {
         else{
             return true;
         }
+    }
+
+
+    //Method to download a textfile and return each line as array object
+    public static String[] getFileAndReturnArray(String fileUrl, String outputFile){
+        //String fileUrl = this.fileUrl; // Replace with actual URL
+        String destination = tempPath + "/" + outputFile; // File where data will be saved
+        List<String> lines = null;
+        try {
+            // Download the file
+            downloadFile(fileUrl, destination);
+
+            // Read file and store lines in an array
+            lines = readFileToArray(destination);
+
+            // Print stored objects
+            for (String line : lines) {
+                System.out.println(line);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return lines.toArray(new String[0]); // Correct way to return an array
+    }
+
+    // Method to download file from URL
+    public static void downloadFile(String fileUrl, String destination) throws IOException {
+        try (BufferedInputStream in = new BufferedInputStream(new URL(fileUrl).openStream());
+             FileOutputStream fileOutputStream = new FileOutputStream(destination)) {
+            byte dataBuffer[] = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+                fileOutputStream.write(dataBuffer, 0, bytesRead);
+            }
+        }
+    }
+
+    // Method to read file and store each line in an array
+    public static List<String> readFileToArray(String filePath) throws IOException {
+        List<String> lines = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+        }
+        return lines;
     }
 
 
@@ -279,6 +407,11 @@ public class Helpers {
                 if (mac) {
                     runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/");
                 }
+                if (linux) {
+                    System.out.println("**Linux prepareAdb: chmod +x " + tempPath + "/" + folder + "/adb");
+                    runShellCommand("chmod +x " + tempPath + "/" + folder + "/adb");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
 

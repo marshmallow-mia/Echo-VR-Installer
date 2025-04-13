@@ -29,7 +29,7 @@ public class FramePCPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.6");
+        this.setTitle("Echo VR Installer v0.8.1");
         this.setModal(true);
 
         Background back = new Background("echo-in-arena.png");
@@ -178,7 +178,7 @@ public class FramePCPatcher extends JDialog {
 
                         System.out.println(link);
                         downloadPatch = new Downloader();
-                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outFrame, null, 3, true, -1);
+                        downloadPatch.startDownload(textfieldPCPatchLink.getText(), echoPath + "", "pnsovr.dll", patchProgress, outFrame, null, 3, true, -1, false);
                     }
                 }
                 else{

@@ -27,6 +27,7 @@ public class FrameQuestDownload extends JDialog {
     String configPath = "Optional: Choose config.json on the button above";
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
+    static boolean isChrome = checkIfChromeOs();
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
     SpecialButton questStartDownload;
 
@@ -54,7 +55,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.6");
+        this.setTitle("Echo VR Installer v0.8.1");
         FrameQuestDownload outFrame = this;
 
 
@@ -104,7 +105,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread = new Thread(() -> {
             downloader = new Downloader();
-            downloader.startDownload("Echo_patched_version_fix.apk", targetPath + "", "Echo_patched_version_fix.apk",  labelQuestProgress2, outFrame, null, 2, false, 0);
+            downloader.startDownload("r15-v76-patch.apk", targetPath + "", "r15-v76-patch.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread.start();
@@ -112,10 +113,10 @@ public class FrameQuestDownload extends JDialog {
 
         pause(2);
 
-        questStartDownload.changeText("Restart Download");
+
         Thread downloadThread2 = new Thread(() -> {
             downloader2 = new Downloader();
-            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath + "", "main.4987570.com.readyatdawn.r15.obb",  labelQuestProgress3, outFrame, null, 2, false, 0);
+            downloader2.startDownload("_data.zip", targetPath + "", "_data.zip",  labelQuestProgress3, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread2.start();
@@ -130,11 +131,16 @@ public class FrameQuestDownload extends JDialog {
         outFrame.repaint();
         JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
+
+
+        //config.json is in /sdcard/Android/data/com.readyatdawn.r15/files/_local now
+
         if (checkBoxConfig.isSelected()){
-            File f = new File(targetPath + "/Echo_patched_version_fix.apk");
+            System.out.println("Custom Config Checkbox selected");
+            File f = new File(targetPath + "/r15-v76-patch.apk");
             if(f.exists() && !f.isDirectory()) {
                 PatchAPK patchAPK = new PatchAPK();
-                if (!patchAPK.patchAPK(targetPath + "", "Echo_patched_version_fix.apk", labelConfigPath.getText(), labelConfigPath, outFrame)) {
+                if (!patchAPK.patchAPK(targetPath + "", "r15-v76-patch.apk", labelConfigPath.getText(), labelConfigPath, outFrame)) {
                     return;
                 }
 
@@ -142,21 +148,48 @@ public class FrameQuestDownload extends JDialog {
             else {
                 ErrorDialog error2 = new ErrorDialog();
                 error2.errorDialog(outFrame, "Echo not found", "Echo wasn't found. Please use the top Button first", 2);
+                System.out.println("Custom Config: Echo wasn't found. Please use the top Button first");
                 return;
             }
             apkfileName = "changedConfig-aligned-debugSigned.apk";
         }
         else {
-            apkfileName = "Echo_patched_version_fix.apk";
+            apkfileName = "r15-v76-patch.apk";
         }
-        String obbfileName = "main.4987570.com.readyatdawn.r15.obb";
+
+
+
+
+        String obbfileName = "_data.zip";
         InstallerQuest installToQuest = new InstallerQuest();
         boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
 
         if (installState) {
+            if (checkBoxConfig.isSelected()){
+                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
+                if(isWindows) {
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(isChrome){
+                    System.out.println("**push config.json");
+                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(mac){
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else{
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+
+                }
+            }
+
             labelQuestInstallProgress.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+
         }
         else{
             labelQuestInstallProgress.setText("Installation did not finish!");

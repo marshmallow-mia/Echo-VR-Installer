@@ -18,6 +18,7 @@ public class FrameQuestPatcher extends JDialog {
     private static final int FRAME_HEIGHT = 720;
     private static final String DEFAULT_PATH = "C:\\EchoVR";
     private final Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
+    static boolean isChrome = checkIfChromeOs();
     private SpecialTextfield textfieldQuestPatchLink;
     private SpecialLabel labelConfigPath;
     private SpecialCheckBox checkBoxConfig;
@@ -47,7 +48,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.6");
+        setTitle("Echo VR Installer v0.8.1  ");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -90,7 +91,7 @@ public class FrameQuestPatcher extends JDialog {
             Thread downloadThread1 = new Thread(() -> {
                 downloader = new Downloader();
                 String fixedURL = textfieldQuestPatchLink.getText().replace("org", "org/dl");
-                downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1);
+                downloader.startDownload(fixedURL, targetPath.toString(), "personilizedechoapk.apk", labelQuestProgress2, this, null, 2, true, -1, false);
             });
 
             downloadThread1.start();  // This runs the download in a separate thread
@@ -104,7 +105,7 @@ public class FrameQuestPatcher extends JDialog {
 
             Thread downloadThread2 = new Thread(() -> {
                 downloader2 = new Downloader();
-                            downloader2.startDownload("main.4987570.com.readyatdawn.r15.obb", targetPath.toString(), "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress3, this, null, 2, false, 0);
+                            downloader2.startDownload("_data.zip", targetPath.toString(), "_data.zip", labelQuestProgress3, this, null, 2, false, 0, false);
             });
 
             downloadThread2.start();  // This runs the download in a separate thread
@@ -127,6 +128,8 @@ public class FrameQuestPatcher extends JDialog {
         outFrame.repaint();
         JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
         String apkfileName;
+
+
         if (checkBoxConfig.isSelected()) {
             File f = new File(targetPath + "/personilizedechoapk.apk");
             if (f.exists() && !f.isDirectory()) {
@@ -142,10 +145,39 @@ public class FrameQuestPatcher extends JDialog {
         } else {
             apkfileName = "personilizedechoapk.apk";
         }
+
+
+
+
+
         InstallerQuest installtoQuest = new InstallerQuest();
-        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "main.4987570.com.readyatdawn.r15.obb", labelQuestProgress4, this);
+        boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "_data.zip", labelQuestProgress4, this);
 
         if (installState) {
+
+            //TODO Doesnt work always. Kinda random...
+            if (checkBoxConfig.isSelected()){
+                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
+                if(isWindows) {
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(isChrome){
+                    System.out.println("**push config.json");
+                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else if(mac){
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+                }
+                else{
+                    System.out.println("**push config.json");
+                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
+
+                }
+            }
+
+
             labelQuestProgress4.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);

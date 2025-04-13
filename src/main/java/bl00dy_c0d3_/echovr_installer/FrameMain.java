@@ -21,7 +21,7 @@ public class FrameMain extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.6 [pre alpha]");
+        setTitle("Echo VR Installer v0.8.1 [pre alpha]");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
@@ -47,7 +47,7 @@ public class FrameMain extends JFrame {
                 "I know you still feel shame when you have to look at my source code.<br>" +
                 "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
                 "This tool is still in early alpha!<br>" +
-                "If you have problems, contact me on Discord 'marcel_one_'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                "If you have problems, contact me on Discord 'marshmallow_mia'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
     }
 
@@ -74,27 +74,27 @@ public class FrameMain extends JFrame {
 
     }
 
-private void addDeleteCached(JPanel back, JFrame outFrame) {
-    SpecialButton btn_deleteCache = new SpecialButton("Delete cache", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-    btn_deleteCache.setLocation(818, 595);
-    btn_deleteCache.addMouseListener(new MouseAdapter() {
-        public void mouseReleased(MouseEvent event) {
-            // Create an instance of DeleteCache and call the executeDeletion method
-            DeleteCache deleteCache = new DeleteCache();
-            deleteCache.executeDeletion(outFrame);
-        }
-    });
-    back.add(btn_deleteCache);
+    private void addDeleteCached(JPanel back, JFrame outFrame) {
+        SpecialButton btn_deleteCache = new SpecialButton("Delete cache", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
+        btn_deleteCache.setLocation(818, 595);
+        btn_deleteCache.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                // Create an instance of DeleteCache and call the executeDeletion method
+                DeleteCache deleteCache = new DeleteCache();
+                deleteCache.executeDeletion(outFrame);
+            }
+        });
+        back.add(btn_deleteCache);
 
-    SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
-    addDeleteIcon.setLocation(770, 595);
-    back.add(addDeleteIcon);
+        SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
+        addDeleteIcon.setLocation(770, 595);
+        back.add(addDeleteIcon);
 
-    SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
-    cacheLabel.setLocation(818, 640);
-    back.add(cacheLabel);
+        SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
+        cacheLabel.setLocation(818, 640);
+        back.add(cacheLabel);
 
-}
+    }
 
 
     private void addPCButtons(JPanel back, FrameMain outFrame) {
@@ -106,6 +106,17 @@ private void addDeleteCached(JPanel back, JFrame outFrame) {
             }
         });
         back.add(btn_PCInstallEcho);
+
+
+        SpecialButton btn_PCUpdateEcho = new SpecialButton("Update Echo (PC)", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        btn_PCUpdateEcho.setLocation(btn_PCInstallEcho.getX(), 280);
+        btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FramePCEchoUpdate(outFrame);
+            }
+        });
+        back.add(btn_PCUpdateEcho);
+
 
         SpecialLabel optionalPCLabel = createSpecialLabel("The following patches are optional", 20);
         optionalPCLabel.setLocation((FRAME_WIDTH / 2 - optionalPCLabel.getPreferredSize().width) / 2, 360);
