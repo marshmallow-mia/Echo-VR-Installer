@@ -24,7 +24,7 @@ public class FrameQuestDownload extends JDialog {
     public int firstDownloadDone = 0;
     //Get the temp path
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
-    String configPath = "Optional: Choose config.json on the button above";
+    String configPath = "Error 204";
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static boolean isChrome = checkIfChromeOs();
@@ -133,59 +133,15 @@ public class FrameQuestDownload extends JDialog {
 
 
 
-        //config.json is in /sdcard/Android/data/com.readyatdawn.r15/files/_local now
-
-        if (checkBoxConfig.isSelected()){
-            System.out.println("Custom Config Checkbox selected");
-            File f = new File(targetPath + "/r15-v76-patch.apk");
-            if(f.exists() && !f.isDirectory()) {
-                PatchAPK patchAPK = new PatchAPK();
-                if (!patchAPK.patchAPK(targetPath + "", "r15-v76-patch.apk", labelConfigPath.getText(), labelConfigPath, outFrame)) {
-                    return;
-                }
-
-            }
-            else {
-                ErrorDialog error2 = new ErrorDialog();
-                error2.errorDialog(outFrame, "Echo not found", "Echo wasn't found. Please use the top Button first", 2);
-                System.out.println("Custom Config: Echo wasn't found. Please use the top Button first");
-                return;
-            }
-            apkfileName = "changedConfig-aligned-debugSigned.apk";
-        }
-        else {
-            apkfileName = "r15-v76-patch.apk";
-        }
 
 
-
+        apkfileName = "r15-v76-patch.apk";
 
         String obbfileName = "_data.zip";
         InstallerQuest installToQuest = new InstallerQuest();
         boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
 
         if (installState) {
-            if (checkBoxConfig.isSelected()){
-                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
-                if(isWindows) {
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(isChrome){
-                    System.out.println("**push config.json");
-                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(mac){
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else{
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-
-                }
-            }
-
             labelQuestInstallProgress.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
@@ -246,7 +202,7 @@ public class FrameQuestDownload extends JDialog {
 
 
     //Needs to be declared outside, as its needed outside
-    SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Check this to use the custom config", 17);
+    SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Error 204", 17);
     private void addSpecialCheckBox(@NotNull JPanel back) {
         checkBoxConfig.setSize(500,30);
         checkBoxConfig.setLocation(50, 190);
@@ -270,7 +226,7 @@ public class FrameQuestDownload extends JDialog {
     }
 
     private void addChooseConfigButton(@NotNull JPanel back) {
-        SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        SpecialButton chooseConfig = new SpecialButton("Error 204", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
         chooseConfig.setLocation(50, 111);
         chooseConfig.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {

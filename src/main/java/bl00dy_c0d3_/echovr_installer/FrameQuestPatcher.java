@@ -128,56 +128,12 @@ public class FrameQuestPatcher extends JDialog {
         outFrame.repaint();
         JOptionPane.showMessageDialog(outFrame, "<html>Press OK to start the installation. It can take a minute to install!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
         String apkfileName;
-
-
-        if (checkBoxConfig.isSelected()) {
-            File f = new File(targetPath + "/personilizedechoapk.apk");
-            if (f.exists() && !f.isDirectory()) {
-                PatchAPK patchAPK = new PatchAPK();
-                if (!patchAPK.patchAPK(targetPath.toString(), "personilizedechoapk.apk", labelConfigPath.getText(), labelConfigPath, this)) {
-                    return;
-                }
-            } else {
-                new ErrorDialog().errorDialog(this, "Echo not found", "Echo wasn't found. Please use the Download Button first", 2);
-                return;
-            }
-            apkfileName = "changedConfig-aligned-debugSigned.apk";
-        } else {
-            apkfileName = "personilizedechoapk.apk";
-        }
-
-
-
-
+        apkfileName = "personilizedechoapk.apk";
 
         InstallerQuest installtoQuest = new InstallerQuest();
         boolean installState = installtoQuest.installAPK(targetPath.toString(), apkfileName, "_data.zip", labelQuestProgress4, this);
 
         if (installState) {
-
-            //TODO Doesnt work always. Kinda random...
-            if (checkBoxConfig.isSelected()){
-                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
-                if(isWindows) {
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(isChrome){
-                    System.out.println("**push config.json");
-                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(mac){
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else{
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-
-                }
-            }
-
-
             labelQuestProgress4.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
@@ -207,11 +163,11 @@ public class FrameQuestPatcher extends JDialog {
 
         back.add(Helpers.createSpecialLabel("4. Paste the link with CTRL-V:", 16, 582, 40));
         back.add(Helpers.createSpecialLabel("5. Start the Download Process:", 16, 582, 170));
-        back.add(Helpers.createSpecialLabel("5(a). Optional config.json. Don't use if you don't need to:", 16, 582, 295));
+        back.add(Helpers.createSpecialLabel("Error 204", 16, 582, 295));
         back.add(Helpers.createSpecialLabel("6. After the Download above is finished, start this button:", 16, 582, 490));
         back.add(Helpers.createSpecialLabel("Progress = ", 17, 810, 210, new Dimension(130, 38), Color.BLACK, Color.WHITE));
 
-        String configPath = "Optional: Choose config.json on the button above";
+        String configPath = "Error 204";
         labelConfigPath = Helpers.createSpecialLabel(configPath, 14, 582, 455, new Dimension(600, 25), Color.BLACK, Color.WHITE);
         back.add(labelConfigPath);
 
@@ -270,7 +226,7 @@ public class FrameQuestPatcher extends JDialog {
     }
 
     private void addCheckBoxes(@NotNull JPanel back) {
-        checkBoxConfig = new SpecialCheckBox("Check this to use the custom config", 17);
+        checkBoxConfig = new SpecialCheckBox("Error 204", 17);
         checkBoxConfig.setSize(500, 30);
         checkBoxConfig.setLocation(582, 525);
         checkBoxConfig.setOpaque(true);
@@ -292,7 +248,7 @@ public class FrameQuestPatcher extends JDialog {
 
 
     private void addChooseConfigButton(@NotNull JPanel back) {
-        SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        SpecialButton chooseConfig = new SpecialButton("Error 204", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
         chooseConfig.setLocation(582, 405);
         chooseConfig.addMouseListener(new MouseAdapter() {
             @Override

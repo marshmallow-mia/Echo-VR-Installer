@@ -75,7 +75,8 @@ public class Helpers {
             outFrame.repaint();
         }
         else{
-            new ErrorDialog().errorDialog(outFrame, "Wrong filetype provided", "Your provided file is not a config.json. Please check again!", 0);
+            return;
+            //new ErrorDialog().errorDialog(outFrame, "Wrong filetype provided", "Your provided file is not a config.json. Please check again!", 0);
         }
     }
 
