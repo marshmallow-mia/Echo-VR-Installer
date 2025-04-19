@@ -48,7 +48,7 @@ public class FrameQuestPatcher extends JDialog {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.8.1  ");
+        setTitle("Echo VR Installer v0.8.2  ");
 
         setPreferredSize(new Dimension(FRAME_WIDTH, FRAME_HEIGHT));
         setModal(true);
@@ -163,13 +163,13 @@ public class FrameQuestPatcher extends JDialog {
 
         back.add(Helpers.createSpecialLabel("4. Paste the link with CTRL-V:", 16, 582, 40));
         back.add(Helpers.createSpecialLabel("5. Start the Download Process:", 16, 582, 170));
-        back.add(Helpers.createSpecialLabel("Error 204", 16, 582, 295));
-        back.add(Helpers.createSpecialLabel("6. After the Download above is finished, start this button:", 16, 582, 490));
+        //back.add(Helpers.createSpecialLabel("Error 204", 16, 582, 295));
+        back.add(Helpers.createSpecialLabel("6. After the Download above is finished, click this button:", 16, 582, 300));
         back.add(Helpers.createSpecialLabel("Progress = ", 17, 810, 210, new Dimension(130, 38), Color.BLACK, Color.WHITE));
 
         String configPath = "Error 204";
         labelConfigPath = Helpers.createSpecialLabel(configPath, 14, 582, 455, new Dimension(600, 25), Color.BLACK, Color.WHITE);
-        back.add(labelConfigPath);
+        //back.add(labelConfigPath);
 
         //THIS NEED TO BE SET MANUALLY, AS I NEED TO ACCESS IT LATER
         labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
@@ -187,7 +187,7 @@ public class FrameQuestPatcher extends JDialog {
         back.add(labelQuestProgress3);
 
         labelQuestProgress4.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress4.setLocation(885,587);
+        labelQuestProgress4.setLocation(885,340);
         labelQuestProgress4.setSize(300, 50);
         labelQuestProgress4.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress4.setForeground(Color.BLACK);
@@ -231,7 +231,7 @@ public class FrameQuestPatcher extends JDialog {
         checkBoxConfig.setLocation(582, 525);
         checkBoxConfig.setOpaque(true);
         checkBoxConfig.setBackground(new Color(50, 50, 50));
-        back.add(checkBoxConfig);
+        //back.add(checkBoxConfig);
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
@@ -256,12 +256,12 @@ public class FrameQuestPatcher extends JDialog {
                 handleChooseConfigClick();
             }
         });
-        back.add(chooseConfig);
+        //back.add(chooseConfig);
     }
 
     private void addStartPatchingButton(@NotNull JPanel back) {
         SpecialButton pcStartPatch = new SpecialButton("Start patching", "button_up.png", "button_down.png", "button_highlighted.png", 18);
-        pcStartPatch.setLocation(585, 587);
+        pcStartPatch.setLocation(585, 340);
         pcStartPatch.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent event) {

@@ -55,7 +55,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.1");
+        this.setTitle("Echo VR Installer v0.8.2");
         FrameQuestDownload outFrame = this;
 
 
@@ -163,35 +163,34 @@ public class FrameQuestDownload extends JDialog {
 
 
     private void addSpecialLabels(@NotNull JPanel back) {
-        back.add(Helpers.createSpecialLabel("Progress = ", 17, 282, 40, new Dimension(240, 38), Color.BLACK, new Color(255, 255, 255, 200)));
+        back.add(Helpers.createSpecialLabel("Progress = ", 17, 257, 100, new Dimension(240, 38), Color.BLACK, new Color(255, 255, 255, 200)));
 
 
         //Progressbar
         labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress2.setLocation(522,40);
-        labelQuestProgress2.setSize(130, 19);
+        labelQuestProgress2.setLocation(497,100);
+        labelQuestProgress2.setSize(159, 19);
         labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress2.setForeground(Color.BLACK);
         back.add(labelQuestProgress2);
 
         labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress3.setLocation(522,59);
-        labelQuestProgress3.setSize(130, 19);
+        labelQuestProgress3.setLocation(497,119);
+        labelQuestProgress3.setSize(159, 19);
         labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress3.setForeground(Color.BLACK);
         back.add(labelQuestProgress3);
 
-
         //ConfigPath
-        labelConfigPath.setLocation(50,160);
+        labelConfigPath.setLocation(25,160);
         labelConfigPath.setSize(600, 25);
         labelConfigPath.setBackground(new Color(255, 255, 255, 200));
         labelConfigPath.setForeground(Color.BLACK);
-        back.add(labelConfigPath);
+        //back.add(labelConfigPath);
 
         //InstallProgress
         labelQuestInstallProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestInstallProgress.setLocation(350,250);
+        labelQuestInstallProgress.setLocation(325,200);
         labelQuestInstallProgress.setSize(330, 50);
         labelQuestInstallProgress.setBackground(new Color(255, 255, 255, 200));
         labelQuestInstallProgress.setForeground(Color.BLACK);
@@ -208,14 +207,14 @@ public class FrameQuestDownload extends JDialog {
         checkBoxConfig.setLocation(50, 190);
 
         //JCheckBoxen werden Panel hinzugefügt
-        back.add(checkBoxConfig);
+        //back.add(checkBoxConfig);
 
 
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
         questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-        questStartDownload.setLocation(50, 40);
+        questStartDownload.setLocation(25, 100);
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 handleDownloadButtonClick();
@@ -233,13 +232,13 @@ public class FrameQuestDownload extends JDialog {
                 jsonFileChooser(labelConfigPath, outFrame);
             }
         });
-        back.add(chooseConfig);
+        //back.add(chooseConfig);
     }
 
 
     private void addQuestStartPatchingButton(@NotNull JPanel back) {
         SpecialButton questStartPatching = new SpecialButton("Install Echo to Quest", "button_up.png", "button_down.png", "button_highlighted.png", 15);
-        questStartPatching.setLocation(50, 250);
+        questStartPatching.setLocation(25, 200);
         questStartPatching.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 handleQuestStartPatchingButtonClick();
