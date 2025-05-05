@@ -144,6 +144,7 @@ public class Helpers {
         }
         else {
             try {
+                System.out.println("HelpersClass runShellCommand: " + shellCommand);
                 Process process = Runtime.getRuntime().exec(shellCommand);
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));

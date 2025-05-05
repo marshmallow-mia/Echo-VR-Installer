@@ -46,42 +46,40 @@ public class InstallerQuest {
             String commandResult4;
             String commandResult5;
             String commandResult6;
-            if(isWindows) {
-                System.out.println("**InstallerQuest ADB DEVICES (Windows 1th step)");
-                runShellCommand(tempPath + "/platform-tools/adb.exe devices");
+            if (isWindows) {
+                String adbPath = "\"" + tempPath + "/platform-tools/adb.exe" + "\"";
+
+                System.out.println("**InstallerQuest ADB DEVICES (Windows 1st step)");
+                runShellCommand(adbPath + " devices");
 
                 System.out.println("**Uninstall");
-                runShellCommand(tempPath + "/platform-tools/adb.exe uninstall com.readyatdawn.r15");
+                runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
 
-                System.out.println("**Start deleting old /sdcard/Android/obb/com.readyatdawn.r15 (Just to make sure its gone)");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell rm -r /sdcard/Android/obb/com.readyatdawn.r15");
+                System.out.println("**Start deleting old /sdcard/Android/obb/com.readyatdawn.r15");
+                runShellCommand(adbPath + " shell rm -r /sdcard/Android/obb/com.readyatdawn.r15");
 
-                System.out.println("**Start deleting old /sdcard/Android/data/com.readyatdawn.r15 (Just to make sure its gone)");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell rm -r /sdcard/Android/data/com.readyatdawn.r15");
+                System.out.println("**Start deleting old /sdcard/Android/data/com.readyatdawn.r15");
+                runShellCommand(adbPath + " shell rm -r /sdcard/Android/data/com.readyatdawn.r15");
 
                 System.out.println("**mkdir: /sdcard/Android/obb/com.readyatdawn.r15");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell \"mkdir /sdcard/Android/obb/com.readyatdawn.r15\"");
-
-                //System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}");
-                //runShellCommand(tempPath + "/platform-tools/adb.exe shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/{RAD,_local,_temp}\"");
-
-                //System.out.println("**Fuck You Meta and your permissions (Setting -R 777 on data/*)");
-                //runShellCommand(tempPath + "/platform-tools/adb.exe shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/*\"");
+                runShellCommand(adbPath + " shell mkdir /sdcard/Android/obb/com.readyatdawn.r15");
 
                 System.out.println("**Install");
-                runShellCommand(tempPath + "/platform-tools/adb.exe install -g " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
                 System.out.println("**push zip");
-                runShellCommand(tempPath + "/platform-tools/adb.exe push " + pathToApkObb + "/" + obbfileName + " \"/sdcard/Android/obb/com.readyatdawn.r15/\"");
+                runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" \"/sdcard/Android/obb/com.readyatdawn.r15/\"");
+
                 System.out.println("**unzip");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell \"cd /sdcard/Android/obb/com.readyatdawn.r15; unzip _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/Android/obb/com.readyatdawn.r15 && unzip _data.zip\"");
 
                 System.out.println("**rm zip");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell \"cd /sdcard/Android/obb/com.readyatdawn.r15; rm _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/Android/obb/com.readyatdawn.r15 && rm _data.zip\"");
 
                 System.out.println("**Fuck You Meta and your permissions (Setting -R 777 on _data/*)");
-                runShellCommand(tempPath + "/platform-tools/adb.exe shell \"chmod -R +rwx /sdcard/Android/obb/com.readyatdawn.r15/_data/*\"");
+                runShellCommand(adbPath + " shell chmod -R 777 /sdcard/Android/obb/com.readyatdawn.r15/_data");
             }
+
             else if(isChrome){
                 System.out.println("**InstallerQuest ADB DEVICES (Chrome 1th step)");
                 runShellCommand("adb devices");
