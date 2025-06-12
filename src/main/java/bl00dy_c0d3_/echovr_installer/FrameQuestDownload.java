@@ -55,7 +55,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.3");
+        this.setTitle("Echo VR Installer v0.8.4");
         FrameQuestDownload outFrame = this;
 
 
