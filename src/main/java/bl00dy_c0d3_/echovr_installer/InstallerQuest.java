@@ -148,14 +148,8 @@ public class InstallerQuest {
                 System.out.println("**Uninstall");
                 runShellCommand(tempPath + "/platform-tools-linux/adb uninstall com.readyatdawn.r15");
 
-                System.out.println("**rm old data");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"rm -rf /sdcard/Android/data/com.readyatdawn.r15/\"");
-
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools-linux/adb install -g " + pathToApkObb + "/" + apkfileName);
-
-                System.out.println("**rm old data");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"rm -rf /sdcard/Android/data/com.readyatdawn.r15/\"");
 
                 System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/_local");
                 runShellCommand(tempPath + "/platform-tools-linux/adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/_local\"");
