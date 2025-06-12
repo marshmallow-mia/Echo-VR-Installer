@@ -55,9 +55,6 @@ public class InstallerQuest {
                 System.out.println("**Uninstall");
                 runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
 
-                System.out.println("**Set permissions on data folder (pre-install)");
-                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
-
                 System.out.println("**Install");
                 runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName);
 
@@ -82,9 +79,6 @@ public class InstallerQuest {
 
                 System.out.println("**Uninstall");
                 runShellCommand("adb uninstall com.readyatdawn.r15");
-
-                System.out.println("**Set permissions on data folder (pre-install)");
-                runShellCommand("adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
 
                 System.out.println("**Install");
                 runShellCommand("adb install -g " + pathToApkObb + "/" + apkfileName);
@@ -111,9 +105,6 @@ public class InstallerQuest {
                 System.out.println("**Uninstall");
                 runShellCommand(tempPath + "/platform-tools-mac/adb uninstall com.readyatdawn.r15");
 
-                System.out.println("**Set permissions on data folder (pre-install)");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
-
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools-mac/adb install -g " + pathToApkObb + "/" + apkfileName);
 
@@ -138,9 +129,6 @@ public class InstallerQuest {
 
                 System.out.println("**Uninstall");
                 runShellCommand(tempPath + "/platform-tools-linux/adb uninstall com.readyatdawn.r15");
-
-                System.out.println("**Set permissions on data folder (pre-install)");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
 
                 System.out.println("**Install");
                 runShellCommand(tempPath + "/platform-tools-linux/adb install -g " + pathToApkObb + "/" + apkfileName);
