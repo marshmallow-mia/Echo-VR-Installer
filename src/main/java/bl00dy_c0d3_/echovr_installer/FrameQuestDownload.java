@@ -105,7 +105,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread = new Thread(() -> {
             downloader = new Downloader();
-            downloader.startDownload("r15-v76-patch.apk", targetPath + "", "r15-v76-patch.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
+            downloader.startDownload("r15_12-06-25.apk", targetPath + "", "r15_12-06-25.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread.start();
@@ -135,7 +135,7 @@ public class FrameQuestDownload extends JDialog {
 
 
 
-        apkfileName = "r15-v76-patch.apk";
+        apkfileName = "r15_12-06-25.apk";
 
         String obbfileName = "_data.zip";
         InstallerQuest installToQuest = new InstallerQuest();
