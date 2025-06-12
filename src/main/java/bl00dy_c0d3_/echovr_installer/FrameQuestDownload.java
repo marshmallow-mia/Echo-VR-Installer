@@ -24,7 +24,7 @@ public class FrameQuestDownload extends JDialog {
     public int firstDownloadDone = 0;
     //Get the temp path
     Path targetPath = Paths.get(System.getProperty("java.io.tmpdir"), "echo/");
-    String configPath = "Optional: Choose config.json on the button above";
+    String configPath = "Error 204";
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static boolean isChrome = checkIfChromeOs();
@@ -55,7 +55,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.1");
+        this.setTitle("Echo VR Installer v0.8.3");
         FrameQuestDownload outFrame = this;
 
 
@@ -105,7 +105,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread = new Thread(() -> {
             downloader = new Downloader();
-            downloader.startDownload("r15-v76-patch.apk", targetPath + "", "r15-v76-patch.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
+            downloader.startDownload("r15_12-06-25.apk", targetPath + "", "r15_12-06-25.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread.start();
@@ -133,59 +133,15 @@ public class FrameQuestDownload extends JDialog {
 
 
 
-        //config.json is in /sdcard/Android/data/com.readyatdawn.r15/files/_local now
-
-        if (checkBoxConfig.isSelected()){
-            System.out.println("Custom Config Checkbox selected");
-            File f = new File(targetPath + "/r15-v76-patch.apk");
-            if(f.exists() && !f.isDirectory()) {
-                PatchAPK patchAPK = new PatchAPK();
-                if (!patchAPK.patchAPK(targetPath + "", "r15-v76-patch.apk", labelConfigPath.getText(), labelConfigPath, outFrame)) {
-                    return;
-                }
-
-            }
-            else {
-                ErrorDialog error2 = new ErrorDialog();
-                error2.errorDialog(outFrame, "Echo not found", "Echo wasn't found. Please use the top Button first", 2);
-                System.out.println("Custom Config: Echo wasn't found. Please use the top Button first");
-                return;
-            }
-            apkfileName = "changedConfig-aligned-debugSigned.apk";
-        }
-        else {
-            apkfileName = "r15-v76-patch.apk";
-        }
 
 
-
+        apkfileName = "r15_12-06-25.apk";
 
         String obbfileName = "_data.zip";
         InstallerQuest installToQuest = new InstallerQuest();
         boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
 
         if (installState) {
-            if (checkBoxConfig.isSelected()){
-                System.out.println("Custom Config Checkbox selected:" + labelConfigPath.getText());
-                if(isWindows) {
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools/adb.exe " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(isChrome){
-                    System.out.println("**push config.json");
-                    runShellCommand("adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else if(mac){
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-mac/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-                }
-                else{
-                    System.out.println("**push config.json");
-                    runShellCommand(tempPath + "/platform-tools-linux/adb " + "push " + labelConfigPath.getText() + " /sdcard/Android/data/com.readyatdawn.r15/files/_local/config.json");
-
-                }
-            }
-
             labelQuestInstallProgress.setText("Installation is complete!");
             outFrame.repaint();
             JOptionPane.showMessageDialog(outFrame, "<html>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
@@ -207,35 +163,34 @@ public class FrameQuestDownload extends JDialog {
 
 
     private void addSpecialLabels(@NotNull JPanel back) {
-        back.add(Helpers.createSpecialLabel("Progress = ", 17, 282, 40, new Dimension(240, 38), Color.BLACK, new Color(255, 255, 255, 200)));
+        back.add(Helpers.createSpecialLabel("Progress = ", 17, 257, 100, new Dimension(240, 38), Color.BLACK, new Color(255, 255, 255, 200)));
 
 
         //Progressbar
         labelQuestProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress2.setLocation(522,40);
-        labelQuestProgress2.setSize(130, 19);
+        labelQuestProgress2.setLocation(497,100);
+        labelQuestProgress2.setSize(159, 19);
         labelQuestProgress2.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress2.setForeground(Color.BLACK);
         back.add(labelQuestProgress2);
 
         labelQuestProgress3.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestProgress3.setLocation(522,59);
-        labelQuestProgress3.setSize(130, 19);
+        labelQuestProgress3.setLocation(497,119);
+        labelQuestProgress3.setSize(159, 19);
         labelQuestProgress3.setBackground(new Color(255, 255, 255, 200));
         labelQuestProgress3.setForeground(Color.BLACK);
         back.add(labelQuestProgress3);
 
-
         //ConfigPath
-        labelConfigPath.setLocation(50,160);
+        labelConfigPath.setLocation(25,160);
         labelConfigPath.setSize(600, 25);
         labelConfigPath.setBackground(new Color(255, 255, 255, 200));
         labelConfigPath.setForeground(Color.BLACK);
-        back.add(labelConfigPath);
+        //back.add(labelConfigPath);
 
         //InstallProgress
         labelQuestInstallProgress.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelQuestInstallProgress.setLocation(350,250);
+        labelQuestInstallProgress.setLocation(325,200);
         labelQuestInstallProgress.setSize(330, 50);
         labelQuestInstallProgress.setBackground(new Color(255, 255, 255, 200));
         labelQuestInstallProgress.setForeground(Color.BLACK);
@@ -246,20 +201,20 @@ public class FrameQuestDownload extends JDialog {
 
 
     //Needs to be declared outside, as its needed outside
-    SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Check this to use the custom config", 17);
+    SpecialCheckBox checkBoxConfig = new SpecialCheckBox("Error 204", 17);
     private void addSpecialCheckBox(@NotNull JPanel back) {
         checkBoxConfig.setSize(500,30);
         checkBoxConfig.setLocation(50, 190);
 
         //JCheckBoxen werden Panel hinzugefügt
-        back.add(checkBoxConfig);
+        //back.add(checkBoxConfig);
 
 
     }
 
     private void addStartDownloadButton(@NotNull JPanel back) {
         questStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-        questStartDownload.setLocation(50, 40);
+        questStartDownload.setLocation(25, 100);
         questStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 handleDownloadButtonClick();
@@ -270,20 +225,20 @@ public class FrameQuestDownload extends JDialog {
     }
 
     private void addChooseConfigButton(@NotNull JPanel back) {
-        SpecialButton chooseConfig = new SpecialButton("OPTIONAL CONFIG", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        SpecialButton chooseConfig = new SpecialButton("Error 204", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
         chooseConfig.setLocation(50, 111);
         chooseConfig.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 jsonFileChooser(labelConfigPath, outFrame);
             }
         });
-        back.add(chooseConfig);
+        //back.add(chooseConfig);
     }
 
 
     private void addQuestStartPatchingButton(@NotNull JPanel back) {
         SpecialButton questStartPatching = new SpecialButton("Install Echo to Quest", "button_up.png", "button_down.png", "button_highlighted.png", 15);
-        questStartPatching.setLocation(50, 250);
+        questStartPatching.setLocation(25, 200);
         questStartPatching.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 handleQuestStartPatchingButtonClick();

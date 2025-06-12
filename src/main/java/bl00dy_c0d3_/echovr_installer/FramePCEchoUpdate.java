@@ -46,7 +46,7 @@ public class FramePCEchoUpdate extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.1");
+        this.setTitle("Echo VR Installer v0.8.3");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");

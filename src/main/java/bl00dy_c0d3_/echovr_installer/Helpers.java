@@ -75,7 +75,8 @@ public class Helpers {
             outFrame.repaint();
         }
         else{
-            new ErrorDialog().errorDialog(outFrame, "Wrong filetype provided", "Your provided file is not a config.json. Please check again!", 0);
+            return;
+            //new ErrorDialog().errorDialog(outFrame, "Wrong filetype provided", "Your provided file is not a config.json. Please check again!", 0);
         }
     }
 
@@ -143,6 +144,7 @@ public class Helpers {
         }
         else {
             try {
+                System.out.println("HelpersClass runShellCommand: " + shellCommand);
                 Process process = Runtime.getRuntime().exec(shellCommand);
                 BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
