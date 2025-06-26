@@ -82,6 +82,9 @@ public class InstallerQuest {
                 System.out.println("**Set permissions (post-unzip)");
                 runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files/\"");
 
+                System.out.println("**adb reboot");
+                runShellCommand(adbPath + " reboot\"");
+
                 System.out.println("**adb kill-server");
                 runShellCommand(adbPath + " kill-server\"");
             }
@@ -120,6 +123,9 @@ public class InstallerQuest {
 
                 System.out.println("**Set permissions (post-unzip)");
                 runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+
+                System.out.println("**adb reboot");
+                runShellCommand(adbPath + " reboot");
 
                 System.out.println("**adb kill-server");
                 runShellCommand(adbPath + " kill-server");
@@ -160,6 +166,9 @@ public class InstallerQuest {
                 System.out.println("**Set permissions (post-unzip)");
                 runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
+                System.out.println("**adb reboot");
+                runShellCommand(adbPath + " reboot");
+
                 System.out.println("**adb kill-server");
                 runShellCommand(adbPath + " kill-server");
             }
@@ -198,6 +207,9 @@ public class InstallerQuest {
 
                 System.out.println("**Set permissions (post-unzip)");
                 runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+
+                System.out.println("**adb reboot");
+                runShellCommand(adbPath + " reboot");
 
                 System.out.println("**adb kill-server");
                 runShellCommand(adbPath + " kill-server");
