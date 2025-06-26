@@ -55,124 +55,153 @@ public class InstallerQuest {
                 System.out.println("**Uninstall");
                 runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
 
+                System.out.println("**delete old data /sdcard/readyatdawn/files/");
+                runShellCommand(adbPath + " shell \"rm -r /sdcard/readyatdawn/files\"");
+
                 System.out.println("**Install");
                 runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/_local");
-                runShellCommand(adbPath + " shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/_local\"");
+                System.out.println("**mkdir: /sdcard/readyatdawn/files/_local");
+                runShellCommand(adbPath + " shell \"mkdir -p /sdcard/readyatdawn/files/_local\"");
 
                 System.out.println("**Set permissions (pre-push)");
-                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
                 System.out.println("**push zip to /data/local/tmp");
                 runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
 
                 System.out.println("**mv zip to target");
-                runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/Android/data/com.readyatdawn.r15/files/\"");
+                runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"");
 
                 System.out.println("**unzip");
-                runShellCommand(adbPath + " shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; unzip _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"");
 
                 System.out.println("**rm zip");
-                runShellCommand(adbPath + " shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; rm _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"");
 
                 System.out.println("**Set permissions (post-unzip)");
-                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files/\"");
+
+                System.out.println("**adb kill-server");
+                runShellCommand(adbPath + " kill-server\"");
             }
             else if (isChrome) {
+                String adbPath = "adb";
+
                 System.out.println("**InstallerQuest ADB DEVICES (Chrome 1st step)");
-                runShellCommand("adb devices");
+                runShellCommand(adbPath + " devices");
 
                 System.out.println("**Uninstall");
-                runShellCommand("adb uninstall com.readyatdawn.r15");
+                runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
+
+                System.out.println("**delete old data /sdcard/readyatdawn/files/");
+                runShellCommand(adbPath + " shell \"rm -r /sdcard/readyatdawn/files\"");
 
                 System.out.println("**Install");
-                runShellCommand("adb install -g " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/_local");
-                runShellCommand("adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/_local\"");
+                System.out.println("**mkdir: /sdcard/readyatdawn/files/_local");
+                runShellCommand(adbPath + " shell \"mkdir -p /sdcard/readyatdawn/files/_local\"");
 
                 System.out.println("**Set permissions (pre-push)");
-                runShellCommand("adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
                 System.out.println("**push zip to /data/local/tmp");
-                runShellCommand("adb push " + pathToApkObb + "/" + obbfileName + " /data/local/tmp");
+                runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
 
                 System.out.println("**mv zip to target");
-                runShellCommand("adb shell \"mv /data/local/tmp/_data.zip /sdcard/Android/data/com.readyatdawn.r15/files/\"");
+                runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"");
 
                 System.out.println("**unzip");
-                runShellCommand("adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; unzip _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"");
 
                 System.out.println("**rm zip");
-                runShellCommand("adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; rm _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"");
 
                 System.out.println("**Set permissions (post-unzip)");
-                runShellCommand("adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+
+                System.out.println("**adb kill-server");
+                runShellCommand(adbPath + " kill-server");
             }
             else if (mac) {
+                String adbPath = tempPath + "/platform-tools-mac/adb";
+
                 System.out.println("**InstallerQuest ADB DEVICES (Mac 1st step)");
-                runShellCommand(tempPath + "/platform-tools-mac/adb devices");
+                runShellCommand(adbPath + " devices");
 
                 System.out.println("**Uninstall");
-                runShellCommand(tempPath + "/platform-tools-mac/adb uninstall com.readyatdawn.r15");
+                runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
+
+                System.out.println("**delete old data /sdcard/readyatdawn/files/");
+                runShellCommand(adbPath + " shell \"rm -r /sdcard/readyatdawn/files\"");
 
                 System.out.println("**Install");
-                runShellCommand(tempPath + "/platform-tools-mac/adb install -g " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/_local");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/_local\"");
+                System.out.println("**mkdir: /sdcard/readyatdawn/files/_local");
+                runShellCommand(adbPath + " shell \"mkdir -p /sdcard/readyatdawn/files/_local\"");
 
                 System.out.println("**Set permissions (pre-push)");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
                 System.out.println("**push zip to /data/local/tmp");
-                runShellCommand(tempPath + "/platform-tools-mac/adb push " + pathToApkObb + "/" + obbfileName + " /data/local/tmp");
+                runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
 
                 System.out.println("**mv zip to target");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"mv /data/local/tmp/_data.zip /sdcard/Android/data/com.readyatdawn.r15/files/\"");
+                runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"");
 
                 System.out.println("**unzip");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; unzip _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"");
 
                 System.out.println("**rm zip");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; rm _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"");
 
                 System.out.println("**Set permissions (post-unzip)");
-                runShellCommand(tempPath + "/platform-tools-mac/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+
+                System.out.println("**adb kill-server");
+                runShellCommand(adbPath + " kill-server");
             }
             else {
+                String adbPath = tempPath + "/platform-tools-linux/adb";
+
                 System.out.println("**InstallerQuest ADB DEVICES (Linux 1st step)");
-                runShellCommand(tempPath + "/platform-tools-linux/adb devices");
+                runShellCommand(adbPath + " devices");
 
                 System.out.println("**Uninstall");
-                runShellCommand(tempPath + "/platform-tools-linux/adb uninstall com.readyatdawn.r15");
+                runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
+
+                System.out.println("**delete old data /sdcard/readyatdawn/files/");
+                runShellCommand(adbPath + " shell \"rm -r /sdcard/readyatdawn/files\"");
 
                 System.out.println("**Install");
-                runShellCommand(tempPath + "/platform-tools-linux/adb install -g " + pathToApkObb + "/" + apkfileName);
+                runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
-                System.out.println("**mkdir: /sdcard/Android/data/com.readyatdawn.r15/files/_local");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"mkdir -p /sdcard/Android/data/com.readyatdawn.r15/files/_local\"");
+                System.out.println("**mkdir: /sdcard/readyatdawn/files/_local");
+                runShellCommand(adbPath + " shell \"mkdir -p /sdcard/readyatdawn/files/_local\"");
 
                 System.out.println("**Set permissions (pre-push)");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
                 System.out.println("**push zip to /data/local/tmp");
-                runShellCommand(tempPath + "/platform-tools-linux/adb push " + pathToApkObb + "/" + obbfileName + " /data/local/tmp");
+                runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
 
                 System.out.println("**mv zip to target");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"mv /data/local/tmp/_data.zip /sdcard/Android/data/com.readyatdawn.r15/files/\"");
+                runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"");
 
                 System.out.println("**unzip");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; unzip _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"");
 
                 System.out.println("**rm zip");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"cd /sdcard/Android/data/com.readyatdawn.r15/files; rm _data.zip\"");
+                runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"");
 
                 System.out.println("**Set permissions (post-unzip)");
-                runShellCommand(tempPath + "/platform-tools-linux/adb shell \"chmod -R 777 /sdcard/Android/data/com.readyatdawn.r15/files\"");
-            }
+                runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
+                System.out.println("**adb kill-server");
+                runShellCommand(adbPath + " kill-server");
+            }
 
 
 
