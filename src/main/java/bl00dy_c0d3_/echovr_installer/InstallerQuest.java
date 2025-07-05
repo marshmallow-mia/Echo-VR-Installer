@@ -101,8 +101,8 @@ public class InstallerQuest {
             runShellCommand(adbPath + " shell pm grant com.readyatdawn.r15 android.permission.WRITE_EXTERNAL_STORAGE");
             runShellCommand(adbPath + " shell pm grant com.readyatdawn.r15 android.permission.RECORD_AUDIO");
 
-            System.out.println("**adb reboot");
-            runShellCommand(adbPath + " reboot");
+            //System.out.println("**adb reboot");
+            //runShellCommand(adbPath + " reboot");
 
             System.out.println("**adb kill-server");
             runShellCommand(adbPath + " kill-server");
