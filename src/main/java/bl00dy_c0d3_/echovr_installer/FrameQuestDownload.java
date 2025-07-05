@@ -142,9 +142,9 @@ public class FrameQuestDownload extends JDialog {
         boolean installState = installToQuest.installAPK(targetPath + "", apkfileName, obbfileName,labelQuestInstallProgress, outFrame);
 
         if (installState) {
-            labelQuestInstallProgress.setText("IMPORTANT! Installation is complete!");
+            labelQuestInstallProgress.setText("Installation is complete!");
             outFrame.repaint();
-            JOptionPane.showMessageDialog(outFrame, "<html>Start Echo, set permissions, restart the Headset!<br>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(outFrame, "<html>Start Echo, set permissions, restart the Headset!<br>Installation of Echo is done. You can start it now on your Quest.<br> DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!</html>", "IMPORTANT!", JOptionPane.INFORMATION_MESSAGE);
 
         }
         else{
