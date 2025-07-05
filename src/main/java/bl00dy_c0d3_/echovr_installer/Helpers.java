@@ -125,7 +125,7 @@ public class Helpers {
         BufferedReader stdInput = null;
         BufferedReader stdError = null;
 
-        if (linux){
+        if (linux || mac){
             try {
                 ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
                 Process process = builder.start();
