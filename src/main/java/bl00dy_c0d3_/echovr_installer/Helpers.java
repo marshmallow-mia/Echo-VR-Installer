@@ -122,18 +122,17 @@ public class Helpers {
     public static String runShellCommand(String shellCommand) {
         StringBuilder output = new StringBuilder();
         StringBuilder errorOutput = new StringBuilder();
+        BufferedReader stdInput = null;
+        BufferedReader stdError = null;
 
-        if (linux){
+        if (linux || mac){
             try {
                 ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
-                builder.redirectErrorStream(true); // merge stdout and stderr
                 Process process = builder.start();
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
+                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
 
                 int exitCode = process.waitFor();
                 output.append("Process exited with code ").append(exitCode).append("\n");
@@ -146,31 +145,39 @@ public class Helpers {
             try {
                 System.out.println("HelpersClass runShellCommand: " + shellCommand);
                 Process process = Runtime.getRuntime().exec(shellCommand);
-                BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-                // Read the output from the command
-                String s = null;
-                while ((s = stdInput.readLine()) != null) {
-                    output.append(s).append("\n");
-                }
-
-                // Read any errors from the attempted command
-                while ((s = stdError.readLine()) != null) {
-                    errorOutput.append(s).append("\n");
-                }
+                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
                 process.waitFor();
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            // Combine standard output and error output (optional)
-            if (errorOutput.length() > 0) {
-                output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
-            }
-            System.out.println(output);
         }
+
+
+        try {
+        // Read the output from the command
+        String s = null;
+        while ((s = stdInput.readLine()) != null) {
+            output.append(s).append("\n");
+        }
+
+        // Read any errors from the attempted command
+        String e = null;
+        while ((e = stdError.readLine()) != null) {
+            errorOutput.append(e).append("\n");
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Combine standard output and error output (optional)
+        if (!errorOutput.isEmpty()) {
+            output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
+        }
+        System.out.println(output);
+
         return output.toString();
     }
 
