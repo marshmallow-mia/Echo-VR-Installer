@@ -229,7 +229,7 @@ public class Downloader implements Runnable {
     // Choose the fastest available http server
     private static String getDownloadSpeed(JLabel labelProgress, JDialog frame) {
         String[] servers = new String[2];
-        servers[0] = "https://echo.marceldomain.de:6969/";
+        servers[0] = "https://echo.mia-hentschel.de/";
         servers[1] = "https://evr.echo.taxi/";
         String testFile = "randomDownloadTestFile";
 
