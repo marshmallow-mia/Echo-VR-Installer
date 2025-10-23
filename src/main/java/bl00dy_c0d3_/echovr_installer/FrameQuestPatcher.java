@@ -74,7 +74,7 @@ public class FrameQuestPatcher extends JDialog {
 
     private void handleDownloadButtonClick() {
 
-        if (textfieldQuestPatchLink.getText().matches("https://echo.mia-hentschel.de.*")) {
+        if (textfieldQuestPatchLink.getText().matches("https://files.echovr.de.*")) {
             JOptionPane.showMessageDialog(null, "The Download will start after pressing OK. Please wait for both files to be done!", "Download started", JOptionPane.INFORMATION_MESSAGE);
             if (downloader != null){
                 downloader.cancelDownload();

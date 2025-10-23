@@ -128,8 +128,8 @@ public class FramePCDownload extends JDialog {
                     downloader = new Downloader();
                     downloader.setOnCompleteListener(() -> {
                         SwingUtilities.invokeLater(() -> {
-                            String[] updateFiles = getFileAndReturnArray("https://echo.mia-hentschel.de/updates/files", "updateFiles");
-                            String URL = "https://echo.mia-hentschel.de/updates/";
+                            String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
+                            String URL = "https://files.echovr.de/updates/";
                             //Download all updated files
                             for (String file : updateFiles) {
                                 System.out.println("Updatefile:" + file);

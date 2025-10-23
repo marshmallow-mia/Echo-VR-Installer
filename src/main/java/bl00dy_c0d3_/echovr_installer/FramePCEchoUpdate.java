@@ -132,8 +132,8 @@ public class FramePCEchoUpdate extends JDialog {
                 String filePath  = labelPcDownloadPath.getText();
                 if (Files.exists(Path.of(filePath + "echovr.exe"))) {
                     System.out.println("echovr.exe does exist: " + filePath);
-                    String[] updateFiles = getFileAndReturnArray("https://echo.mia-hentschel.de/updates/files", "updateFiles");
-                    String URL = "https://echo.mia-hentschel.de/updates/";
+                    String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
+                    String URL = "https://files.echovr.de/updates/";
                     //Download all updated files
                     for (String file : updateFiles) {
                         System.out.println("Updatefile:" + file);

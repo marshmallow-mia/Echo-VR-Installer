@@ -188,7 +188,7 @@ public class Downloader implements Runnable {
     }
 
     public void checkHash() throws IOException, NoSuchAlgorithmException {
-        String[] fileHash = getFileAndReturnArray("https://echo.mia-hentschel.de/updates/" + filename + ".hash",filename  + ".hash");
+        String[] fileHash = getFileAndReturnArray("https://files.echovr.de/updates/" + filename + ".hash",filename  + ".hash");
         Path filePath = Path.of(localFilePath + "/" + filename);
         System.out.println("File to check hash: " + filePath);
 
@@ -229,7 +229,7 @@ public class Downloader implements Runnable {
     // Choose the fastest available http server
     private static String getDownloadSpeed(JLabel labelProgress, JDialog frame) {
         String[] servers = new String[2];
-        servers[0] = "https://echo.mia-hentschel.de/";
+        servers[0] = "https://files.echovr.de/";
         servers[1] = "https://evr.echo.taxi/";
         String testFile = "randomDownloadTestFile";
 
