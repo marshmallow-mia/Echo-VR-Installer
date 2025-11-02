@@ -1,5 +1,5 @@
 # NOTE:
-This entire branch is not supposed to be the actual installer and is meant to be a shitpost of sorts.
+This entire branch is not supposed to be the actual installer and is meant to be a shitpost of sorts. AKA **__DON'T USE THIS VERSION OF THE INSTALLER__**
 If you want to use the actual version of the installer, go [here](https://github.com/BL00DY-C0D3/Echo-VR-Installer/releases)
 
 That being said, I wrote this purely for giggles.
