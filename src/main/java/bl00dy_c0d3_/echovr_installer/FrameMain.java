@@ -4,18 +4,33 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
 public class FrameMain extends JFrame {
     private static final int FRAME_WIDTH = 1280;
     private static final int FRAME_HEIGHT = 720;
+    private AdSystem adSystem;
+    private Timer autoAdTimer;
 
     public FrameMain() {
         initComponents();
+        adSystem = new AdSystem(this);
+        startAutoAdTimer();
         this.setVisible(true);
     }
 
+    private void startAutoAdTimer() {
+        autoAdTimer = new Timer();
+        autoAdTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> adSystem.showAd());
+            }
+        }, 120000, 120000);
+    }
 
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -40,14 +55,8 @@ public class FrameMain extends JFrame {
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
 
-        JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
-                "This installer is not at all associated with them!<br><br>" +
-                "Special thanks to Sick and SirDominik for some of the backgrounds!<br>" +
-                "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>" +
-                "I know you still feel shame when you have to look at my source code.<br>" +
-                "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
-                "This tool is still in early alpha!<br>" +
-                "If you have problems, contact me on Discord 'marshmallow_mia'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "<html>This is not the actual version of the installer and is meant to be a shitpost, and it may not have newest features of the installer<br>" +
+                "if you want to use the real installer, click <a href='https://github.com/BL00DY-C0D3/Echo-VR-Installer/releases'>here</a>.</html>", "WARNING - Silly Version", JOptionPane.WARNING_MESSAGE);
 
     }
 
@@ -59,6 +68,7 @@ public class FrameMain extends JFrame {
         btn_addGetLog.setLocation(818, 547);
         btn_addGetLog.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
+                adSystem.showAd();
                 GetLogFilesFromQuest.getLogFilesFromQuest();
             }
         });
@@ -79,7 +89,7 @@ public class FrameMain extends JFrame {
         btn_deleteCache.setLocation(818, 595);
         btn_deleteCache.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                // Create an instance of DeleteCache and call the executeDeletion method
+                adSystem.showAd();
                 DeleteCache deleteCache = new DeleteCache();
                 deleteCache.executeDeletion(outFrame);
             }
@@ -102,7 +112,7 @@ public class FrameMain extends JFrame {
         btn_PCInstallEcho.setLocation((FRAME_WIDTH / 2 - btn_PCInstallEcho.getWidth()) / 2, 200);
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCDownload(outFrame);
+                adSystem.showAdThenExecute(() -> new FramePCDownload(outFrame));
             }
         });
         back.add(btn_PCInstallEcho);
@@ -112,7 +122,7 @@ public class FrameMain extends JFrame {
         btn_PCUpdateEcho.setLocation(btn_PCInstallEcho.getX(), 280);
         btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCEchoUpdate(outFrame);
+                adSystem.showAdThenExecute(() -> new FramePCEchoUpdate(outFrame));
             }
         });
         back.add(btn_PCUpdateEcho);
@@ -130,7 +140,7 @@ public class FrameMain extends JFrame {
         btn_PCnonLicence.setLocation((FRAME_WIDTH / 2 - btn_PCnonLicence.getWidth()) / 2, 440);
         btn_PCnonLicence.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCPatcher();
+                adSystem.showAdThenExecute(() -> new FramePCPatcher());
             }
         });
         back.add(btn_PCnonLicence);
@@ -143,7 +153,7 @@ public class FrameMain extends JFrame {
         btn_PCnoOVRHeadset.setLocation((FRAME_WIDTH / 2 - btn_PCnoOVRHeadset.getWidth()) / 2, 560);
         btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameSteamPatcher(outFrame);
+                adSystem.showAdThenExecute(() -> new FrameSteamPatcher(outFrame));
             }
         });
         back.add(btn_PCnoOVRHeadset);
@@ -158,7 +168,7 @@ public class FrameMain extends JFrame {
         btn_QuestInstallEcho.setLocation(819, 200);
         btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameQuestDownload(outFrame);
+                adSystem.showAdThenExecute(() -> new FrameQuestDownload(outFrame));
             }
         });
         back.add(btn_QuestInstallEcho);
@@ -183,7 +193,7 @@ public class FrameMain extends JFrame {
         btn_QuestNoLicence.setLocation((FRAME_WIDTH / 4 * 3 - btn_QuestNoLicence.getWidth() / 2), 440);
         btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameQuestPatcher();
+                adSystem.showAdThenExecute(() -> new FrameQuestPatcher());
             }
         });
         back.add(btn_QuestNoLicence);
@@ -224,6 +234,7 @@ public class FrameMain extends JFrame {
         easteregg.setLocation(590, 430);
         easteregg.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
+                adSystem.showAd();
                 JOptionPane.showMessageDialog(outFrame, "Never divide by 0!", "You found an Easter Egg", JOptionPane.INFORMATION_MESSAGE);
             }
         });
