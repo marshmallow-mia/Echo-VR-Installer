@@ -98,7 +98,7 @@ public class FrameMain extends JFrame {
 
 
     private void addPCButtons(JPanel back, FrameMain outFrame) {
-        SpecialButton btn_PCInstallEcho = new SpecialButton("PC Install Echo", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        SpecialButton btn_PCInstallEcho = new SpecialButton("Step 1: Install Echo", "button_up.png", "button_down.png", "button_highlighted.png", 20);
         btn_PCInstallEcho.setLocation((FRAME_WIDTH / 2 - btn_PCInstallEcho.getWidth()) / 2, 200);
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
@@ -118,11 +118,11 @@ public class FrameMain extends JFrame {
         back.add(btn_PCUpdateEcho);
 
 
-        SpecialLabel optionalPCLabel = createSpecialLabel("The following patches are optional", 20);
+        SpecialLabel optionalPCLabel = createSpecialLabel("Step 2: Use these patches if needed!", 20);
         optionalPCLabel.setLocation((FRAME_WIDTH / 2 - optionalPCLabel.getPreferredSize().width) / 2, 360);
         back.add(optionalPCLabel);
 
-        SpecialLabel optionalPCLabel2 = createSpecialLabel("(Only use them if you have to)", 10);
+        SpecialLabel optionalPCLabel2 = createSpecialLabel("(These patches are fully optional, you may need them though!)", 10);
         optionalPCLabel2.setLocation((FRAME_WIDTH / 2 - optionalPCLabel2.getPreferredSize().width) / 2, 395);
         back.add(optionalPCLabel2);
 
