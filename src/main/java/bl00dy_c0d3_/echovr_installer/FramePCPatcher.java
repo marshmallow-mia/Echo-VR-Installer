@@ -26,15 +26,21 @@ public class FramePCPatcher extends JDialog {
 
     private void initComponents(){
 
-        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        this.setResizable(false);
-        this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.5");
-        this.setModal(true);
+    this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    this.setResizable(false);
+    this.setIconImage(loadGUI("icon.png"));
+    this.setTitle("Echo VR Installer v0.8.5");
+    this.setModal(true);
 
-        Background back = new Background("echo-in-arena.png");
-        back.setLayout(null);
-        this.setContentPane(back);
+    Background back = new Background("echo-in-arena.png");
+    back.setLayout(null);
+    this.setContentPane(back);
+
+    // Add reminder to install Echo VR first
+    SpecialLabel installReminder = new SpecialLabel("Make sure Echo VR is installed before patching!", 16);
+    installReminder.setForeground(Color.RED);
+    installReminder.setLocation(40, 10);
+    back.add(installReminder);
 
 
         SpecialLabel discordLink = new SpecialLabel("1. Join the Echo VR Patcher Disocrd Server:", 16);

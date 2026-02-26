@@ -23,6 +23,48 @@ import java.io.IOException;
 
 
 public class Helpers {
+    // Create a Windows shortcut (.lnk) using PowerShell
+    public static void createWindowsShortcut(String exePath, String shortcutPath, String name) throws IOException, InterruptedException {
+        String psScript =
+            "$WshShell = New-Object -ComObject WScript.Shell\n" +
+            "$Shortcut = $WshShell.CreateShortcut(\"" + shortcutPath.replace("\\", "\\\\") + "\")\n" +
+            "$Shortcut.TargetPath = \"" + exePath.replace("\\", "\\\\") + "\"\n" +
+            "$Shortcut.Save()\n";
+        File tempPs1 = File.createTempFile("createshortcut", ".ps1");
+        try (FileWriter fw = new FileWriter(tempPs1)) {
+            fw.write(psScript);
+        }
+        System.out.println("[Shortcut Powershell] Temp script: " + tempPs1.getAbsolutePath());
+        ProcessBuilder pb = new ProcessBuilder("powershell.exe", "-ExecutionPolicy", "Bypass", "-File", tempPs1.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        StringBuilder output = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            output.append(line).append(System.lineSeparator());
+        }
+        int exitCode = p.waitFor();
+        System.out.println("[Shortcut Powershell] Exit code: " + exitCode);
+        System.out.println("[Shortcut Powershell] Output:\n" + output);
+        tempPs1.delete();
+    }
+
+
+    // Add shortcut to Start Menu
+    public static void addShortcutsAll(String exePath, String shortcutName) throws Exception {
+        String appData = System.getenv("APPDATA");
+        String userProfile = System.getenv("USERPROFILE");
+        String startMenu = appData + "\\Microsoft\\Windows\\Start Menu\\Programs";
+        String desktop = userProfile + "\\Desktop";
+        String shortcutPathStart = startMenu + "\\" + shortcutName + ".lnk";
+        String shortcutPathDesktop = desktop + "\\" + shortcutName + ".lnk";
+        System.out.println("[Shortcut] exePath: " + exePath);
+        System.out.println("[Shortcut] Start Menu: " + shortcutPathStart);
+        System.out.println("[Shortcut] Desktop: " + shortcutPathDesktop);
+        createWindowsShortcut(exePath, shortcutPathStart, shortcutName);
+        createWindowsShortcut(exePath, shortcutPathDesktop, shortcutName);
+    }
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static boolean linux = System.getProperty("os.name").toLowerCase().contains("linux");
