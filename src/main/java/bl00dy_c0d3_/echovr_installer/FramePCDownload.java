@@ -1,8 +1,5 @@
 package bl00dy_c0d3_.echovr_installer;
 
-
-
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -18,17 +15,17 @@ public class FramePCDownload extends JDialog {
     FrameMain frameMain = null;
     int frameWidth = 700;
     int frameHeight = 394;
-    String path = "C:/EchoVR";
+    String path = "C:\\Program Files\\Oculus\\Software\\Software\\"; // Updated default path
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
     static Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+    
     //Constructor
     public FramePCDownload(FrameMain frameMain){
         this.frameMain = frameMain;
         initComponents();
-        this.setVisible(true);
+        this.setVisible(true); // Window appears here, after initComponents runs
     }
-
 
     public void dispose(){
         if (downloader != null){
@@ -37,8 +34,13 @@ public class FramePCDownload extends JDialog {
         super.dispose();
     }
 
-
     private void initComponents(){
+        // 1. & 2. Request admin privileges and auto-choose path before window rendering
+        String autoPath = checkForAdminAndOculusPath(this);
+        if (autoPath != null && !autoPath.isEmpty()) {
+            path = autoPath + "Software\\Software\\";
+        }
+        
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
@@ -48,7 +50,6 @@ public class FramePCDownload extends JDialog {
         Background back = new Background("EchoArena.jpg");
         back.setLayout(null);
         this.setContentPane(back);
-
 
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
@@ -60,25 +61,23 @@ public class FramePCDownload extends JDialog {
         labelPcDownloadPath.setForeground(Color.BLACK);
         back.add(labelPcDownloadPath);
 
-
-        SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+        // 3. Changed button text to "Reset to Default"
+        SpecialButton pcChooseOriginalPath = new SpecialButton("Reset to Default", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
         pcChooseOriginalPath.setLocation(20, 70);
         pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 String newPath = checkForAdminAndOculusPath(outFrame);
-                if (!newPath.matches("")) {
+                if (newPath != null && !newPath.matches("")) {
                     labelPcDownloadPath.setText(newPath + "Software\\Software\\");
-                    outFrame.repaint();
+                } else {
+                    labelPcDownloadPath.setText("C:\\Program Files\\Oculus\\Software\\Software\\");
                 }
+                outFrame.repaint();
             }
         });
         back.add(pcChooseOriginalPath);
 
-
-        SpecialLabel labelPcOculusPathExplaination = new SpecialLabel("Choose this to use the original Oculus path", 14);
-        labelPcOculusPathExplaination.setLocation(252,70);
-        back.add(labelPcOculusPathExplaination);
-
+        // 4. Removed the "Choose this to use the original Oculus path" label entirely.
 
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
         pcChoosePath.setLocation(20, 130);
@@ -89,11 +88,9 @@ public class FramePCDownload extends JDialog {
         });
         back.add(pcChoosePath);
 
-
         SpecialLabel labelPcDownloadPathExplaination = new SpecialLabel("Specify the Path for the Echo Installation or leave it as it is.", 14);
         labelPcDownloadPathExplaination.setLocation(20,160);
         back.add(labelPcDownloadPathExplaination);
-
 
         SpecialLabel labelPcProgress1 = new SpecialLabel("Progress =", 17);
         labelPcProgress1.setLocation(252,230);
@@ -102,15 +99,13 @@ public class FramePCDownload extends JDialog {
         labelPcProgress1.setForeground(Color.BLACK);
         back.add(labelPcProgress1);
 
-
         SpecialLabel labelPcProgress2 = new SpecialLabel(" 0%", 17);
-        labelPcProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
+        labelPcProgress2.setHorizontalAlignment(SwingConstants.LEFT);  
         labelPcProgress2.setLocation(407,230);
         labelPcProgress2.setSize(170, 38);
         labelPcProgress2.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress2.setForeground(Color.BLACK);
         back.add(labelPcProgress2);
-
 
         FramePCDownload thisFrame = this;
         SpecialButton pcStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
@@ -130,7 +125,7 @@ public class FramePCDownload extends JDialog {
                         SwingUtilities.invokeLater(() -> {
                             String[] updateFiles = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/files", "updateFiles");
                             String URL = "https://echo.marceldomain.de:6969/updates/";
-                            //Download all updated files
+                            
                             for (String file : updateFiles) {
                                 System.out.println("Updatefile:" + file);
 
@@ -139,7 +134,7 @@ public class FramePCDownload extends JDialog {
                                     downloader.startDownload(URL + file, labelPcDownloadPath.getText() + "/ready-at-dawn-echo-arena/bin/win10", file, labelPcProgress2, thisFrame, frameMain, 1, true, -1, true);
                                 });
 
-                                downloadThread2.start();  // This runs the download in a separate thread
+                                downloadThread2.start();  
                                 System.out.println("UPDATE after regular install is DONE");
                             }
                         });
@@ -147,27 +142,21 @@ public class FramePCDownload extends JDialog {
                     downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0, false);
                 });
 
-                downloadThread1.start();  // This runs the download in a separate thread
+                downloadThread1.start(); 
             }
         });
         back.add(pcStartDownload);
 
-        //Alles fertig machen...
         this.pack();
-
-        //Fenstergröße und Position setzen...
         this.setSize(frameWidth, frameHeight);
         int x = frameMain.getX() + (frameMain.getWidth() - this.getWidth()) / 2;
         int y = frameMain.getY() + (frameMain.getHeight() - this.getHeight()) / 2;
         this.setLocation(x, y);
     }
 
-    //Lädt eine GUI-Grafik und gibt sie zurück:
     private java.awt.Image loadGUI(String imageName) {
         URL imageURL = getClass().getClassLoader().getResource(imageName);
         if (imageURL == null) return null;
         else return (new ImageIcon(imageURL, imageName)).getImage();
     }
-
-
 }
