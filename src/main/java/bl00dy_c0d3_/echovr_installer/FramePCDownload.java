@@ -42,7 +42,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.5 ");
+        this.setTitle("Echo VR Installer v0.8.9 ");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -128,8 +128,8 @@ public class FramePCDownload extends JDialog {
                     downloader = new Downloader();
                     downloader.setOnCompleteListener(() -> {
                         SwingUtilities.invokeLater(() -> {
-                            String[] updateFiles = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/files", "updateFiles");
-                            String URL = "https://echo.marceldomain.de:6969/updates/";
+                            String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
+                            String URL = "https://files.echovr.de/updates/";
                             //Download all updated files
                             for (String file : updateFiles) {
                                 System.out.println("Updatefile:" + file);

@@ -46,7 +46,7 @@ public class FramePCEchoUpdate extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.8.5");
+        this.setTitle("Echo VR Installer v0.8.9");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -132,8 +132,8 @@ public class FramePCEchoUpdate extends JDialog {
                 String filePath  = labelPcDownloadPath.getText();
                 if (Files.exists(Path.of(filePath + "echovr.exe"))) {
                     System.out.println("echovr.exe does exist: " + filePath);
-                    String[] updateFiles = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/files", "updateFiles");
-                    String URL = "https://echo.marceldomain.de:6969/updates/";
+                    String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
+                    String URL = "https://files.echovr.de/updates/";
                     //Download all updated files
                     for (String file : updateFiles) {
                         System.out.println("Updatefile:" + file);
