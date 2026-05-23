@@ -10,6 +10,7 @@ import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 public class FrameMain extends JFrame {
     private static final int FRAME_WIDTH = 1280;
     private static final int FRAME_HEIGHT = 720;
+    private TipBox tipBox;
 
     public FrameMain() {
         initComponents();
@@ -27,10 +28,14 @@ public class FrameMain extends JFrame {
         back.setLayout(null);
         setContentPane(back);
 
+        tipBox = new TipBox();
+        tipBox.setLocation((FRAME_WIDTH - tipBox.getWidth()) / 2, 240);
+        back.add(tipBox);
+
         FrameMain outFrame = this;
         addPCButtons(back, outFrame);
         addQuestButtons(back, outFrame);
-        addBackgroundFrames(back);
+        addBackgroundFrames(back, outFrame);
         addEasterEgg(back, outFrame);
         addDeleteCached(back, outFrame);
         addGetLog(back, outFrame);
@@ -62,15 +67,19 @@ public class FrameMain extends JFrame {
                 GetLogFilesFromQuest.getLogFilesFromQuest();
             }
         });
+        btn_addGetLog.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Retrieve log files from your Quest for troubleshooting");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_addGetLog);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         //back.add(addDeleteIcon);
-
-        SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
-        cacheLabel.setLocation(818, 640);
-        //back.add(cacheLabel);
 
     }
 
@@ -84,15 +93,19 @@ public class FrameMain extends JFrame {
                 deleteCache.executeDeletion(outFrame);
             }
         });
+        btn_deleteCache.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Clear cached downloaded files to free up space");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_deleteCache);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         back.add(addDeleteIcon);
-
-        SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
-        cacheLabel.setLocation(818, 640);
-        back.add(cacheLabel);
 
     }
 
@@ -105,6 +118,14 @@ public class FrameMain extends JFrame {
                 new FramePCDownload(outFrame);
             }
         });
+        btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Download and install Echo VR for PC");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_PCInstallEcho);
 
 
@@ -115,42 +136,15 @@ public class FrameMain extends JFrame {
                 new FramePCEchoUpdate(outFrame);
             }
         });
+        btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Update an existing Echo VR PC installation");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_PCUpdateEcho);
-
-
-        SpecialLabel optionalPCLabel = createSpecialLabel("Step 2: Use these patches if needed!", 20);
-        optionalPCLabel.setLocation((FRAME_WIDTH / 2 - optionalPCLabel.getPreferredSize().width) / 2, 360);
-        back.add(optionalPCLabel);
-
-        SpecialLabel optionalPCLabel2 = createSpecialLabel("(These patches are fully optional, you may need them though!)", 10);
-        optionalPCLabel2.setLocation((FRAME_WIDTH / 2 - optionalPCLabel2.getPreferredSize().width) / 2, 395);
-        back.add(optionalPCLabel2);
-
-        SpecialButton btn_PCnonLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
-        btn_PCnonLicence.setLocation((FRAME_WIDTH / 2 - btn_PCnonLicence.getWidth()) / 2, 440);
-        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FramePCPatcher();
-            }
-        });
-        back.add(btn_PCnonLicence);
-
-        SpecialLabel noLincencePCLabel = createSpecialLabel("If you don't own Echo on your Account, use this Patch", 10);
-        noLincencePCLabel.setLocation((FRAME_WIDTH / 2 - noLincencePCLabel.getPreferredSize().width) / 2, 500);
-        back.add(noLincencePCLabel);
-
-        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch (Revive)", "button_up.png", "button_down.png", "button_highlighted.png", 19);
-        btn_PCnoOVRHeadset.setLocation((FRAME_WIDTH / 2 - btn_PCnoOVRHeadset.getWidth()) / 2, 560);
-        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FrameSteamPatcher(outFrame);
-            }
-        });
-        back.add(btn_PCnoOVRHeadset);
-
-        SpecialLabel steamPatchLabel = createSpecialLabel("If you Play with an Steam only Headset use this Patch. (Normally not needed)", 10);
-        steamPatchLabel.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2, 620);
-        back.add(steamPatchLabel);
     }
 
     private void addQuestButtons(JPanel back, FrameMain outFrame) {
@@ -161,58 +155,138 @@ public class FrameMain extends JFrame {
                 new FrameQuestDownload(outFrame);
             }
         });
+        btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Download and install Echo VR on your Quest headset");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_QuestInstallEcho);
+    }
 
-        SpecialLabel questInstallNoticeLabel1 = createSpecialLabel("If you don't own Echo on your account,", 20);
-        questInstallNoticeLabel1.setLocation((FRAME_WIDTH / 4 * 3 - questInstallNoticeLabel1.getPreferredSize().width / 2), 265);
-        back.add(questInstallNoticeLabel1);
+    private void addBackgroundFrames(JPanel back, FrameMain outFrame) {
+        // ---- PC side: No licence patch + Steam Patch ----
+        SpecialButton btn_PCnonLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FramePCPatcher();
+            }
+        });
+        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Patch Echo VR if you don't own it on your Oculus account");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
 
-        SpecialLabel questInstallNoticeLabel2 = createSpecialLabel("use the method below instead of the top one!", 20);
-        questInstallNoticeLabel2.setLocation((FRAME_WIDTH / 4 * 3 - questInstallNoticeLabel2.getPreferredSize().width / 2), 300);
-        back.add(questInstallNoticeLabel2);
+        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch (Revive)", "button_up.png", "button_down.png", "button_highlighted.png", 19);
+        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FrameSteamPatcher(outFrame);
+            }
+        });
+        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Install Revive for SteamVR headsets like Valve Index");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
 
-        SpecialLabel optionalQuestLabel = createSpecialLabel("The following patches are optional", 20);
-        optionalQuestLabel.setLocation((FRAME_WIDTH / 4 * 3 - optionalQuestLabel.getPreferredSize().width / 2), 360);
-        back.add(optionalQuestLabel);
+        final int ARC = 20;
+        final int PAD = 15;
 
-        SpecialLabel optionalQuestLabel2 = createSpecialLabel("(Only use them if you have to)", 10);
-        optionalQuestLabel2.setLocation((FRAME_WIDTH / 4 * 3 - optionalQuestLabel2.getPreferredSize().width / 2), 395);
-        back.add(optionalQuestLabel2);
+        // Position inside rahmen1 with PAD padding
+        int b1w = btn_PCnonLicence.getWidth();
+        int b1h = btn_PCnonLicence.getHeight();
+        int b2w = btn_PCnoOVRHeadset.getWidth();
+        int b2h = btn_PCnoOVRHeadset.getHeight();
 
+        btn_PCnonLicence.setLocation(PAD, PAD);
+        btn_PCnoOVRHeadset.setLocation(PAD, PAD + b1h + PAD);
+
+        int pcPanelW = Math.max(b1w, b2w) + PAD * 2;
+        int pcPanelH = PAD + b1h + PAD + b2h + PAD;
+
+        JPanel rahmen1 = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(200, 0, 150, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC, ARC);
+                g2.setColor(new Color(50, 50, 50, 150));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+            @Override
+            protected void paintChildren(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), ARC, ARC));
+                super.paintChildren(g2);
+                g2.dispose();
+            }
+        };
+        rahmen1.setOpaque(false);
+        rahmen1.setBounds((FRAME_WIDTH / 2 - pcPanelW) / 2, 420, pcPanelW, pcPanelH);
+        rahmen1.add(btn_PCnonLicence);
+        rahmen1.add(btn_PCnoOVRHeadset);
+        back.add(rahmen1);
+
+        // ---- Quest side: No licence patch ----
         SpecialButton btn_QuestNoLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
-        btn_QuestNoLicence.setLocation((FRAME_WIDTH / 4 * 3 - btn_QuestNoLicence.getWidth() / 2), 440);
         btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 new FrameQuestPatcher();
             }
         });
-        back.add(btn_QuestNoLicence);
+        btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Patch Echo VR for Quest if you don't own it on your account");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
 
-        SpecialLabel noLincenceQuestLabel = createSpecialLabel("If you don't own Echo on your Account, use this Patch", 10);
-        noLincenceQuestLabel.setLocation((FRAME_WIDTH / 4 * 3 - noLincenceQuestLabel.getPreferredSize().width / 2), 500);
-        back.add(noLincenceQuestLabel);
-    }
+        int qw = btn_QuestNoLicence.getWidth();
+        int qh = btn_QuestNoLicence.getHeight();
+        btn_QuestNoLicence.setLocation(PAD, PAD);
 
-    private void addBackgroundFrames(JPanel back) {
-        SpecialLabel steamPatchLabel = createSpecialLabel("If you Play with an Steam only Headset use this Patch. (Normally not needed)", 10);
+        int questPanelW = qw + PAD * 2;
+        int questPanelH = qh + PAD * 2;
 
-        Background rahmen1 = new Background("Rahmenbild.png");
-        rahmen1.setLayout(null);
-        rahmen1.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2 - 8, 350);
-        rahmen1.setSize(steamPatchLabel.getPreferredSize().width + 30, 305);
-        rahmen1.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
-        rahmen1.setBackground(new Color(255, 255, 255, 0));
-        back.add(rahmen1);
-
-        SpecialLabel optionalQuestLabel = createSpecialLabel("The following patches are optional", 20);
-
-
-        Background rahmen2 = new Background("Rahmenbild.png");
-        rahmen2.setLayout(null);
-            rahmen2.setLocation((FRAME_WIDTH / 4 * 3 + optionalQuestLabel.getPreferredSize().width) / 2 + 18, 350);
-        rahmen2.setSize(optionalQuestLabel.getPreferredSize().width + 30, 186);
-        rahmen2.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
-        rahmen2.setBackground(new Color(255, 255, 255, 0));
+        JPanel rahmen2 = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(200, 0, 150, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC, ARC);
+                g2.setColor(new Color(50, 50, 50, 150));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+            @Override
+            protected void paintChildren(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), ARC, ARC));
+                super.paintChildren(g2);
+                g2.dispose();
+            }
+        };
+        rahmen2.setOpaque(false);
+        rahmen2.setBounds((FRAME_WIDTH / 4 * 3 - questPanelW / 2), 420, questPanelW, questPanelH);
+        rahmen2.add(btn_QuestNoLicence);
         back.add(rahmen2);
     }
 
