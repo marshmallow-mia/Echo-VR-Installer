@@ -17,7 +17,7 @@ public class FramePCDownload extends JDialog {
     Downloader downloader = null;
     FrameMain frameMain = null;
     int frameWidth = 700;
-    int frameHeight = 394;
+    int frameHeight = 419;
     String path = "C:/EchoVR";
     JDialog outFrame = this;
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");
@@ -49,12 +49,14 @@ public class FramePCDownload extends JDialog {
         back.setLayout(null);
         this.setContentPane(back);
 
+        //Tipbox erstellen (muss vor den Buttons sein, damit hover listener darauf zugreifen können)
+        TipBox tipBox = new TipBox();
 
         //Note before installing Echo
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
-        labelPcDownloadPath.setLocation(170,130);
+        labelPcDownloadPath.setLocation(170, 100);
         labelPcDownloadPath.setSize(490, 25);
         labelPcDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcDownloadPath.setForeground(Color.BLACK);
@@ -62,7 +64,7 @@ public class FramePCDownload extends JDialog {
 
 
         SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
-        pcChooseOriginalPath.setLocation(20, 70);
+        pcChooseOriginalPath.setLocation(20, 40);
         pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 String newPath = checkForAdminAndOculusPath(outFrame);
@@ -72,31 +74,41 @@ public class FramePCDownload extends JDialog {
                 }
             }
         });
+        pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Automatically find the original Oculus installation path");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(pcChooseOriginalPath);
 
 
-        SpecialLabel labelPcOculusPathExplaination = new SpecialLabel("Choose this to use the original Oculus path", 14);
-        labelPcOculusPathExplaination.setLocation(252,70);
-        back.add(labelPcOculusPathExplaination);
 
 
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
-        pcChoosePath.setLocation(20, 130);
+        pcChoosePath.setLocation(20, 100);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 pathFolderChooser(labelPcDownloadPath, outFrame);
             }
         });
+        pcChoosePath.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Choose a custom folder for the Echo VR installation");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(pcChoosePath);
 
 
-        SpecialLabel labelPcDownloadPathExplaination = new SpecialLabel("Specify the Path for the Echo Installation or leave it as it is.", 14);
-        labelPcDownloadPathExplaination.setLocation(20,160);
-        back.add(labelPcDownloadPathExplaination);
 
 
         SpecialLabel labelPcProgress1 = new SpecialLabel("Progress =", 17);
-        labelPcProgress1.setLocation(252,230);
+        labelPcProgress1.setLocation(252, 140);
         labelPcProgress1.setSize(155, 38);
         labelPcProgress1.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress1.setForeground(Color.BLACK);
@@ -105,7 +117,7 @@ public class FramePCDownload extends JDialog {
 
         SpecialLabel labelPcProgress2 = new SpecialLabel(" 0%", 17);
         labelPcProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelPcProgress2.setLocation(407,230);
+        labelPcProgress2.setLocation(407, 140);
         labelPcProgress2.setSize(170, 38);
         labelPcProgress2.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress2.setForeground(Color.BLACK);
@@ -114,7 +126,7 @@ public class FramePCDownload extends JDialog {
 
         FramePCDownload thisFrame = this;
         SpecialButton pcStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-        pcStartDownload.setLocation(20, 230);
+        pcStartDownload.setLocation(20, 140);
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 if (downloader != null){
@@ -150,7 +162,19 @@ public class FramePCDownload extends JDialog {
                 downloadThread1.start();  // This runs the download in a separate thread
             }
         });
+        pcStartDownload.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Start downloading Echo VR to the selected path");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(pcStartDownload);
+
+        //Tipbox positionieren und hinzufügen...
+        tipBox.setLocation((frameWidth - tipBox.getWidth()) / 2, frameHeight - tipBox.getHeight() - 60);
+        back.add(tipBox);
 
         //Alles fertig machen...
         this.pack();
