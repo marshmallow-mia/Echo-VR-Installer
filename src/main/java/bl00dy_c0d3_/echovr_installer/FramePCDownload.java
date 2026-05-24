@@ -16,6 +16,11 @@ import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 public class FramePCDownload extends JDialog {
     Downloader downloader = null;
     FrameMain frameMain = null;
+    private static final int SECTION_PADDING = 20;
+    private static final int ITEM_GAP = 20;
+    private static final Color SECTION_BOX_FILL = new Color(200, 0, 150, 90);
+    private static final Color SECTION_BOX_BORDER = new Color(50, 50, 50, 150);
+    private static final int HEADER_CONTENT_OFFSET = 49;
     int frameWidth = 700;
     int frameHeight = 419;
     String path = "C:/EchoVR";
@@ -56,7 +61,7 @@ public class FramePCDownload extends JDialog {
         JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
-        labelPcDownloadPath.setLocation(170, 100);
+        labelPcDownloadPath.setLocation(182, 100);
         labelPcDownloadPath.setSize(490, 25);
         labelPcDownloadPath.setBackground(new Color(255, 255, 255, 200));
         labelPcDownloadPath.setForeground(Color.BLACK);
@@ -64,7 +69,7 @@ public class FramePCDownload extends JDialog {
 
 
         SpecialButton pcChooseOriginalPath = new SpecialButton("<html>Auto choose original<br>Oculus path</html>", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
-        pcChooseOriginalPath.setLocation(20, 40);
+        pcChooseOriginalPath.setLocation(32, 40);
         pcChooseOriginalPath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 String newPath = checkForAdminAndOculusPath(outFrame);
@@ -88,7 +93,7 @@ public class FramePCDownload extends JDialog {
 
 
         SpecialButton pcChoosePath = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
-        pcChoosePath.setLocation(20, 100);
+        pcChoosePath.setLocation(32, 100);
         pcChoosePath.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 pathFolderChooser(labelPcDownloadPath, outFrame);
@@ -108,7 +113,7 @@ public class FramePCDownload extends JDialog {
 
 
         SpecialLabel labelPcProgress1 = new SpecialLabel("Progress =", 17);
-        labelPcProgress1.setLocation(252, 140);
+        labelPcProgress1.setLocation(264, 140);
         labelPcProgress1.setSize(155, 38);
         labelPcProgress1.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress1.setForeground(Color.BLACK);
@@ -117,7 +122,7 @@ public class FramePCDownload extends JDialog {
 
         SpecialLabel labelPcProgress2 = new SpecialLabel(" 0%", 17);
         labelPcProgress2.setHorizontalAlignment(SwingConstants.LEFT);  // Set text alignment to left
-        labelPcProgress2.setLocation(407, 140);
+        labelPcProgress2.setLocation(419, 140);
         labelPcProgress2.setSize(170, 38);
         labelPcProgress2.setBackground(new Color(255, 255, 255, 200));
         labelPcProgress2.setForeground(Color.BLACK);
@@ -126,7 +131,7 @@ public class FramePCDownload extends JDialog {
 
         FramePCDownload thisFrame = this;
         SpecialButton pcStartDownload = new SpecialButton("Start Download", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
-        pcStartDownload.setLocation(20, 140);
+        pcStartDownload.setLocation(32, 140);
         pcStartDownload.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 if (downloader != null){
@@ -176,6 +181,29 @@ public class FramePCDownload extends JDialog {
         tipBox.setLocation((frameWidth - tipBox.getWidth()) / 2, frameHeight - tipBox.getHeight() - 60);
         back.add(tipBox);
 
+        // --- Section Panel (single box around all content) ---
+        int[] bounds = calcBounds(SECTION_PADDING,
+            new int[]{pcChooseOriginalPath.getX(), pcChooseOriginalPath.getY(), pcChooseOriginalPath.getWidth(), pcChooseOriginalPath.getHeight()},
+            new int[]{pcChoosePath.getX(), pcChoosePath.getY(), pcChoosePath.getWidth(), pcChoosePath.getHeight()},
+            new int[]{labelPcDownloadPath.getX(), labelPcDownloadPath.getY(), labelPcDownloadPath.getWidth(), labelPcDownloadPath.getHeight()},
+            new int[]{labelPcProgress1.getX(), labelPcProgress1.getY(), labelPcProgress1.getWidth(), labelPcProgress1.getHeight()},
+            new int[]{labelPcProgress2.getX(), labelPcProgress2.getY(), labelPcProgress2.getWidth(), labelPcProgress2.getHeight()},
+            new int[]{pcStartDownload.getX(), pcStartDownload.getY(), pcStartDownload.getWidth(), pcStartDownload.getHeight()}
+        );
+        back.add(createSectionPanel(bounds[0], bounds[1], bounds[2], bounds[3]));
+        // Section hover tip via mouse motion (does not block button events)
+        final int[] box = bounds;
+        back.addMouseMotionListener(new MouseAdapter() {
+            public void mouseMoved(MouseEvent e) {
+                int mx = e.getX(), my = e.getY();
+                if (mx >= box[0] && mx <= box[0]+box[2] && my >= box[1] && my <= box[1]+box[3]) {
+                    tipBox.showTip("Section tip");
+                } else {
+                    tipBox.showDefault();
+                }
+            }
+        });
+
         //Alles fertig machen...
         this.pack();
 
@@ -193,5 +221,36 @@ public class FramePCDownload extends JDialog {
         else return (new ImageIcon(imageURL, imageName)).getImage();
     }
 
+    // Berechnet den umschließenden Rechteck aus mehreren Content-Rechtecken + Padding
+    private int[] calcBounds(int pad, int[]... rects) {
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
+        int maxR = Integer.MIN_VALUE, maxB = Integer.MIN_VALUE;
+        for (int[] r : rects) {
+            minX = Math.min(minX, r[0]);
+            minY = Math.min(minY, r[1]);
+            maxR = Math.max(maxR, r[0] + r[2]);
+            maxB = Math.max(maxB, r[1] + r[3]);
+        }
+        return new int[]{minX - pad, minY - pad, maxR - minX + pad * 2, maxB - minY + pad * 2};
+    }
+
+    // Erstellt ein Section-Panel mit purpurnem Hintergrund und abgerundeten Ecken
+    private JPanel createSectionPanel(int x, int y, int w, int h) {
+        JPanel panel = new JPanel(null) {
+            @Override public boolean contains(int x, int y) { return false; }
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(SECTION_BOX_FILL);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), SECTION_PADDING, SECTION_PADDING);
+                g2.setColor(SECTION_BOX_BORDER);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, SECTION_PADDING, SECTION_PADDING);
+                g2.dispose();
+            }
+        };
+        panel.setBounds(x, y, w, h);
+        return panel;
+    }
 
 }
