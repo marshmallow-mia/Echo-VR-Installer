@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.beryx.jlink' version '2.24.4'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
 group 'org.example'
@@ -22,9 +23,13 @@ ext {
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
+javafx {
+    version = '17.0.2'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing']
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    options.release.set(17)
 }
 
 application {
@@ -34,7 +39,8 @@ application {
             "-Djava.library.path=libs/",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-exports=javafx.web/com.sun.webkit.network=ALL-UNNAMED"
             //"--add-reads=jlibtorrent=java.logging"
     ]
 }
@@ -44,8 +50,9 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     //implementation files('libs/jlibtorrent-1.2.19.0.jar')
     //implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
-    //implementation "org.openjfx:javafx-controls:${javafxVersion}"
-    //implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    implementation "org.openjfx:javafx-controls:${javafxVersion}"
+    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    implementation "org.openjfx:javafx-web:${javafxVersion}"
     implementation 'org.jetbrains:annotations:24.1.0'
 }
 
@@ -68,7 +75,7 @@ tasks.register('copyLibjpeg', Copy) {
 def os = org.gradle.internal.os.OperatingSystem.current()
 
 jlink {
-    options = ['--add-modules', 'jdk.zipfs']
+    options = ['--add-modules', 'jdk.zipfs,javafx.controls,javafx.fxml,javafx.web,javafx.graphics,javafx.base']
     jpackage {
         installerName = 'Echo_VR_Installer'
 

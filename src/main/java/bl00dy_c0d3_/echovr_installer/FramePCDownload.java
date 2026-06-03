@@ -16,6 +16,8 @@ import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 public class FramePCDownload extends JDialog {
     Downloader downloader = null;
     FrameMain frameMain = null;
+    private WizardState wizardState;
+    SpecialButton nextButton;
     private static final int SECTION_PADDING = 20;
     private static final int ITEM_GAP = 20;
     private static final Color SECTION_BOX_FILL = new Color(200, 0, 150, 90);
@@ -30,12 +32,22 @@ public class FramePCDownload extends JDialog {
     //Constructor
     public FramePCDownload(FrameMain frameMain){
         this.frameMain = frameMain;
+        this.wizardState = new WizardState();
         initComponents();
         this.setVisible(true);
     }
 
+    public FramePCDownload(FrameMain frameMain, WizardState wizardState){
+        this.frameMain = frameMain;
+        this.wizardState = wizardState;
+        initComponents();
+    }
+
 
     public void dispose(){
+        if (nextButton != null) {
+            setVisible(false);
+        }
         if (downloader != null){
             downloader.cancelDownload();
         }
@@ -58,7 +70,7 @@ public class FramePCDownload extends JDialog {
         TipBox tipBox = new TipBox();
 
         //Note before installing Echo
-        JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+        //JOptionPane.showMessageDialog(this, "<html>If you own Echo on your Meta account, first download it officially, start it once and choose the path to the installation on the next screen!<br>If you don't own Echo on your account just proceed and use the patch afterwards!</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
 
         SpecialLabel labelPcDownloadPath = new SpecialLabel(path, 14);
         labelPcDownloadPath.setLocation(182, 100);
@@ -144,6 +156,7 @@ public class FramePCDownload extends JDialog {
                 Thread downloadThread1 = new Thread(() -> {
                     downloader = new Downloader();
                     downloader.setOnCompleteListener(() -> {
+                        nextButton.setVisible(true);
                         SwingUtilities.invokeLater(() -> {
                             String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
                             String URL = "https://files.echovr.de/updates/";
@@ -177,6 +190,32 @@ public class FramePCDownload extends JDialog {
         });
         back.add(pcStartDownload);
 
+        // Next button - initially hidden, made visible after download completes
+        nextButton = new SpecialButton("Next", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 17);
+        nextButton.setLocation(32, 190);
+        nextButton.setVisible(false);
+        nextButton.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                wizardState.setInstallPath(labelPcDownloadPath.getText());
+                WizardState.UserType userType = wizardState.getUserType();
+                if (userType == WizardState.UserType.OWNER) {
+                    dispose();
+                    SwingUtilities.invokeLater(() -> {
+                        OptionalPatchesPanel panel = new OptionalPatchesPanel(null, wizardState);
+                        panel.setVisible(true);
+                    });
+                } else if (userType == WizardState.UserType.NEW_PLAYER) {
+                    dispose();
+                    SwingUtilities.invokeLater(() -> {
+                        new FramePCPatcher();
+                    });
+                } else {
+                    dispose();
+                }
+            }
+        });
+        back.add(nextButton);
+
         //Tipbox positionieren und hinzufügen...
         tipBox.setLocation((frameWidth - tipBox.getWidth()) / 2, frameHeight - tipBox.getHeight() - 60);
         back.add(tipBox);
@@ -188,7 +227,8 @@ public class FramePCDownload extends JDialog {
             new int[]{labelPcDownloadPath.getX(), labelPcDownloadPath.getY(), labelPcDownloadPath.getWidth(), labelPcDownloadPath.getHeight()},
             new int[]{labelPcProgress1.getX(), labelPcProgress1.getY(), labelPcProgress1.getWidth(), labelPcProgress1.getHeight()},
             new int[]{labelPcProgress2.getX(), labelPcProgress2.getY(), labelPcProgress2.getWidth(), labelPcProgress2.getHeight()},
-            new int[]{pcStartDownload.getX(), pcStartDownload.getY(), pcStartDownload.getWidth(), pcStartDownload.getHeight()}
+            new int[]{pcStartDownload.getX(), pcStartDownload.getY(), pcStartDownload.getWidth(), pcStartDownload.getHeight()},
+            new int[]{nextButton.getX(), nextButton.getY(), nextButton.getWidth(), nextButton.getHeight()}
         );
         back.add(createSectionPanel(bounds[0], bounds[1], bounds[2], bounds[3]));
         // Section hover tip via mouse motion (does not block button events)
