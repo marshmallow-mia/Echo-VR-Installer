@@ -6,6 +6,8 @@ import java.io.PrintStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import javafx.application.Platform;
+
 import static java.lang.System.*;
 
 public class EchoVRInstaller {
@@ -47,6 +49,8 @@ public class EchoVRInstaller {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(Platform::exit));
 
         // Start your main application logic
         new FrameMain();

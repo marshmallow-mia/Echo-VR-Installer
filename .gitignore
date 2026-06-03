@@ -1,0 +1,7 @@
+build/
+.gradle/
+.idea/
+*.class
+*.jar
+*.kate-swp
+echovr/

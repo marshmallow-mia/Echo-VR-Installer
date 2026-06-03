@@ -20,6 +20,12 @@ public class FrameMain extends JFrame {
 
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                try { javafx.application.Platform.exit(); } catch (Exception ignored) {}
+                System.exit(0);
+            }
+        });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
         setTitle("Echo VR Installer v0.8.9 [pre alpha]");
@@ -45,7 +51,7 @@ public class FrameMain extends JFrame {
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
 
-        JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
+/*      JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
                 "This installer is not at all associated with them!<br><br>" +
                 "Special thanks to Sick and SirDominik for some of the backgrounds!<br>" +
                 "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>" +
@@ -53,7 +59,7 @@ public class FrameMain extends JFrame {
                 "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
                 "This tool is still in early alpha!<br>" +
                 "If you have problems, contact me on Discord 'marshmallow_mia'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-
+*/
     }
 
 
@@ -76,6 +82,7 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_addGetLog);
+        btn_addGetLog.setVisible(false);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
@@ -102,20 +109,22 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_deleteCache);
+        btn_deleteCache.setVisible(false);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         back.add(addDeleteIcon);
+        addDeleteIcon.setVisible(false);
 
     }
 
 
     private void addPCButtons(JPanel back, FrameMain outFrame) {
-        SpecialButton btn_PCInstallEcho = new SpecialButton("Step 1: Install Echo", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        SpecialButton btn_PCInstallEcho = new SpecialButton("Install Echo VR", "button_up.png", "button_down.png", "button_highlighted.png", 20);
         btn_PCInstallEcho.setLocation((FRAME_WIDTH / 2 - btn_PCInstallEcho.getWidth()) / 2, 200);
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCDownload(outFrame);
+                new FrameGuidance(outFrame);
             }
         });
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
@@ -164,6 +173,7 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_QuestInstallEcho);
+        btn_QuestInstallEcho.setVisible(false);
     }
 
     private void addBackgroundFrames(JPanel back, FrameMain outFrame) {
@@ -239,6 +249,7 @@ public class FrameMain extends JFrame {
         rahmen1.add(btn_PCnonLicence);
         rahmen1.add(btn_PCnoOVRHeadset);
         back.add(rahmen1);
+        rahmen1.setVisible(false);
 
         // ---- Quest side: No licence patch ----
         SpecialButton btn_QuestNoLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
@@ -288,6 +299,7 @@ public class FrameMain extends JFrame {
         rahmen2.setBounds((FRAME_WIDTH / 4 * 3 - questPanelW / 2), 420, questPanelW, questPanelH);
         rahmen2.add(btn_QuestNoLicence);
         back.add(rahmen2);
+        rahmen2.setVisible(false);
     }
 
     private void addEasterEgg(JPanel back, FrameMain outFrame) {
