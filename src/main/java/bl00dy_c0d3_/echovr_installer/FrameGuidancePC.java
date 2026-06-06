@@ -549,7 +549,7 @@ public class FrameGuidancePC extends BaseWizard {
         });
         contentPanel.add(choosePathBtn);
 
-        SpecialButton oauthBtn = new SpecialButton("Licence Patch", "button_up.png", "button_down.png", "button_highlighted.png", 18);
+        SpecialButton oauthBtn = new SpecialButton("Authorize with Discord", "button_up.png", "button_down.png", "button_highlighted.png", 18);
         oauthBtn.setLocation((cx - oauthBtn.getWidth()) / 2, 160);
         oauthBtn.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
