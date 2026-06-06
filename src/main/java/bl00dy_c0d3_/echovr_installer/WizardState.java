@@ -7,13 +7,7 @@ public class WizardState {
         NEW_PLAYER
     }
 
-    public enum PlayStyle {
-        STEAMVR,
-        META_LINK
-    }
-
     private UserType userType;
-    private PlayStyle playStyle;
     private String installPath = "";
 
     public UserType getUserType() {
@@ -22,14 +16,6 @@ public class WizardState {
 
     public void setUserType(UserType userType) {
         this.userType = userType;
-    }
-
-    public PlayStyle getPlayStyle() {
-        return playStyle;
-    }
-
-    public void setPlayStyle(PlayStyle playStyle) {
-        this.playStyle = playStyle;
     }
 
     public String getInstallPath() {
@@ -42,13 +28,9 @@ public class WizardState {
         }
     }
 
-    public String getBinPath() {
-        return installPath + "/bin/win10";
-    }
-
     @Override
     public String toString() {
-        return "WizardState{userType=" + userType + ", playStyle=" + playStyle + ", path=" + installPath + "}";
+        return "WizardState{userType=" + userType + ", path=" + installPath + "}";
     }
 
     private static String normalizePath(String path) {

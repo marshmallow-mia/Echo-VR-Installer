@@ -49,11 +49,11 @@ public class FrameMainTest {
     }
 
     @Test
-    void testQuestButtonsHidden() {
-        // "Quest Install Echo" button should be hidden
+    void testQuestButtonsVisible() {
+        // "Quest Install Echo" button should now be visible (opens FrameGuidanceQuest)
         SpecialButton questBtn = findButtonByText("Quest Install Echo");
         assertNotNull(questBtn, "Quest Install Echo button should exist");
-        assertFalse(questBtn.isVisible(), "Quest Install Echo button should be hidden");
+        assertTrue(questBtn.isVisible(), "Quest Install Echo button should be visible");
     }
 
     @Test

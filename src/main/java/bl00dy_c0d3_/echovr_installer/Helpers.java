@@ -148,7 +148,8 @@ public class Helpers {
                 stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-                process.waitFor();
+                int exitCode = process.waitFor();
+                output.append("Process exited with code ").append(exitCode).append("\n");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -179,6 +180,39 @@ public class Helpers {
         System.out.println(output);
 
         return output.toString();
+    }
+
+
+    /**
+     * Runs a shell command and returns the exit code.
+     * Consumes stdout/stderr silently to prevent process hangs.
+     *
+     * @param shellCommand the shell command to execute
+     * @return the process exit code, or -1 on exception
+     */
+    public static int runShellCommandWithExitCode(String shellCommand) {
+        Process process = null;
+        try {
+            if (linux || mac) {
+                ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
+                process = builder.start();
+            } else {
+                process = Runtime.getRuntime().exec(shellCommand);
+            }
+
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            String s;
+            while ((s = stdInput.readLine()) != null) { }
+            String e;
+            while ((e = stdError.readLine()) != null) { }
+
+            return process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
 

@@ -15,6 +15,11 @@ import java.nio.file.Paths;
 //import static bl00dy_c0d3_.echovr_installer.Helpers.jsonFileChooser;
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
+// TODO: Remove in v0.9.0 — replaced by FrameGuidanceQuest
+/**
+ * @deprecated Replaced by {@link FrameGuidanceQuest}. Will be removed in a future version.
+ */
+@Deprecated
 public class FrameQuestDownload extends JDialog {
     Downloader downloader = null;
     Downloader downloader2 = null;
