@@ -124,7 +124,7 @@ public class FrameMain extends JFrame {
         btn_PCInstallEcho.setLocation((FRAME_WIDTH / 2 - btn_PCInstallEcho.getWidth()) / 2, 200);
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameGuidance(outFrame);
+                new FrameGuidancePC(outFrame);
             }
         });
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
@@ -161,7 +161,7 @@ public class FrameMain extends JFrame {
         btn_QuestInstallEcho.setLocation(819, 200);
         btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameQuestDownload(outFrame);
+                new FrameGuidanceQuest(outFrame);
             }
         });
         btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
@@ -173,7 +173,6 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_QuestInstallEcho);
-        btn_QuestInstallEcho.setVisible(false);
     }
 
     private void addBackgroundFrames(JPanel back, FrameMain outFrame) {
@@ -251,55 +250,6 @@ public class FrameMain extends JFrame {
         back.add(rahmen1);
         rahmen1.setVisible(false);
 
-        // ---- Quest side: No licence patch ----
-        SpecialButton btn_QuestNoLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
-        btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FrameQuestPatcher();
-            }
-        });
-        btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent event) {
-                tipBox.showTip("Patch Echo VR for Quest if you don't own it on your account");
-            }
-            public void mouseExited(MouseEvent event) {
-                tipBox.showDefault();
-            }
-        });
-
-        int qw = btn_QuestNoLicence.getWidth();
-        int qh = btn_QuestNoLicence.getHeight();
-        btn_QuestNoLicence.setLocation(PAD, PAD);
-
-        int questPanelW = qw + PAD * 2;
-        int questPanelH = qh + PAD * 2;
-
-        JPanel rahmen2 = new JPanel(null) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(200, 0, 150, 150));
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC, ARC);
-                g2.setColor(new Color(50, 50, 50, 150));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-            @Override
-            protected void paintChildren(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), ARC, ARC));
-                super.paintChildren(g2);
-                g2.dispose();
-            }
-        };
-        rahmen2.setOpaque(false);
-        rahmen2.setBounds((FRAME_WIDTH / 4 * 3 - questPanelW / 2), 420, questPanelW, questPanelH);
-        rahmen2.add(btn_QuestNoLicence);
-        back.add(rahmen2);
-        rahmen2.setVisible(false);
     }
 
     private void addEasterEgg(JPanel back, FrameMain outFrame) {

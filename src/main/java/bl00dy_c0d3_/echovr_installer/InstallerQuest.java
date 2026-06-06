@@ -81,19 +81,70 @@ public class InstallerQuest {
             runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
 
             System.out.println("**push zip to /data/local/tmp");
-            runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
+            progressLabel.setText("Pushing data files...");
+            String pushOutput = runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
+
+            boolean pushTransferredData = pushOutput.contains("bytes") && !pushOutput.contains("0 files pushed");
+            int pushExitCode = parseExitCode(pushOutput);
+
+            if (!pushTransferredData) {
+                System.out.println("**FAILED: push did not transfer any data (exit code: " + pushExitCode + ")");
+                ErrorDialog error = new ErrorDialog();
+                error.errorDialog(parrentFrame, "Transfer Failed", "Failed to push data files to the device.", 0);
+                return false;
+            }
+
+            progressLabel.setText("Verifying transfer...");
+
+            int deviceStatus = checkQuestStatus();
+            if (deviceStatus != 0) {
+                System.out.println("**WARNING: Device disconnected after data push (push transferred but adb connection lost)");
+                progressLabel.setText("Device disconnected - retrying...");
+
+                runShellCommand(adbPath + " kill-server");
+                runShellCommand(adbPath + " start-server");
+                pause(2);
+
+                deviceStatus = checkQuestStatus();
+                if (deviceStatus != 0) {
+                    ErrorDialog error = new ErrorDialog();
+                    error.errorDialog(parrentFrame, "Device Disconnected",
+                            "Device disconnected during data transfer and could not be reconnected.", 0);
+                    return false;
+                }
+
+                progressLabel.setText("Device reconnected, continuing...");
+            }
+
+            boolean overallSuccess = true;
 
             System.out.println("**mv zip to target");
-            runShellCommand(adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"");
+            if (!executeWithReconnect(adbPath,
+                    adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"",
+                    "mv", progressLabel)) {
+                overallSuccess = false;
+            }
 
             System.out.println("**unzip");
-            runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"");
+            if (!executeWithReconnect(adbPath,
+                    adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"",
+                    "unzip", progressLabel)) {
+                overallSuccess = false;
+            }
 
             System.out.println("**rm zip");
-            runShellCommand(adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"");
+            if (!executeWithReconnect(adbPath,
+                    adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"",
+                    "rm", progressLabel)) {
+                overallSuccess = false;
+            }
 
             System.out.println("**Set permissions (post-unzip)");
-            runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+            if (!executeWithReconnect(adbPath,
+                    adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"",
+                    "chmod", progressLabel)) {
+                overallSuccess = false;
+            }
 
             System.out.println("**Grant permissions");
             runShellCommand(adbPath + " shell appops set com.readyatdawn.r15 MANAGE_EXTERNAL_STORAGE allow");
@@ -107,12 +158,7 @@ public class InstallerQuest {
             System.out.println("**adb kill-server");
             runShellCommand(adbPath + " kill-server");
 
-
-
-
-
-
-            return true;
+            return overallSuccess;
         }
         else if (deviceConnected == 1) {
             ErrorDialog error = new ErrorDialog();
@@ -201,7 +247,59 @@ public class InstallerQuest {
     }
 
 
+    private static int parseExitCode(String output) {
+        if (output == null) {
+            return -1;
+        }
+        String[] lines = output.split("\\n");
+        for (String line : lines) {
+            if (line.startsWith("Process exited with code ")) {
+                try {
+                    String codeStr = line.substring("Process exited with code ".length()).trim();
+                    return Integer.parseInt(codeStr);
+                } catch (NumberFormatException e) {
+                    return -1;
+                }
+            }
+        }
+        return 0;
+    }
 
+    private static boolean executeWithReconnect(String adbPath, String command,
+                                                 String commandDesc, SpecialLabel progressLabel) {
+        int exitCode = runShellCommandWithExitCode(command);
+        if (exitCode == 0) {
+            return true;
+        }
 
+        int deviceStatus = checkQuestStatus();
+        if (deviceStatus == 0) {
+            System.out.println("**WARNING: " + commandDesc + " failed (exit code " + exitCode +
+                    ") but device is connected — not retrying");
+            return false;
+        }
 
+        System.out.println("**WARNING: Device disconnected during " + commandDesc + ", retrying...");
+        progressLabel.setText("Device disconnected - retrying...");
+
+        runShellCommand(adbPath + " kill-server");
+        runShellCommand(adbPath + " start-server");
+        pause(2);
+
+        deviceStatus = checkQuestStatus();
+        if (deviceStatus != 0) {
+            System.out.println("**ERROR: Device still disconnected after reconnection during " + commandDesc);
+            return false;
+        }
+
+        progressLabel.setText("Device reconnected, continuing...");
+
+        exitCode = runShellCommandWithExitCode(command);
+        if (exitCode != 0) {
+            System.out.println("**ERROR: " + commandDesc + " failed after reconnection (exit code " + exitCode + ")");
+            return false;
+        }
+
+        return true;
+    }
 }

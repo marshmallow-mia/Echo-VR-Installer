@@ -13,6 +13,11 @@ import java.nio.file.Paths;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
+// TODO: Remove in v0.9.0 — replaced by FrameGuidanceQuest
+/**
+ * @deprecated Replaced by {@link FrameGuidanceQuest}. Will be removed in a future version.
+ */
+@Deprecated
 public class FrameQuestPatcher extends JDialog {
     private static final int SECTION_PADDING = 20;
     private static final int ITEM_GAP = 20;
