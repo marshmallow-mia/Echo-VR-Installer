@@ -1,6 +1,10 @@
 build/
 .gradle/
 .idea/
+.opencode/
+.sisyphus/
+log.log
+echo_ideas.md
 *.class
 *.jar
 *.kate-swp
