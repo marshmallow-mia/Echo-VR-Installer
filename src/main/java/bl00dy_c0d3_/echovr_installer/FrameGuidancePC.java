@@ -21,6 +21,7 @@ public class FrameGuidancePC extends BaseWizard {
     private SpecialLabel steamPatchProgressLbl;
     private int patchDetailMode = 0; // 0=master, 1=licence, 2=steam
     private boolean justArrivedAtStep4 = false;
+    private JLabel pathIndicator;
     public FrameGuidancePC(FrameMain frameMain) {
         super(frameMain);
         Background back = (Background) getContentPane();
@@ -269,6 +270,12 @@ public class FrameGuidancePC extends BaseWizard {
         pathLbl.setBackground(new Color(255, 255, 255, 200)); pathLbl.setForeground(Color.BLACK);
         contentPanel.add(pathLbl);
 
+        this.pathIndicator = new JLabel();
+        this.pathIndicator.setBounds((cx - 440) / 2 + 445, 64, 90, 34);
+        this.pathIndicator.setFont(new Font("Arial", Font.BOLD, 14));
+        contentPanel.add(this.pathIndicator);
+        updatePathStatus(this.pathIndicator, savedPath, pathLbl);
+
         dlButton = new SpecialButton("Start Download", "button_up.png", "button_down.png", "button_highlighted.png", 18);
         dlButton.setLocation((cx - dlButton.getWidth()) / 2, 102);
         dlButton.addMouseListener(new MouseAdapter() {
@@ -281,6 +288,18 @@ public class FrameGuidancePC extends BaseWizard {
                     dlProgressLabel.setText("Ready to download");
                     nextBtn.setEnabled(true);
                 } else {
+                    String installPath = wizardState.getInstallPath();
+                    if (installPath != null && !installPath.isEmpty()) {
+                        String exePath = installPath + "/ready-at-dawn-echo-arena/bin/win10/echovr.exe";
+                        if (new File(exePath).exists()) {
+                            int choice = JOptionPane.showConfirmDialog(FrameGuidancePC.this,
+                                "Echo VR is already installed at this path.\n\nOverwrite the existing installation?",
+                                "Existing Installation Found", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                            if (choice != JOptionPane.YES_OPTION) {
+                                return;
+                            }
+                        }
+                    }
                     dlButton.changeText("Cancel Download");
                     wizardState.setInstallPath(pathLbl.getText());
                     triggerDownload();
