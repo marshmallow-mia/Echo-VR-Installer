@@ -460,48 +460,11 @@ public class FrameGuidancePC extends BaseWizard {
                     downloadPatch.startDownload(patchUrl, ep, "pnsovr.dll", new SpecialLabel(" 0%", 13), FrameGuidancePC.this, null, 3, true, -1, false);
                 });
             } catch (java.util.concurrent.ExecutionException ex) {
-                Throwable cause = ex.getCause();
-                System.out.println("OAuth2 ERROR (ExecutionException): " + (cause != null ? cause.getClass().getName() + ": " + cause.getMessage() : "null cause"));
-                if (cause != null) cause.printStackTrace();
-                SwingUtilities.invokeLater(() -> {
-                    if (cause instanceof DiscordOAuth2Flow.OAuth2Exception oae) {
-                        if ("not_in_guild".equals(oae.getErrorCode())) {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Join Server First",
-                                    oae.getMessage(), 0);
-                        } else if ("busy".equals(oae.getErrorCode())) {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Bot Busy",
-                                    oae.getMessage(), 0);
-                        } else {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Authorization Failed",
-                                    oae.getMessage(), 0);
-                        }
-                    } else {
-                        new ErrorDialog().errorDialog(FrameGuidancePC.this, "Error",
-                                "Failed: " + (cause != null ? cause.getMessage() : "Unknown error"), 0);
-                    }
-                    resetAfterError(triggerBtn);
-                });
+                OAuth2ErrorHandler.handleError(ex.getCause(), FrameGuidancePC.this, triggerBtn);
+                resetAfterError(triggerBtn);
             } catch (Exception ex) {
-                System.out.println("OAuth2 ERROR: " + ex.getClass().getName() + ": " + ex.getMessage());
-                ex.printStackTrace();
-                SwingUtilities.invokeLater(() -> {
-                    if (ex instanceof DiscordOAuth2Flow.OAuth2Exception oae) {
-                        if ("not_in_guild".equals(oae.getErrorCode())) {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Join Server First",
-                                    oae.getMessage(), 0);
-                        } else if ("busy".equals(oae.getErrorCode())) {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Bot Busy",
-                                    oae.getMessage(), 0);
-                        } else {
-                            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Authorization Failed",
-                                    oae.getMessage(), 0);
-                        }
-                    } else {
-                        new ErrorDialog().errorDialog(FrameGuidancePC.this, "Error",
-                                "Timed out or cancelled. Try again.", 0);
-                    }
-                    resetAfterError(triggerBtn);
-                });
+                OAuth2ErrorHandler.handleError(ex, FrameGuidancePC.this, triggerBtn);
+                resetAfterError(triggerBtn);
             }
         }).start();
     }
@@ -617,48 +580,11 @@ public class FrameGuidancePC extends BaseWizard {
                             downloadPatch.startDownload(patchUrl, ep, "pnsovr.dll", new SpecialLabel(" 0%", 13), FrameGuidancePC.this, null, 3, true, -1, false);
                         });
                     } catch (java.util.concurrent.ExecutionException ex) {
-                        Throwable cause = ex.getCause();
-                        System.out.println("OAuth2 ERROR (ExecutionException): " + (cause != null ? cause.getClass().getName() + ": " + cause.getMessage() : "null cause"));
-                        if (cause != null) cause.printStackTrace();
-                        SwingUtilities.invokeLater(() -> {
-                            if (cause instanceof DiscordOAuth2Flow.OAuth2Exception oae) {
-                                if ("not_in_guild".equals(oae.getErrorCode())) {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Join Server First",
-                                            oae.getMessage(), 0);
-                                } else if ("busy".equals(oae.getErrorCode())) {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Bot Busy",
-                                            oae.getMessage(), 0);
-                                } else {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Authorization Failed",
-                                            oae.getMessage(), 0);
-                                }
-                            } else {
-                                new ErrorDialog().errorDialog(FrameGuidancePC.this, "Error",
-                                        "Failed: " + (cause != null ? cause.getMessage() : "Unknown error"), 0);
-                            }
-                            resetAfterError(oauthBtn);
-                        });
+                        OAuth2ErrorHandler.handleError(ex.getCause(), FrameGuidancePC.this, oauthBtn);
+                        resetAfterError(oauthBtn);
                     } catch (Exception ex) {
-                        System.out.println("OAuth2 ERROR: " + ex.getClass().getName() + ": " + ex.getMessage());
-                        ex.printStackTrace();
-                        SwingUtilities.invokeLater(() -> {
-                            if (ex instanceof DiscordOAuth2Flow.OAuth2Exception oae) {
-                                if ("not_in_guild".equals(oae.getErrorCode())) {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Join Server First",
-                                            oae.getMessage(), 0);
-                                } else if ("busy".equals(oae.getErrorCode())) {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Bot Busy",
-                                            oae.getMessage(), 0);
-                                } else {
-                                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "Authorization Failed",
-                                            oae.getMessage(), 0);
-                                }
-                            } else {
-                                new ErrorDialog().errorDialog(FrameGuidancePC.this, "Error",
-                                        "Timed out or cancelled. Try again.", 0);
-                            }
-                            resetAfterError(oauthBtn);
-                        });
+                        OAuth2ErrorHandler.handleError(ex, FrameGuidancePC.this, oauthBtn);
+                        resetAfterError(oauthBtn);
                     }
                 }).start();
             }

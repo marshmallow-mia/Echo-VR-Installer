@@ -20,7 +20,7 @@ public class SelectorConfig {
     }
 
     public String getServerInvite() {
-        return properties.getProperty("discord.server.invite", "https://discord.gg/KqjqdNUaHR");
+        return properties.getProperty("discord.server.invite", "https://discord.gg/bMpsva6fmA");
     }
 
     public String getChannelName() {
