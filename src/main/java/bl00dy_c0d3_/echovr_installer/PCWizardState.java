@@ -21,6 +21,10 @@ public class PCWizardState extends WizardState {
         return getInstallPath() + "/ready-at-dawn-echo-arena/bin/win10";
     }
 
+    public String getExePath() {
+        return getBinPath() + "/echovr.exe";
+    }
+
     @Override
     public String toString() {
         return "PCWizardState{userType=" + getUserType() + ", playStyle=" + playStyle + ", path=" + getInstallPath() + "}";
