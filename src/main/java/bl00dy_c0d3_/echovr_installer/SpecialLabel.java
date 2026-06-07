@@ -24,9 +24,18 @@ public class SpecialLabel extends JLabel {
         this.setFont(font);
         this.setForeground(Color.WHITE);
         this.setSize(this.getPreferredSize().width + 10, this.getPreferredSize().height + 10);
-        this.setOpaque(true);
         this.setBackground(new Color(60, 70, 100, 200));
         this.setHorizontalAlignment(SwingConstants.CENTER);
         this.setVerticalAlignment(SwingConstants.CENTER);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        // Paint semi-transparent background over the parent (which repaints behind us
+        // since we're not opaque). This ensures old text is fully cleared before
+        // painting the new text — preventing ghosting/overlap on text changes.
+        g.setColor(getBackground());
+        g.fillRect(0, 0, getWidth(), getHeight());
+        super.paintComponent(g);
     }
 }
