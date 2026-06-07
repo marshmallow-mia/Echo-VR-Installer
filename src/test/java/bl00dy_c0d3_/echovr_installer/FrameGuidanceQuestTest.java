@@ -1,6 +1,8 @@
 package bl00dy_c0d3_.echovr_installer;
 
 import java.awt.GraphicsEnvironment;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -269,5 +271,77 @@ public class FrameGuidanceQuestTest {
         if (GraphicsEnvironment.isHeadless()) return;
         assertNotNull(wizard.nextBtn,
                 "Next button must exist (inherited from BaseWizard)");
+    }
+
+    // ========================================================================
+    // canAdvanceFrom step 0 validation (RED phase — test 1 must FAIL)
+    // ========================================================================
+
+    @Test
+    void testCanAdvanceStep0BlocksWhenNoUserType() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        QuestWizardState qs = getField("questState");
+        qs.setUserType(null);
+        assertFalse(invokeCanAdvanceFrom(0, 0),
+                "Step 0 should block advancement when userType is null");
+    }
+
+    @Test
+    void testCanAdvanceStep0AllowsWhenOwner() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        QuestWizardState qs = getField("questState");
+        qs.setUserType(WizardState.UserType.OWNER);
+        assertTrue(invokeCanAdvanceFrom(0, 0),
+                "Step 0 should allow advancement when userType is OWNER");
+    }
+
+    @Test
+    void testCanAdvanceStep0AllowsWhenNewPlayer() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        QuestWizardState qs = getField("questState");
+        qs.setUserType(WizardState.UserType.NEW_PLAYER);
+        assertTrue(invokeCanAdvanceFrom(0, 0),
+                "Step 0 should allow advancement when userType is NEW_PLAYER");
+    }
+
+    // ========================================================================
+    // Reflection helpers
+    // ========================================================================
+
+    @SuppressWarnings("unchecked")
+    private <T> T getField(String name) {
+        try {
+            Class<?> clazz = wizard.getClass();
+            while (clazz != null) {
+                try {
+                    Field f = clazz.getDeclaredField(name);
+                    f.setAccessible(true);
+                    return (T) f.get(wizard);
+                } catch (NoSuchFieldException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+            throw new RuntimeException("Failed to access field: " + name);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to access field: " + name, e);
+        }
+    }
+
+    private boolean invokeCanAdvanceFrom(int step, int sub) {
+        try {
+            Class<?> clazz = wizard.getClass();
+            while (clazz != null) {
+                try {
+                    Method m = clazz.getDeclaredMethod("canAdvanceFrom", int.class, int.class);
+                    m.setAccessible(true);
+                    return (boolean) m.invoke(wizard, step, sub);
+                } catch (NoSuchMethodException e) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+            throw new RuntimeException("Failed to invoke canAdvanceFrom");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invoke canAdvanceFrom(" + step + ", " + sub + ")", e);
+        }
     }
 }
