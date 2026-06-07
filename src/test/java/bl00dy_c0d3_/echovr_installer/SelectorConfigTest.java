@@ -16,7 +16,7 @@ public class SelectorConfigTest {
 
     @Test
     void testServerInvite() {
-        assertEquals("https://discord.gg/KqjqdNUaHR", config.getServerInvite());
+        assertEquals("https://discord.gg/bMpsva6fmA", config.getServerInvite());
     }
 
     @Test
