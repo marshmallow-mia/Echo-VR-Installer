@@ -373,6 +373,35 @@ public class FrameGuidancePC extends BaseWizard {
         d.setBounds(0, 55, cx, 40); d.setForeground(new Color(0, 255, 0)); d.setFont(new Font("Arial", Font.BOLD, 24)); contentPanel.add(d);
         JLabel s = new JLabel("Echo VR is ready to play.", SwingConstants.CENTER);
         s.setBounds(0, 105, cx, 24); s.setForeground(Color.WHITE); s.setFont(new Font("Arial", Font.PLAIN, 16)); contentPanel.add(s);
+
+        if (wizardState.getInstallPath() != null && !wizardState.getInstallPath().isEmpty()) {
+            SpecialButton shortcutBtn = new SpecialButton("Create Desktop Shortcut",
+                "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+            shortcutBtn.setLocation((cx - shortcutBtn.getWidth()) / 2, 155);
+            shortcutBtn.addMouseListener(new MouseAdapter() {
+                public void mouseReleased(MouseEvent e) {
+                    Helpers.createDesktopShortcut(wizardState.getExePath());
+                    JOptionPane.showMessageDialog(FrameGuidancePC.this,
+                        "Desktop shortcut created!", "Done", JOptionPane.INFORMATION_MESSAGE);
+                }
+                public void mouseEntered(MouseEvent e) { tipBox.showTip("Create a shortcut to Echo VR on your desktop"); }
+                public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+            });
+            contentPanel.add(shortcutBtn);
+
+            SpecialButton openBtn = new SpecialButton("Open Install Folder",
+                "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
+            openBtn.setLocation((cx - openBtn.getWidth()) / 2, 205);
+            openBtn.addMouseListener(new MouseAdapter() {
+                public void mouseReleased(MouseEvent e) {
+                    Helpers.openFolder(wizardState.getBinPath());
+                }
+                public void mouseEntered(MouseEvent e) { tipBox.showTip("Open the Echo VR install folder in file explorer"); }
+                public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+            });
+            contentPanel.add(openBtn);
+        }
+
         nextBtn.setEnabled(true);
     }
 

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -301,6 +302,81 @@ public class Helpers {
 
         return "";
 
+    }
+
+    public static boolean openUrl(String url) {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(new URI(url));
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("linux")) {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", url});
+                return true;
+            } else if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", url});
+                return true;
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", url});
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    public static void createDesktopShortcut(String exePath) {
+        try {
+            File exeFile = new File(exePath);
+            String name = "Echo VR";
+            String workingDir = exeFile.getParent();
+
+            if (isWindows) {
+                String psCommand = String.format(
+                    "$ws = New-Object -ComObject WScript.Shell; " +
+                    "$s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\%s.lnk'); " +
+                    "$s.TargetPath = '%s'; " +
+                    "$s.WorkingDirectory = '%s'; " +
+                    "$s.IconLocation = '%s,0'; " +
+                    "$s.Save()",
+                    name, exePath.replace("\\", "\\\\"), workingDir.replace("\\", "\\\\"), exePath.replace("\\", "\\\\"));
+                runShellCommand("powershell -Command \"" + psCommand + "\"");
+            } else if (linux) {
+                String desktopEntry = String.format(
+                    "[Desktop Entry]\nType=Application\nName=%s\nExec=\"%s\"\nPath=%s\nTerminal=false\n",
+                    name, exePath, workingDir);
+                Path desktopDir = Paths.get(System.getProperty("user.home"), ".local", "share", "applications");
+                Files.createDirectories(desktopDir);
+                Files.write(desktopDir.resolve("echo-vr.desktop"), desktopEntry.getBytes());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to create desktop shortcut: " + e.getMessage());
+        }
+    }
+
+    public static void openFolder(String path) {
+        try {
+            File folder = new File(path);
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(folder);
+                return;
+            }
+        } catch (Exception ignored) {}
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"explorer", path});
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", path});
+            } else {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", path});
+            }
+        } catch (Exception ignored) {}
     }
 
     private static File findFileRecursive(File dir, String filename) {
