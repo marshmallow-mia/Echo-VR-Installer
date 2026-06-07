@@ -109,12 +109,12 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_deleteCache);
-        btn_deleteCache.setVisible(false);
+        btn_deleteCache.setVisible(true);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         back.add(addDeleteIcon);
-        addDeleteIcon.setVisible(false);
+        addDeleteIcon.setVisible(true);
 
     }
 
