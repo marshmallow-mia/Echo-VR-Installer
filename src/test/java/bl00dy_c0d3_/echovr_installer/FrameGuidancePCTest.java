@@ -5,8 +5,12 @@ import org.junit.jupiter.api.Test;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -214,6 +218,83 @@ public class FrameGuidancePCTest {
         assertTrue(result);
     }
 
+    @Test
+    void testStep3IndicatorShowsCheckWhenEchoExists() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        Path tempDir = null;
+        try {
+            try {
+                tempDir = Files.createTempDirectory("echovr-test");
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create temp directory", e);
+            }
+            File exeDir = new File(tempDir.toFile(), "ready-at-dawn-echo-arena/bin/win10");
+            exeDir.mkdirs();
+            try {
+                new File(exeDir, "echovr.exe").createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create echovr.exe", e);
+            }
+
+            PCWizardState ws = getField("wizardState");
+            ws.setInstallPath(tempDir.toString());
+
+            invokeBuildStep3();
+
+            // Field doesn't exist yet → getField throws → test fails (RED)
+            JLabel pathIndicator = getField("pathIndicator");
+            assertEquals("\u2713", pathIndicator.getText());
+        } finally {
+            if (tempDir != null) {
+                try {
+                    Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
+                        @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            Files.delete(file); return FileVisitResult.CONTINUE;
+                        }
+                        @Override public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                            Files.delete(dir); return FileVisitResult.CONTINUE;
+                        }
+                    });
+                } catch (IOException ignored) {}
+            }
+        }
+    }
+
+    @Test
+    void testStep3IndicatorShowsCrossWhenEchoAbsent() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        Path tempDir = null;
+        try {
+            try {
+                tempDir = Files.createTempDirectory("echovr-test");
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create temp directory", e);
+            }
+
+            PCWizardState ws = getField("wizardState");
+            ws.setInstallPath(tempDir.toString());
+
+            invokeBuildStep3();
+
+            // Field doesn't exist yet → getField throws → test fails (RED)
+            JLabel pathIndicator = getField("pathIndicator");
+            assertEquals("\u2717", pathIndicator.getText());
+        } finally {
+            if (tempDir != null) {
+                try {
+                    Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
+                        @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            Files.delete(file); return FileVisitResult.CONTINUE;
+                        }
+                        @Override public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                            Files.delete(dir); return FileVisitResult.CONTINUE;
+                        }
+                    });
+                } catch (IOException ignored) {}
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private <T> T getField(String name) {
         try {
@@ -278,6 +359,17 @@ public class FrameGuidancePCTest {
             throw new RuntimeException("Failed to invoke confirmAbortDownload");
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke confirmAbortDownload", e);
+        }
+    }
+
+    private void invokeBuildStep3() {
+        try {
+            Method m = FrameGuidancePC.class.getDeclaredMethod("buildStep3", int.class);
+            m.setAccessible(true);
+            JPanel contentPanel = getField("contentPanel");
+            m.invoke(guidance, contentPanel.getWidth());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invoke buildStep3", e);
         }
     }
 
