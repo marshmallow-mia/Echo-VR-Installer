@@ -238,7 +238,12 @@ public class FrameGuidancePC extends BaseWizard {
         h.setBounds((cx - 450) / 2, 5, 450, 55); contentPanel.add(h);
 
         String savedPath = wizardState.getInstallPath();
-        if (savedPath == null || savedPath.isEmpty()) savedPath = System.getProperty("os.name").toLowerCase().contains("win") ? "C:/EchoVR" : System.getProperty("user.dir") + File.separator + "echovr";
+        if (savedPath == null || savedPath.isEmpty()) {
+            String configPath = Helpers.loadInstallPath();
+            savedPath = (configPath != null && !configPath.isEmpty()) ? configPath
+                : (System.getProperty("os.name").toLowerCase().contains("win") ? "C:/EchoVR" 
+                   : System.getProperty("user.dir") + File.separator + "echovr");
+        }
         wizardState.setInstallPath(savedPath);
         pathLbl = makeRoundedLabel(savedPath, 12);
         pathLbl.setLocation((cx - 440) / 2, 70); pathLbl.setSize(440, 22);
@@ -251,6 +256,7 @@ public class FrameGuidancePC extends BaseWizard {
             public void mouseReleased(MouseEvent e) {
                 pathFolderChooser(pathLbl, FrameGuidancePC.this);
                 wizardState.setInstallPath(pathLbl.getText());
+                Helpers.saveInstallPath(pathLbl.getText());
                 showStep(3, 0);
             }
             public void mouseEntered(MouseEvent e) { tipBox.showTip("Manually choose install folder"); }
@@ -303,6 +309,7 @@ public class FrameGuidancePC extends BaseWizard {
                     }
                     dlButton.changeText("Cancel Download");
                     wizardState.setInstallPath(pathLbl.getText());
+                    Helpers.saveInstallPath(wizardState.getInstallPath());
                     triggerDownload();
                 }
             }
@@ -370,37 +377,47 @@ public class FrameGuidancePC extends BaseWizard {
 
     private void buildStep5(int cx) {
         JLabel d = new JLabel("You're all set!", SwingConstants.CENTER);
-        d.setBounds(0, 55, cx, 40); d.setForeground(new Color(0, 255, 0)); d.setFont(new Font("Arial", Font.BOLD, 24)); contentPanel.add(d);
+        d.setBounds(0, 20, cx, 40); d.setForeground(new Color(0, 255, 0)); d.setFont(new Font("Arial", Font.BOLD, 24)); contentPanel.add(d);
         JLabel s = new JLabel("Echo VR is ready to play.", SwingConstants.CENTER);
-        s.setBounds(0, 105, cx, 24); s.setForeground(Color.WHITE); s.setFont(new Font("Arial", Font.PLAIN, 16)); contentPanel.add(s);
+        s.setBounds(0, 70, cx, 24); s.setForeground(Color.WHITE); s.setFont(new Font("Arial", Font.PLAIN, 16)); contentPanel.add(s);
 
-        if (wizardState.getInstallPath() != null && !wizardState.getInstallPath().isEmpty()) {
-            SpecialButton shortcutBtn = new SpecialButton("Create Desktop Shortcut",
-                "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
-            shortcutBtn.setLocation((cx - shortcutBtn.getWidth()) / 2, 155);
-            shortcutBtn.addMouseListener(new MouseAdapter() {
-                public void mouseReleased(MouseEvent e) {
-                    Helpers.createDesktopShortcut(wizardState.getExePath());
-                    JOptionPane.showMessageDialog(FrameGuidancePC.this,
-                        "Desktop shortcut created!", "Done", JOptionPane.INFORMATION_MESSAGE);
+        SpecialButton shortcutBtn = new SpecialButton("Create Desktop Shortcut",
+            "button_up.png", "button_down.png", "button_highlighted.png", 18);
+        shortcutBtn.setLocation((cx - shortcutBtn.getWidth()) / 2, 115);
+        shortcutBtn.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                String installPath = wizardState.getInstallPath();
+                if (installPath == null || installPath.isEmpty()) {
+                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "No Install Path",
+                        "Echo VR is not installed. Please download and install Echo VR first.", 0);
+                    return;
                 }
-                public void mouseEntered(MouseEvent e) { tipBox.showTip("Create a shortcut to Echo VR on your desktop"); }
-                public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
-            });
-            contentPanel.add(shortcutBtn);
+                Helpers.createDesktopShortcut(wizardState.getExePath());
+                JOptionPane.showMessageDialog(FrameGuidancePC.this,
+                    "Desktop shortcut created!", "Done", JOptionPane.INFORMATION_MESSAGE);
+            }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Create a shortcut to Echo VR on your desktop"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        contentPanel.add(shortcutBtn);
 
-            SpecialButton openBtn = new SpecialButton("Open Install Folder",
-                "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 14);
-            openBtn.setLocation((cx - openBtn.getWidth()) / 2, 205);
-            openBtn.addMouseListener(new MouseAdapter() {
-                public void mouseReleased(MouseEvent e) {
-                    Helpers.openFolder(wizardState.getBinPath());
+        SpecialButton openBtn = new SpecialButton("Open Install Folder",
+            "button_up.png", "button_down.png", "button_highlighted.png", 18);
+        openBtn.setLocation((cx - openBtn.getWidth()) / 2, 180);
+        openBtn.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                String installPath = wizardState.getInstallPath();
+                if (installPath == null || installPath.isEmpty()) {
+                    new ErrorDialog().errorDialog(FrameGuidancePC.this, "No Install Path",
+                        "Echo VR is not installed. Please download and install Echo VR first.", 0);
+                    return;
                 }
-                public void mouseEntered(MouseEvent e) { tipBox.showTip("Open the Echo VR install folder in file explorer"); }
-                public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
-            });
-            contentPanel.add(openBtn);
-        }
+                Helpers.openFolder(wizardState.getBinPath());
+            }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Open the Echo VR install folder in file explorer"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        contentPanel.add(openBtn);
 
         nextBtn.setEnabled(true);
     }
