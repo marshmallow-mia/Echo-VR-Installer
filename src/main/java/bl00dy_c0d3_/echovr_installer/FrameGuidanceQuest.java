@@ -87,6 +87,12 @@ public class FrameGuidanceQuest extends BaseWizard {
 
     @Override
     protected boolean canAdvanceFrom(int step, int sub) {
+        if (step == 0 && questState.getUserType() == null) {
+            JOptionPane.showMessageDialog(FrameGuidanceQuest.this,
+                "Please select whether you own Echo VR or are a new player before continuing.",
+                "No Player Type Selected", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         if (step == 2) {
             return stepCompleted;
         }
@@ -106,6 +112,9 @@ public class FrameGuidanceQuest extends BaseWizard {
     // === Step 0: Type Selection ===
 
     private void buildStep0(int cx) {
+        // Reset selection so the user is forced to choose again
+        questState.setUserType(null);
+
         JLabel h = makeHeader("Do you own Echo VR on your Meta account?");
         h.setBounds((cx - 450) / 2, 8, 450, 55); contentPanel.add(h);
 
@@ -114,7 +123,6 @@ public class FrameGuidanceQuest extends BaseWizard {
         own.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
                 questState.setUserType(WizardState.UserType.OWNER);
-                nextBtn.setEnabled(true);
                 advance();
             }
             public void mouseEntered(MouseEvent e) { tipBox.showTip("You already own Echo VR"); }
@@ -126,7 +134,6 @@ public class FrameGuidanceQuest extends BaseWizard {
         np.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
                 questState.setUserType(WizardState.UserType.NEW_PLAYER);
-                nextBtn.setEnabled(true);
                 advance();
             }
             public void mouseEntered(MouseEvent e) { tipBox.showTip("You need to patch Echo VR"); }
