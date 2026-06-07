@@ -281,6 +281,7 @@ public class FrameGuidancePC extends BaseWizard {
         dlButton.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
                 if (stepInProgress) {
+                    if (!confirmAbortDownload()) return;
                     if (downloader != null) downloader.cancelDownload();
                     stepInProgress = false;
                     progressAnimator.stop();

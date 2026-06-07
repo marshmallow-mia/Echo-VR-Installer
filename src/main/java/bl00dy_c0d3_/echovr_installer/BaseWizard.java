@@ -304,7 +304,7 @@ public abstract class BaseWizard extends JDialog {
 
         nextBtn = new SpecialButton("Next >", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 11);
         nextBtn.setEnabled(false);
-        nextBtn.addMouseListener(new MouseAdapter() { public void mouseReleased(MouseEvent e) { advance(); } });
+        nextBtn.addMouseListener(new MouseAdapter() { public void mouseReleased(MouseEvent e) { advanceWithConfirm(); } });
         back.add(nextBtn);
 
         int stepCount = getStepCount();
@@ -422,6 +422,12 @@ public abstract class BaseWizard extends JDialog {
         int sc = getSubstepCount(currentStep);
         if (currentSubstep < sc - 1) showStep(currentStep, currentSubstep + 1);
         else showStep(currentStep + 1, 0);
+    }
+
+    protected void advanceWithConfirm() {
+        if (!confirmAbortDownload()) return;
+        if (downloader != null) downloader.cancelDownload();
+        advance();
     }
 
     protected void goBack() {
