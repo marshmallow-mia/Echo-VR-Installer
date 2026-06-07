@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.util.List;
@@ -302,6 +303,42 @@ public class Helpers {
 
         return "";
 
+    }
+
+    private static final Path CONFIG_DIR = Paths.get(System.getProperty("user.home"), ".echovr_installer");
+    private static final Path CONFIG_FILE = CONFIG_DIR.resolve("paths.properties");
+
+    public static void saveInstallPath(String path) {
+        try {
+            Files.createDirectories(CONFIG_DIR);
+            Properties props = new Properties();
+            if (Files.exists(CONFIG_FILE)) {
+                try (FileInputStream in = new FileInputStream(CONFIG_FILE.toFile())) {
+                    props.load(in);
+                }
+            }
+            props.setProperty("pc.install.path", path);
+            try (FileOutputStream out = new FileOutputStream(CONFIG_FILE.toFile())) {
+                props.store(out, "Echo VR Installer saved paths");
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to save install path: " + e.getMessage());
+        }
+    }
+
+    public static String loadInstallPath() {
+        try {
+            if (Files.exists(CONFIG_FILE)) {
+                Properties props = new Properties();
+                try (FileInputStream in = new FileInputStream(CONFIG_FILE.toFile())) {
+                    props.load(in);
+                }
+                return props.getProperty("pc.install.path");
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load install path: " + e.getMessage());
+        }
+        return null;
     }
 
     public static boolean openUrl(String url) {
