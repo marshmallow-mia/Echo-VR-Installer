@@ -172,6 +172,7 @@ public class FrameGuidanceQuest extends BaseWizard {
             dlButton.addMouseListener(new MouseAdapter() {
                 public void mouseReleased(MouseEvent e) {
                     if (stepInProgress) {
+                        if (!confirmAbortDownload()) return;
                         cancelDownloads();
                         stepInProgress = false;
                         progressAnimator.stop();
@@ -190,7 +191,17 @@ public class FrameGuidanceQuest extends BaseWizard {
             dlButton.setLocation((cx - dlButton.getWidth()) / 2, 130);
             dlButton.addMouseListener(new MouseAdapter() {
                 public void mouseReleased(MouseEvent e) {
-                    if (!stepInProgress) startOAuth2Download();
+                    if (stepInProgress) {
+                        if (!confirmAbortDownload()) return;
+                        cancelDownloads();
+                        stepInProgress = false;
+                        progressAnimator.stop();
+                        dlButton.changeText("Start Download");
+                        dlProgressLabel.setText("Ready to download");
+                        nextBtn.setEnabled(true);
+                    } else {
+                        startOAuth2Download();
+                    }
                 }
                 public void mouseEntered(MouseEvent e) { tipBox.showTip("Authorize with Discord to get your patched APK"); }
                 public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
@@ -349,7 +360,7 @@ public class FrameGuidanceQuest extends BaseWizard {
         installBtn.setLocation((cx - installBtn.getWidth()) / 2, 115);
         installBtn.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
-                if (stepInProgress) return;
+                if (stepInProgress && !confirmAbortDownload()) return;
                 installBtn.setEnabled(false);
                 nextBtn.setEnabled(false);
                 stepInProgress = true;
