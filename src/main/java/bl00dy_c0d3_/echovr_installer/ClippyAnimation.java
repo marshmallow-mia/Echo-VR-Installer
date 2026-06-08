@@ -37,22 +37,28 @@ public class ClippyAnimation extends JPanel {
         setOpaque(false);
         setLayout(null);
 
-        // Extract GIF frames
+        // Extract all GIF frames
         frames = new ArrayList<>();
         try {
-            // Use getResource() not getClassLoader().getResource() — module-aware
             URL gifUrl = getClass().getResource("/clippy/anim2.gif");
             System.err.println("[Clippy] GIF URL: " + gifUrl);
             if (gifUrl != null) {
-                BufferedImage img = ImageIO.read(gifUrl);
-                System.err.println("[Clippy] GIF read result: " + (img != null) + " " + (img != null ? img.getWidth()+"x"+img.getHeight() : "null"));
-                if (img != null) {
-                    frames.add(img);
+                ImageInputStream iis = ImageIO.createImageInputStream(gifUrl.openStream());
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.setInput(iis);
+                    int n = reader.getNumImages(true);
+                    System.err.println("[Clippy] GIF frames: " + n);
+                    for (int i = 0; i < n; i++) frames.add(reader.read(i));
+                    reader.dispose();
                 }
+                iis.close();
             }
         } catch (Exception e) {
             System.err.println("[Clippy] GIF error: " + e);
         }
+        System.err.println("[Clippy] Extracted frames: " + frames.size());
 
         if (frames.isEmpty()) {
             // No frames: still works (shows empty box with border)
