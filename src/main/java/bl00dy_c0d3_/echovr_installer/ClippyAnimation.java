@@ -5,7 +5,6 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.net.URL;
@@ -32,7 +31,7 @@ public class ClippyAnimation extends JPanel {
     private Runnable onComplete;
 
     public ClippyAnimation() {
-        this(10, 10);
+        this(1, 1);
     }
 
     public ClippyAnimation(int riseFrames, int fallFrames) {
@@ -77,7 +76,7 @@ public class ClippyAnimation extends JPanel {
         timer.start();
     }
 
-    public void start(Rectangle position, JLayeredPane layeredPane, Runnable onComplete) {
+    public void start(Rectangle position, Container parent, Runnable onComplete) {
         this.onComplete = onComplete;
         this.visible = true;
         this.rising = true;
@@ -91,8 +90,8 @@ public class ClippyAnimation extends JPanel {
         System.err.println("[Clippy] Y: start=" + startY + " target=" + targetY + " h=" + getHeight());
 
         setBounds(panelX, currentY, getWidth(), getHeight());
-        layeredPane.add(this, JLayeredPane.POPUP_LAYER);
-        layeredPane.repaint();
+        parent.add(this);
+        parent.repaint();
     }
 
     private void onTick() {

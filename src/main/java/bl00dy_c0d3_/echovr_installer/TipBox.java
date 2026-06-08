@@ -55,10 +55,6 @@ public class TipBox extends JPanel {
         currentBoxH = boxH;
         rebuild();
         addMouseListener(clippyListener);
-        // TEST: auto-trigger in a loop
-        new javax.swing.Timer(500, evt -> {
-            if (!clippyAnimating) triggerClippy();
-        }).start();
     }
 
     @Override
@@ -131,6 +127,11 @@ public class TipBox extends JPanel {
 
         setPreferredSize(new Dimension(totalW, totalH));
         setSize(totalW, totalH);
+
+        System.err.println("[TipBox] totalSize=" + totalW + "x" + totalH
+            + " headerY=" + PADDING + " h=" + imgH
+            + " tipY=" + (PADDING + imgH + GAP) + " h=" + boxH
+            + " PADDING=" + PADDING + " GAP=" + GAP);
 
         // ---- header image label (centered, shifted down by PADDING) ----
         JLabel headerLabel = new JLabel("Tipbox", icon, SwingConstants.CENTER);
@@ -208,21 +209,18 @@ public class TipBox extends JPanel {
             clippyAnimation = new ClippyAnimation(CLIPPY_RISE_FRAMES, CLIPPY_FALL_FRAMES);
             clippyAnimating = true;
 
-            Window rootWindow = SwingUtilities.getWindowAncestor(this);
-            if (rootWindow == null) return;
+            Container parent = getParent();
+            if (parent == null) return;
 
-            JLayeredPane lp;
-            if (rootWindow instanceof JFrame) lp = ((JFrame) rootWindow).getLayeredPane();
-            else if (rootWindow instanceof JDialog) lp = ((JDialog) rootWindow).getLayeredPane();
-            else return;
-
-            Point tipInLp = SwingUtilities.convertPoint(this, 0, 0, lp);
-            int x = tipInLp.x + (getWidth() - 124) / 2;
-            int y = tipInLp.y;
-            System.err.println("[Clippy] convertPoint y=" + y + " (was manual: " + (getLocationOnScreen().y - lp.getLocationOnScreen().y) + ")");
+            Point tipInParent = SwingUtilities.convertPoint(this, 0, 0, parent);
+            int x = tipInParent.x + (getWidth() - 124) / 2;
+            int y = tipInParent.y;
+            System.err.println("[Clippy] convertPoint y=" + y + " tipBoxSize=" + getWidth() + "x" + getHeight()
+                + " headerBounds=" + getComponent(0).getBounds()
+                + " tipLabelBounds=" + getComponent(1).getBounds());
             Rectangle pos = new Rectangle(x, y, 124, 93);
 
-            clippyAnimation.start(pos, lp, () -> {
+            clippyAnimation.start(pos, parent, () -> {
                 clippyAnimating = false;
                 clippyAnimation = null;
             });
