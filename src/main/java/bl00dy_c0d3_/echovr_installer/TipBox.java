@@ -25,7 +25,7 @@ public class TipBox extends JPanel {
     private static final int CLIPPY_FALL_MS = 400;
     private boolean clippyAnimating = false;
     private ClippyAnimation clippyAnimation = null;
-    private javax.swing.Timer clippyTestTimer = null;
+    private boolean clippyTestStarted = false;
 
     private final MouseAdapter clippyListener = new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
@@ -55,13 +55,17 @@ public class TipBox extends JPanel {
         currentBoxH = boxH;
         rebuild();
         addMouseListener(clippyListener);
-        if (clippyTestTimer == null) {
-            clippyTestTimer = new javax.swing.Timer(500, evt -> {
-                triggerClippy();
-            });
-            clippyTestTimer.setRepeats(false);
-            clippyTestTimer.start();
-        }
+        addHierarchyListener(new java.awt.event.HierarchyListener() {
+            public void hierarchyChanged(java.awt.event.HierarchyEvent e) {
+                if (!clippyTestStarted && isShowing()) {
+                    clippyTestStarted = true;
+                    System.err.println("[Clippy] Became visible, triggering first test animation in 200ms");
+                    new javax.swing.Timer(200, evt2 -> {
+                        triggerClippy();
+                    }).start();
+                }
+            }
+        });
     }
 
     @Override
@@ -200,6 +204,9 @@ public class TipBox extends JPanel {
     }
 
     private void triggerClippy() {
+        System.err.println("[Clippy] === triggerClippy() called at " + System.currentTimeMillis()
+                + " isShowing=" + isShowing() + " size=" + getWidth() + "x" + getHeight()
+                + " parent=" + (getParent() != null));
         System.err.println("[Clippy] triggerClippy() called");
         if (clippyAnimating) { System.err.println("[Clippy] BLOCKED: already animating"); return; }
         if (!isShowing()) { System.err.println("[Clippy] BLOCKED: not showing"); return; }
@@ -212,13 +219,10 @@ public class TipBox extends JPanel {
             clippyAnimating = true;
             Rectangle tipBoxBounds = getBounds();
             clippyAnimation.start(tipBoxBounds, parent, () -> {
-                System.err.println("[Clippy] Animation complete callback fired");
+                System.err.println("[Clippy] Animation complete, scheduling next in 1s");
                 clippyAnimating = false;
                 clippyAnimation = null;
-                if (clippyTestTimer != null) {
-                    clippyTestTimer.setInitialDelay(1000);
-                    clippyTestTimer.restart();
-                }
+                new javax.swing.Timer(1000, evt -> triggerClippy()).start();
             });
         } catch (Exception ex) {
             System.err.println("[Clippy] EXCEPTION: " + ex.getMessage());

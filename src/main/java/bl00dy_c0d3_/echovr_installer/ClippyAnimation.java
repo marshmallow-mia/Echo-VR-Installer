@@ -109,6 +109,8 @@ public class ClippyAnimation extends JPanel {
 
         parent.add(this);
         parent.setComponentZOrder(this, parent.getComponentCount() - 1);
+        parent.revalidate();
+        parent.repaint();
 
         System.err.println("[ClippyAnim] Added to parent, z-order="
                 + parent.getComponentZOrder(this)
