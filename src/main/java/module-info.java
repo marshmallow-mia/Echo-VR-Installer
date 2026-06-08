@@ -5,6 +5,7 @@ module bl00dy_c0d3_.echovr_installer {
     requires jdk.jfr;
     requires java.logging;
     requires org.jetbrains.annotations;
+    requires com.google.gson;
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
