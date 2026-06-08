@@ -381,7 +381,7 @@ public class FrameGuidancePC extends BaseWizard {
         JLabel s = new JLabel("Echo VR is ready to play.", SwingConstants.CENTER);
         s.setBounds(0, 70, cx, 24); s.setForeground(Color.WHITE); s.setFont(new Font("Arial", Font.PLAIN, 16)); contentPanel.add(s);
 
-        SpecialButton shortcutBtn = new SpecialButton("Create Desktop Shortcut",
+        SpecialButton shortcutBtn = new SpecialButton("Add Desktop Shortcut",
             "button_up.png", "button_down.png", "button_highlighted.png", 18);
         shortcutBtn.setLocation((cx - shortcutBtn.getWidth()) / 2, 115);
         shortcutBtn.addMouseListener(new MouseAdapter() {
