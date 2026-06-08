@@ -203,31 +203,29 @@ public class TipBox extends JPanel {
         if (!isShowing()) { System.err.println("[Clippy] BLOCKED: not showing"); return; }
         if (getWidth() <= 0 || getHeight() <= 0) { System.err.println("[Clippy] BLOCKED: zero size w="+getWidth()+" h="+getHeight()); return; }
         try {
-            clippyAnimation = new ClippyAnimation(CLIPPY_RISE_MS, CLIPPY_FALL_MS);
+            clippyAnimation = new ClippyAnimation();
             clippyAnimating = true;
 
-            // Simple placement: add to layered pane so repaint() is visible
             Window rootWindow = SwingUtilities.getWindowAncestor(this);
-            if (rootWindow != null) {
-                JLayeredPane layeredPane;
-                if (rootWindow instanceof JFrame) {
-                    layeredPane = ((JFrame) rootWindow).getLayeredPane();
-                } else if (rootWindow instanceof JDialog) {
-                    layeredPane = ((JDialog) rootWindow).getLayeredPane();
-                } else {
-                    return;
-                }
-                Point tpScreen = this.getLocationOnScreen();
-                Point lpScreen = layeredPane.getLocationOnScreen();
-                int x = tpScreen.x - lpScreen.x + (getWidth() - 124) / 2;
-                int y = tpScreen.y - lpScreen.y - 93 - 10;
-                clippyAnimation.setBounds(x, y, 124, 93);
-                layeredPane.add(clippyAnimation, JLayeredPane.POPUP_LAYER);
-                layeredPane.repaint();
-            }
+            if (rootWindow == null) return;
+
+            JLayeredPane lp;
+            if (rootWindow instanceof JFrame) lp = ((JFrame) rootWindow).getLayeredPane();
+            else if (rootWindow instanceof JDialog) lp = ((JDialog) rootWindow).getLayeredPane();
+            else return;
+
+            Point tpScreen = getLocationOnScreen();
+            Point lpScreen = lp.getLocationOnScreen();
+            int x = tpScreen.x - lpScreen.x + (getWidth() - 124) / 2;
+            int y = tpScreen.y - lpScreen.y;
+            Rectangle pos = new Rectangle(x, y, 124, 93);
+
+            clippyAnimation.start(pos, lp, () -> {
+                clippyAnimating = false;
+                clippyAnimation = null;
+            });
         } catch (Exception ex) {
-            System.err.println("[Clippy] EXCEPTION: " + ex.getMessage());
-            ex.printStackTrace();
+            System.err.println("Clippy failed: " + ex);
             clippyAnimating = false;
             clippyAnimation = null;
         }
