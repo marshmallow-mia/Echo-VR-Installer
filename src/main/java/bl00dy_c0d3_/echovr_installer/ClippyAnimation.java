@@ -99,10 +99,11 @@ public class ClippyAnimation extends JPanel {
         long now = System.currentTimeMillis();
 
         if (rising) {
-            // Rise: slide up while playing first riseFrames
-            float p = (float) (now - phaseStart) / (riseFrames * TICK_MS);
-            currentY = startY - (int) ((startY - targetY) * Math.min(1f, p));
-            currentFrame = Math.min(currentFrame, riseFrames - 1);
+            long elapsed = now - phaseStart;
+            float p = Math.min(1f, (float) elapsed / (riseFrames * TICK_MS));
+            int tickIndex = (int)(elapsed / TICK_MS);
+            currentFrame = Math.min(tickIndex, riseFrames - 1);
+            currentY = startY - (int) ((startY - targetY) * p);
             if (p >= 1f) {
                 currentY = targetY;
                 rising = false;
