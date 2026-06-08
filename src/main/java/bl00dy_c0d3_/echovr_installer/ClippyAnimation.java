@@ -1,9 +1,16 @@
 package bl00dy_c0d3_.echovr_installer;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
-import java.net.URL;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ClippyAnimation extends JPanel {
 
@@ -11,7 +18,7 @@ public class ClippyAnimation extends JPanel {
 
     private static final int DEFAULT_DURATION_MS = 400;
     private static final int HOLD_MS = 2000;
-    private static final int TICK_MS = 16;
+    private static final int TICK_MS = 80; // match GIF frame rate
 
     private final int riseMs, fallMs;
     private Timer timer;
@@ -22,7 +29,9 @@ public class ClippyAnimation extends JPanel {
     private long phaseStart;
     private Phase phase;
     private boolean active;
-    private Image gifImage;
+    private List<BufferedImage> frames;
+    private int currentFrame;
+    private boolean framesAvailable;
 
     public ClippyAnimation() {
         this(DEFAULT_DURATION_MS, DEFAULT_DURATION_MS);
@@ -34,14 +43,34 @@ public class ClippyAnimation extends JPanel {
         setOpaque(false);
         setLayout(null);
 
-        URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
-        if (gifUrl != null) {
-            gifImage = Toolkit.getDefaultToolkit().createImage(gifUrl);
-            MediaTracker tracker = new MediaTracker(this);
-            tracker.addImage(gifImage, 0);
-            try { tracker.waitForID(0, 3000); } catch (InterruptedException ignored) {}
-            panelW = gifImage.getWidth(this);
-            panelH = gifImage.getHeight(this);
+        // Extract all frames from the animated GIF
+        frames = new ArrayList<>();
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("clippy/anim2.gif");
+            if (is != null) {
+                ImageInputStream iis = ImageIO.createImageInputStream(is);
+                Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.setInput(iis);
+                    int numFrames = reader.getNumImages(true);
+                    for (int i = 0; i < numFrames; i++) {
+                        BufferedImage frame = reader.read(i);
+                        frames.add(frame);
+                    }
+                    reader.dispose();
+                }
+                iis.close();
+                is.close();
+            }
+        } catch (Exception e) {
+            System.err.println("[ClippyAnim] GIF frame extraction failed: " + e.getMessage());
+        }
+
+        framesAvailable = !frames.isEmpty();
+        if (framesAvailable) {
+            panelW = frames.get(0).getWidth();
+            panelH = frames.get(0).getHeight();
         }
         if (panelW <= 0) { panelW = 100; panelH = 100; }
         setSize(panelW, panelH);
@@ -51,15 +80,14 @@ public class ClippyAnimation extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-        // Draw GIF directly — 'this' as ImageObserver drives frame animation
-        if (gifImage != null) {
-            g.drawImage(gifImage, 0, 0, this);
+        if (framesAvailable && currentFrame >= 0 && currentFrame < frames.size()) {
+            g.drawImage(frames.get(currentFrame), 0, 0, this);
         } else {
-            // Fallback: yellow debug box
+            // Fallback yellow debug
             g.setColor(new Color(255, 255, 0, 128));
             g.fillRect(0, 0, getWidth(), getHeight());
         }
-        // Red debug border always
+        // Red border always
         g.setColor(Color.RED);
         g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
     }
@@ -92,6 +120,7 @@ public class ClippyAnimation extends JPanel {
         this.active = true;
         this.phase = Phase.RISE;
         this.phaseStart = System.currentTimeMillis();
+        this.currentFrame = 0;
 
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
         layeredPane.repaint();
@@ -102,6 +131,12 @@ public class ClippyAnimation extends JPanel {
 
     private void tick() {
         if (!active) return;
+
+        // Advance frame every tick
+        if (framesAvailable) {
+            currentFrame = (currentFrame + 1) % frames.size();
+        }
+
         long elapsed = System.currentTimeMillis() - phaseStart;
 
         switch (phase) {
@@ -122,7 +157,7 @@ public class ClippyAnimation extends JPanel {
         }
 
         setBounds(layeredX, currentY, panelW, panelH);
-        repaint(); // triggers GIF imageUpdate → advances frame
+        repaint();
     }
 
     private void onHierarchyChanged(HierarchyEvent e) {
@@ -138,10 +173,7 @@ public class ClippyAnimation extends JPanel {
             layeredPane.repaint();
             layeredPane = null;
         }
-        if (gifImage != null) {
-            gifImage.flush();
-            gifImage = null;
-        }
+        if (frames != null) frames.clear();
         Runnable cb = onComplete;
         onComplete = null;
         if (cb != null) cb.run();
