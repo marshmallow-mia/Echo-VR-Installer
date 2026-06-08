@@ -2,6 +2,8 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -18,6 +20,19 @@ public class TipBox extends JPanel {
     private int currentImgH = -1;
     private int currentBoxW = -1;
     private int currentBoxH = -1;
+
+    private static final int CLIPPY_RISE_MS = 400;
+    private static final int CLIPPY_FALL_MS = 400;
+    private boolean clippyAnimating = false;
+    private ClippyAnimation clippyAnimation = null;
+
+    private final MouseAdapter clippyListener = new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) {
+                triggerClippy();
+            }
+        }
+    };
 
     public TipBox() {
         this(300, -1, -1, -1);
@@ -37,6 +52,7 @@ public class TipBox extends JPanel {
         currentBoxW = boxW;
         currentBoxH = boxH;
         rebuild();
+        addMouseListener(clippyListener);
     }
 
     @Override
@@ -135,6 +151,8 @@ public class TipBox extends JPanel {
         }
         headerLabel.setFont(headerFont);
 
+        headerLabel.addMouseListener(clippyListener);
+
         add(headerLabel);
 
         // ---- grey tip box (centered, with margin so transparent bg shows around it) ----
@@ -159,6 +177,8 @@ public class TipBox extends JPanel {
         tipLabel.setForeground(Color.WHITE);
         tipLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
+        tipLabel.addMouseListener(clippyListener);
+
         add(tipLabel);
     }
 
@@ -168,5 +188,25 @@ public class TipBox extends JPanel {
 
     public void showDefault() {
         tipLabel.setText("<html><center>" + DEFAULT_TEXT + "</center></html>");
+    }
+
+    private void triggerClippy() {
+        if (clippyAnimating) return;
+        if (!isShowing() || getWidth() <= 0 || getHeight() <= 0) return;
+        Container parent = getParent();
+        if (parent == null) return;
+        try {
+            clippyAnimation = new ClippyAnimation(CLIPPY_RISE_MS, CLIPPY_FALL_MS);
+            clippyAnimating = true;
+            Rectangle tipBoxBounds = getBounds();
+            clippyAnimation.start(tipBoxBounds, parent, () -> {
+                clippyAnimating = false;
+                clippyAnimation = null;
+            });
+        } catch (Exception ex) {
+            System.err.println("Clippy animation failed: " + ex.getMessage());
+            clippyAnimating = false;
+            clippyAnimation = null;
+        }
     }
 }
