@@ -216,10 +216,10 @@ public class TipBox extends JPanel {
             else if (rootWindow instanceof JDialog) lp = ((JDialog) rootWindow).getLayeredPane();
             else return;
 
-            Point tpScreen = getLocationOnScreen();
-            Point lpScreen = lp.getLocationOnScreen();
-            int x = tpScreen.x - lpScreen.x + (getWidth() - 124) / 2;
-            int y = tpScreen.y - lpScreen.y;
+            Point tipInLp = SwingUtilities.convertPoint(this, 0, 0, lp);
+            int x = tipInLp.x + (getWidth() - 124) / 2;
+            int y = tipInLp.y;
+            System.err.println("[Clippy] convertPoint y=" + y + " (was manual: " + (getLocationOnScreen().y - lp.getLocationOnScreen().y) + ")");
             Rectangle pos = new Rectangle(x, y, 124, 93);
 
             clippyAnimation.start(pos, lp, () -> {
