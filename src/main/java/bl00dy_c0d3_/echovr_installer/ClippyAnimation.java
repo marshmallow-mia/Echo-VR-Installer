@@ -15,8 +15,10 @@ public class ClippyAnimation extends JPanel {
 
     private final int riseMs, fallMs;
     private Timer timer;
-    private int startY, targetY, panelX, currentY;
-    private Container parent;
+    private int layeredX, startY, targetY, currentY;
+    private int panelW, panelH;
+    private JLayeredPane layeredPane;
+    private Window rootWindow;
     private Runnable onComplete;
     private long phaseStart;
     private Phase phase;
@@ -36,11 +38,11 @@ public class ClippyAnimation extends JPanel {
         URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
         if (gifUrl != null) {
             ImageIcon icon = new ImageIcon(gifUrl);
-            int w = icon.getIconWidth();
-            int h = icon.getIconHeight();
-            if (w > 0 && h > 0) {
-                setSize(w, h);
-                setPreferredSize(new Dimension(w, h));
+            panelW = icon.getIconWidth();
+            panelH = icon.getIconHeight();
+            if (panelW > 0 && panelH > 0) {
+                setSize(panelW, panelH);
+                setPreferredSize(new Dimension(panelW, panelH));
             }
             JLabel label = new JLabel(icon);
             label.setOpaque(false);
@@ -52,27 +54,37 @@ public class ClippyAnimation extends JPanel {
         addHierarchyListener(this::onHierarchyChanged);
     }
 
-    public void start(Rectangle tipBoxBounds, Container parent, Runnable onComplete) {
-        if (active || !hasGif) return;
-        int w = getWidth(), h = getHeight();
-        if (w <= 0 || h <= 0) return;
+    public void start(Component anchor, Runnable onComplete) {
+        if (active || !hasGif || panelW <= 0) return;
 
-        panelX  = tipBoxBounds.x + (tipBoxBounds.width - w) / 2;
-        startY  = tipBoxBounds.y + tipBoxBounds.height;
-        targetY = Math.max(0, tipBoxBounds.y - h);
+        rootWindow = SwingUtilities.getWindowAncestor(anchor);
+        if (rootWindow == null) return;
+
+        if (rootWindow instanceof JFrame) {
+            layeredPane = ((JFrame) rootWindow).getLayeredPane();
+        } else if (rootWindow instanceof JDialog) {
+            layeredPane = ((JDialog) rootWindow).getLayeredPane();
+        } else {
+            return;
+        }
+
+        Point tipBoxScreen = anchor.getLocationOnScreen();
+        Point lpScreen = layeredPane.getLocationOnScreen();
+
+        layeredX = tipBoxScreen.x - lpScreen.x + (anchor.getWidth() - panelW) / 2;
+        startY  = tipBoxScreen.y + anchor.getHeight() - lpScreen.y;
+        targetY = Math.max(0, tipBoxScreen.y - lpScreen.y - panelH);
         currentY = startY;
-        setBounds(panelX, currentY, w, h);
 
-        this.parent = parent;
+        setBounds(layeredX, currentY, panelW, panelH);
+
         this.onComplete = onComplete;
         this.active = true;
         this.phase = Phase.RISE;
         this.phaseStart = System.currentTimeMillis();
 
-        parent.add(this);
-        parent.setComponentZOrder(this, parent.getComponentCount() - 1);
-        parent.revalidate();
-        parent.repaint();
+        layeredPane.add(this, JLayeredPane.POPUP_LAYER);
+        layeredPane.repaint();
 
         if (timer == null) timer = new Timer(TICK_MS, e -> tick());
         timer.start();
@@ -81,6 +93,7 @@ public class ClippyAnimation extends JPanel {
     private void tick() {
         if (!active) return;
         long elapsed = System.currentTimeMillis() - phaseStart;
+
         switch (phase) {
             case RISE:
                 float rp = Math.min(1f, (float) elapsed / riseMs);
@@ -97,7 +110,8 @@ public class ClippyAnimation extends JPanel {
                 if (fp >= 1f) { currentY = startY; cleanup(); return; }
                 break;
         }
-        setBounds(panelX, currentY, getWidth(), getHeight());
+
+        setBounds(layeredX, currentY, panelW, panelH);
     }
 
     private void onHierarchyChanged(HierarchyEvent e) {
@@ -108,7 +122,11 @@ public class ClippyAnimation extends JPanel {
         if (!active) return;
         active = false;
         if (timer != null) timer.stop();
-        if (parent != null) { parent.remove(this); parent.revalidate(); parent.repaint(); parent = null; }
+        if (layeredPane != null) {
+            layeredPane.remove(this);
+            layeredPane.repaint();
+            layeredPane = null;
+        }
         Runnable cb = onComplete;
         onComplete = null;
         if (cb != null) cb.run();
