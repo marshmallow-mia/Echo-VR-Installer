@@ -205,10 +205,26 @@ public class TipBox extends JPanel {
         try {
             clippyAnimation = new ClippyAnimation(CLIPPY_RISE_MS, CLIPPY_FALL_MS);
             clippyAnimating = true;
-            clippyAnimation.start(this, () -> {
-                clippyAnimating = false;
-                clippyAnimation = null;
-            });
+
+            // Simple placement: add to layered pane so repaint() is visible
+            Window rootWindow = SwingUtilities.getWindowAncestor(this);
+            if (rootWindow != null) {
+                JLayeredPane layeredPane;
+                if (rootWindow instanceof JFrame) {
+                    layeredPane = ((JFrame) rootWindow).getLayeredPane();
+                } else if (rootWindow instanceof JDialog) {
+                    layeredPane = ((JDialog) rootWindow).getLayeredPane();
+                } else {
+                    return;
+                }
+                Point tpScreen = this.getLocationOnScreen();
+                Point lpScreen = layeredPane.getLocationOnScreen();
+                int x = tpScreen.x - lpScreen.x + (getWidth() - 124) / 2;
+                int y = tpScreen.y - lpScreen.y - 93 - 10;
+                clippyAnimation.setBounds(x, y, 124, 93);
+                layeredPane.add(clippyAnimation, JLayeredPane.POPUP_LAYER);
+                layeredPane.repaint();
+            }
         } catch (Exception ex) {
             System.err.println("[Clippy] EXCEPTION: " + ex.getMessage());
             ex.printStackTrace();
