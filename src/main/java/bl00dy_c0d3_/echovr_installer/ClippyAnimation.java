@@ -39,6 +39,7 @@ public class ClippyAnimation extends JPanel {
     private boolean active;
     private Runnable onComplete;
     private Container parent;
+    private int tickCount;
 
     public ClippyAnimation() {
         this(DEFAULT_DURATION_MS, DEFAULT_DURATION_MS);
@@ -71,6 +72,10 @@ public class ClippyAnimation extends JPanel {
      * @param onComplete   callback invoked after the animation finishes (or window closes)
      */
     public void start(Rectangle tipBoxBounds, Container parent, Runnable onComplete) {
+        System.err.println("[ClippyAnim] start() called. active=" + active
+                + " framesEmpty=" + frames.isEmpty()
+                + " panelSize=" + getWidth() + "x" + getHeight());
+
         if (active || frames.isEmpty()) {
             return;
         }
@@ -89,6 +94,9 @@ public class ClippyAnimation extends JPanel {
 
         setBounds(panelX, currentY, panelWidth, panelHeight);
 
+        System.err.println("[ClippyAnim] Positioned at x=" + panelX
+                + " startY=" + startY + " targetY=" + targetY);
+
         this.parent = parent;
         this.onComplete = onComplete;
         this.active = true;
@@ -97,9 +105,14 @@ public class ClippyAnimation extends JPanel {
         phase = Phase.RISE;
         lastFrameTime = System.currentTimeMillis();
         phaseStartTime = lastFrameTime;
+        tickCount = 0;
 
         parent.add(this);
-        parent.setComponentZOrder(this, 0);
+        parent.setComponentZOrder(this, parent.getComponentCount() - 1);
+
+        System.err.println("[ClippyAnim] Added to parent, z-order="
+                + parent.getComponentZOrder(this)
+                + " of " + parent.getComponentCount());
 
         if (timer == null) {
             timer = new Timer(TIMER_INTERVAL_MS, e -> onTick());
@@ -122,6 +135,12 @@ public class ClippyAnimation extends JPanel {
 
     private void onTick() {
         if (!active) return;
+
+        tickCount++;
+        if (tickCount % 30 == 0) {
+            System.err.println("[ClippyAnim] phase=" + phase + " y=" + currentY
+                    + " frame=" + currentFrame + "/" + frames.size());
+        }
 
         long now = System.currentTimeMillis();
         long elapsed = now - phaseStartTime;
@@ -175,6 +194,7 @@ public class ClippyAnimation extends JPanel {
 
     private void cleanup() {
         if (!active) return;
+        System.err.println("[ClippyAnim] cleanup() called");
         active = false;
 
         if (timer != null) {
@@ -212,6 +232,7 @@ public class ClippyAnimation extends JPanel {
             }
         }
 
+        System.err.println("[ClippyAnim] Loaded " + list.size() + " frames");
         return list;
     }
 
