@@ -85,7 +85,7 @@ public class ClippyAnimation extends JPanel {
         this.phaseStart = System.currentTimeMillis();
         this.currentFrame = 0;
         this.panelX = position.x;
-        this.startY = position.y + position.height;
+        this.startY = position.y;
         this.targetY = Math.max(0, position.y - getHeight());
         this.currentY = startY;
 
