@@ -2,7 +2,6 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.MediaTracker;
 import java.awt.event.HierarchyEvent;
 import java.net.URL;
 
@@ -19,13 +18,11 @@ public class ClippyAnimation extends JPanel {
     private int layeredX, startY, targetY, currentY;
     private int panelW, panelH;
     private JLayeredPane layeredPane;
-    private Window rootWindow;
     private Runnable onComplete;
     private long phaseStart;
     private Phase phase;
     private boolean active;
-    private final boolean hasGif;
-    private int tickCount = 0;
+    private Image gifImage;
 
     public ClippyAnimation() {
         this(DEFAULT_DURATION_MS, DEFAULT_DURATION_MS);
@@ -35,57 +32,43 @@ public class ClippyAnimation extends JPanel {
         this.riseMs = Math.max(riseMs, 1);
         this.fallMs = Math.max(fallMs, 1);
         setOpaque(false);
-        setLayout(new BorderLayout());
+        setLayout(null);
 
         URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
         if (gifUrl != null) {
-            // Load via Toolkit for proper animation support
-            Image gifImage = Toolkit.getDefaultToolkit().createImage(gifUrl);
-            ImageIcon icon = new ImageIcon(gifImage);
-            // Wait for image to fully load
+            gifImage = Toolkit.getDefaultToolkit().createImage(gifUrl);
             MediaTracker tracker = new MediaTracker(this);
             tracker.addImage(gifImage, 0);
-            try { tracker.waitForID(0, 2000); } catch (InterruptedException ignored) {}
-            
-            panelW = icon.getIconWidth();
-            panelH = icon.getIconHeight();
-            if (panelW <= 0) { panelW = 124; panelH = 93; }
-            setSize(panelW, panelH);
-            setPreferredSize(new Dimension(panelW, panelH));
-            
-            JLabel label = new JLabel(icon);
-            label.setOpaque(false);
-            // CRITICAL: set the label as the image observer so GIF animates
-            icon.setImageObserver(label);
-            add(label, BorderLayout.CENTER);
-            hasGif = true;
-        } else {
-            hasGif = false;
-            setSize(100, 100);
-            setPreferredSize(new Dimension(100, 100));
-            panelW = 100;
-            panelH = 100;
+            try { tracker.waitForID(0, 3000); } catch (InterruptedException ignored) {}
+            panelW = gifImage.getWidth(this);
+            panelH = gifImage.getHeight(this);
         }
+        if (panelW <= 0) { panelW = 100; panelH = 100; }
+        setSize(panelW, panelH);
+        setPreferredSize(new Dimension(panelW, panelH));
         addHierarchyListener(this::onHierarchyChanged);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        // DEBUG: yellow fill + red border — impossible to miss
-        g.setColor(new Color(255, 255, 0, 128));
-        g.fillRect(0, 0, getWidth(), getHeight());
+        // Draw GIF directly — 'this' as ImageObserver drives frame animation
+        if (gifImage != null) {
+            g.drawImage(gifImage, 0, 0, this);
+        } else {
+            // Fallback: yellow debug box
+            g.setColor(new Color(255, 255, 0, 128));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        }
+        // Red debug border always
         g.setColor(Color.RED);
         g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
-        g.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
     }
 
     public void start(Component anchor, Runnable onComplete) {
         if (active) return;
 
-        rootWindow = SwingUtilities.getWindowAncestor(anchor);
+        Window rootWindow = SwingUtilities.getWindowAncestor(anchor);
         if (rootWindow == null) return;
-        System.err.println("[ClippyAnim] window=" + rootWindow.getClass().getSimpleName());
 
         if (rootWindow instanceof JFrame) {
             layeredPane = ((JFrame) rootWindow).getLayeredPane();
@@ -95,7 +78,6 @@ public class ClippyAnimation extends JPanel {
             return;
         }
 
-        System.err.println("[ClippyAnim] layeredPane=" + (layeredPane != null) + " size=" + layeredPane.getWidth() + "x" + layeredPane.getHeight());
         Point tipBoxScreen = anchor.getLocationOnScreen();
         Point lpScreen = layeredPane.getLocationOnScreen();
 
@@ -103,8 +85,6 @@ public class ClippyAnimation extends JPanel {
         startY  = tipBoxScreen.y + anchor.getHeight() - lpScreen.y;
         targetY = Math.max(0, tipBoxScreen.y - lpScreen.y - panelH);
         currentY = startY;
-
-        System.err.println("[ClippyAnim] tipBoxScreen=" + tipBoxScreen + " lpScreen=" + lpScreen + " -> x=" + layeredX + " startY=" + startY + " targetY=" + targetY);
 
         setBounds(layeredX, currentY, panelW, panelH);
 
@@ -116,20 +96,13 @@ public class ClippyAnimation extends JPanel {
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
         layeredPane.repaint();
 
-        System.err.println("[ClippyAnim] Added to layeredPane. parent=" + getParent());
-
         if (timer == null) timer = new Timer(TICK_MS, e -> tick());
         timer.start();
-        System.err.println("[ClippyAnim] Timer started, phase=RISE");
     }
 
     private void tick() {
         if (!active) return;
         long elapsed = System.currentTimeMillis() - phaseStart;
-
-        if (tickCount++ % 60 == 0) {
-            System.err.println("[ClippyAnim] tick phase=" + phase + " y=" + currentY + " elapsed=" + elapsed);
-        }
 
         switch (phase) {
             case RISE:
@@ -149,7 +122,7 @@ public class ClippyAnimation extends JPanel {
         }
 
         setBounds(layeredX, currentY, panelW, panelH);
-        repaint();
+        repaint(); // triggers GIF imageUpdate → advances frame
     }
 
     private void onHierarchyChanged(HierarchyEvent e) {
@@ -158,13 +131,16 @@ public class ClippyAnimation extends JPanel {
 
     private void cleanup() {
         if (!active) return;
-        System.err.println("[ClippyAnim] cleanup, active=" + active);
         active = false;
         if (timer != null) timer.stop();
         if (layeredPane != null) {
             layeredPane.remove(this);
             layeredPane.repaint();
             layeredPane = null;
+        }
+        if (gifImage != null) {
+            gifImage.flush();
+            gifImage = null;
         }
         Runnable cb = onComplete;
         onComplete = null;
