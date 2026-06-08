@@ -7,12 +7,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.util.List;
@@ -148,7 +150,8 @@ public class Helpers {
                 stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-                process.waitFor();
+                int exitCode = process.waitFor();
+                output.append("Process exited with code ").append(exitCode).append("\n");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -179,6 +182,39 @@ public class Helpers {
         System.out.println(output);
 
         return output.toString();
+    }
+
+
+    /**
+     * Runs a shell command and returns the exit code.
+     * Consumes stdout/stderr silently to prevent process hangs.
+     *
+     * @param shellCommand the shell command to execute
+     * @return the process exit code, or -1 on exception
+     */
+    public static int runShellCommandWithExitCode(String shellCommand) {
+        Process process = null;
+        try {
+            if (linux || mac) {
+                ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
+                process = builder.start();
+            } else {
+                process = Runtime.getRuntime().exec(shellCommand);
+            }
+
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+
+            String s;
+            while ((s = stdInput.readLine()) != null) { }
+            String e;
+            while ((e = stdError.readLine()) != null) { }
+
+            return process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
 
@@ -233,6 +269,20 @@ public class Helpers {
 
     }
 
+    /**
+     * Reads the Meta/Oculus install base from the registry. Reading
+     * {@code HKLM\SOFTWARE\WOW6432Node\Oculus VR, LLC\Oculus -> Base} does not require admin,
+     * so unlike {@link #checkForAdminAndOculusPath} this performs no elevation check.
+     *
+     * @return the base path (e.g. {@code C:\Program Files\Oculus\}) or "" if not found.
+     */
+    public static String getOculusBasePath() {
+        if (!isWindows) return "";
+        String command = "powershell.exe -Command \"(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\WOW6432Node\\Oculus VR, LLC\\Oculus').Base\"";
+        String out = runShellCommandWithOutput(command);
+        return out == null ? "" : out.trim();
+    }
+
     public static String checkForEchoOnKnownPaths(JDialog outFrame){
         String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
         String output = runShellCommandWithOutput(command);
@@ -267,6 +317,136 @@ public class Helpers {
 
         return "";
 
+    }
+
+    private static final Path CONFIG_DIR = Paths.get(System.getProperty("user.home"), ".echovr_installer");
+    private static final Path CONFIG_FILE = CONFIG_DIR.resolve("paths.properties");
+
+    public static void saveInstallPath(String path) {
+        try {
+            Files.createDirectories(CONFIG_DIR);
+            Properties props = new Properties();
+            if (Files.exists(CONFIG_FILE)) {
+                try (FileInputStream in = new FileInputStream(CONFIG_FILE.toFile())) {
+                    props.load(in);
+                }
+            }
+            props.setProperty("pc.install.path", path);
+            try (FileOutputStream out = new FileOutputStream(CONFIG_FILE.toFile())) {
+                props.store(out, "Echo VR Installer saved paths");
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to save install path: " + e.getMessage());
+        }
+    }
+
+    public static String loadInstallPath() {
+        try {
+            if (Files.exists(CONFIG_FILE)) {
+                Properties props = new Properties();
+                try (FileInputStream in = new FileInputStream(CONFIG_FILE.toFile())) {
+                    props.load(in);
+                }
+                return props.getProperty("pc.install.path");
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load install path: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public static boolean openUrl(String url) {
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(new URI(url));
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {}
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("linux")) {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", url});
+                return true;
+            } else if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", url});
+                return true;
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", url});
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    public static void createDesktopShortcut(String exePath) {
+        File exeFile = new File(exePath);
+        createShortcut("Echo VR", exePath, null, exeFile.getParent(), exePath);
+    }
+
+    /**
+     * Creates a desktop shortcut with optional launch arguments.
+     *
+     * @param name         shortcut display name (without extension)
+     * @param target       the executable the shortcut launches
+     * @param args         launch arguments, or null/empty for none
+     * @param workingDir   working directory for the launched process
+     * @param iconLocation path to the file providing the icon (",0" appended on Windows); may be null to skip
+     */
+    public static void createShortcut(String name, String target, String args, String workingDir, String iconLocation) {
+        try {
+            if (isWindows) {
+                StringBuilder ps = new StringBuilder();
+                ps.append("$ws = New-Object -ComObject WScript.Shell; ");
+                ps.append(String.format("$s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\%s.lnk'); ", name));
+                ps.append(String.format("$s.TargetPath = '%s'; ", target.replace("\\", "\\\\")));
+                if (args != null && !args.isEmpty()) {
+                    ps.append(String.format("$s.Arguments = '%s'; ", args.replace("'", "''")));
+                }
+                if (workingDir != null) {
+                    ps.append(String.format("$s.WorkingDirectory = '%s'; ", workingDir.replace("\\", "\\\\")));
+                }
+                if (iconLocation != null) {
+                    ps.append(String.format("$s.IconLocation = '%s,0'; ", iconLocation.replace("\\", "\\\\")));
+                }
+                ps.append("$s.Save()");
+                runShellCommand("powershell -Command \"" + ps + "\"");
+            } else if (linux) {
+                String exec = (args != null && !args.isEmpty())
+                    ? String.format("\"%s\" %s", target, args)
+                    : String.format("\"%s\"", target);
+                String desktopEntry = String.format(
+                    "[Desktop Entry]\nType=Application\nName=%s\nExec=%s\nPath=%s\nTerminal=false\n",
+                    name, exec, workingDir == null ? "" : workingDir);
+                Path desktopDir = Paths.get(System.getProperty("user.home"), ".local", "share", "applications");
+                Files.createDirectories(desktopDir);
+                Files.write(desktopDir.resolve(name.toLowerCase().replace(' ', '-') + ".desktop"), desktopEntry.getBytes());
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to create shortcut: " + e.getMessage());
+        }
+    }
+
+    public static void openFolder(String path) {
+        try {
+            File folder = new File(path);
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(folder);
+                return;
+            }
+        } catch (Exception ignored) {}
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                Runtime.getRuntime().exec(new String[]{"explorer", path});
+            } else if (os.contains("mac")) {
+                Runtime.getRuntime().exec(new String[]{"open", path});
+            } else {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", path});
+            }
+        } catch (Exception ignored) {}
     }
 
     private static File findFileRecursive(File dir, String filename) {

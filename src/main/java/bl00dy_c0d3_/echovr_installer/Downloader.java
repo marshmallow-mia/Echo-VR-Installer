@@ -158,10 +158,9 @@ public class Downloader implements Runnable {
             }
 
             if (platform == 0) {
-                UnzipFile.unzip(frame, frameMain, localFilePath + "\\" + filename, localFilePath);
-                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-            } else if (platform == 3) {
-                JOptionPane.showMessageDialog(frame, "<html>Installation is done. Path is:<br>" + localFilePath + "</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+                SwingUtilities.invokeLater(() -> labelProgress.setText("Extracting..."));
+                UnzipFile.unzip(localFilePath + File.separator + filename, localFilePath);
+                SwingUtilities.invokeLater(() -> labelProgress.setText("Extraction complete"));
             }
 
 
@@ -229,11 +228,11 @@ public class Downloader implements Runnable {
     // Choose the fastest available http server
     private static String getDownloadSpeed(JLabel labelProgress, JDialog frame) {
         String[] servers = new String[2];
-        servers[0] = "https://echo.marceldomain.de:6969/";
+        servers[0] = "https://files.echovr.de/";
         servers[1] = "https://evr.echo.taxi/";
         String testFile = "randomDownloadTestFile";
 
-        labelProgress.setText("Server Test");
+        labelProgress.setText("Preparing Download...");
         frame.repaint();
         System.out.println("Server Test started");
 
