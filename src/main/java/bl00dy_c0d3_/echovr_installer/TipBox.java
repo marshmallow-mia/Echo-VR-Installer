@@ -198,14 +198,10 @@ public class TipBox extends JPanel {
         if (clippyAnimating) { System.err.println("[Clippy] BLOCKED: already animating"); return; }
         if (!isShowing()) { System.err.println("[Clippy] BLOCKED: not showing"); return; }
         if (getWidth() <= 0 || getHeight() <= 0) { System.err.println("[Clippy] BLOCKED: zero size w="+getWidth()+" h="+getHeight()); return; }
-        Container parent = getParent();
-        if (parent == null) { System.err.println("[Clippy] BLOCKED: no parent"); return; }
-        System.err.println("[Clippy] Starting animation. parent=" + parent.getClass().getSimpleName() + " tipBoxBounds=" + getBounds());
         try {
             clippyAnimation = new ClippyAnimation(CLIPPY_RISE_MS, CLIPPY_FALL_MS);
             clippyAnimating = true;
-            Rectangle tipBoxBounds = getBounds();
-            clippyAnimation.start(tipBoxBounds, parent, () -> {
+            clippyAnimation.start(this, () -> {
                 clippyAnimating = false;
                 clippyAnimation = null;
             });
