@@ -1,6 +1,6 @@
 # Echo VR Installer — Design Rules
 
-> **Last updated**: June 2026 — reflects actual implementation as of v0.8.9 [pre alpha].
+> **Last updated**: June 2026 — reflects actual implementation as of v0.9.3b.
 > Sections marked **→ IMPLEMENTED** were previously in "Future Features" and are now live in code.
 
 ---
@@ -144,7 +144,7 @@ Type → Download → Install → Done
   - Step 4 sub 1: "Apply Steam patch for Revive compatibility"
   - Step 5: "Echo VR installation complete!"
   - During OAuth2: "Discord authorization opened in your browser." → "Generating your patch file..." → "Downloading patch file..." → "License patch applied!" / "Patch applied successfully!"
-  - During Steam patch: "Installing Revive..." → "Revive installed successfully!"
+  - During Steam patch (chained, per selected row): "Installing Revive..." → "Creating Revive shortcut..." → "Updating Revive manifest..." → "Restoring dashboard entry..." → "Installing game artwork..." → "Revive setup complete!"
 
   **Quest guidance:**
   - Step 0: "Choose your player type"
@@ -204,7 +204,7 @@ Type → Download → Install → Done
 |-----------|-------------------|-------------------|------|-------|
 | SpecialLabel (base) | `Color(60, 70, 100, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Base class default; **overridden in path labels** (see §11) |
 | SpecialHyperlink | none (transparent) | `Color.WHITE` | conthrax-sb.otf | Hand cursor, opens URL via `Desktop.browse()` |
-| SpecialCheckBox | none (opaque=false) | `Color.WHITE` | conthrax-sb.otf | Flat border paint |
+| SpecialCheckBox | none (opaque=false) | `Color.WHITE` | conthrax-sb.otf | Flat border paint. Used for the Step 4 Steam Patch row toggles (size 14), each paired with a ○/●/✓/✗ status glyph (see §12) |
 | SpecialTextfield | `Color(30, 30, 30, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Always same dark bg, sized via `specialTextfield(w,h,x,y,textSize)` |
 | SpecialButtonSmall | 3-state image panel | `Color(230, 230, 230)` / `Color(250, 250, 250)` | conthrax-sb.otf **20** | Identical to SpecialButton but hardcoded font size 20; **unused in current wizard flow** |
 | SpecialButtonInvisible | opaque true | label fg `Color.WHITE`, label bg `Color.BLUE` | n/a (hardcoded) | **Incomplete/debug component** — not used in production flow |
@@ -251,7 +251,7 @@ Type → Download → Install → Done
 - Extract/unzip only for PC (platform=0) — Quest download does not auto-extract
 - Download progress: `SpecialLabel` with percentage text
 - **Multi-server**: auto-selects fastest of 2 CDN mirrors (`files.echovr.de`, `evr.echo.taxi`) via speed test before download
-- **Path validation**: `updatePathStatus()` shows a ✓ (`Color(80, 255, 0)`, Arial Bold 28) or ✗ (`Color(255, 80, 80)`, Arial Bold 18) indicator next to the path. Valid paths tint the label background green `Color(200, 255, 200, 200)`. Invalid paths keep default white background. Validation checks for existence of `echovr.exe` at `<path>/ready-at-dawn-echo-arena/bin/win10/echovr.exe`.
+- **Path validation**: `updatePathStatus()` shows a **vector-drawn** check (`Color(80, 255, 0)`, 26px) or cross (`Color(255, 80, 80)`, 22px) icon next to the path via `markIcon()` — drawn with `Graphics2D` strokes, **not** a unicode glyph, because Windows Arial lacks U+2713/U+2717 (they render as empty "tofu" boxes). The same `markIcon()` draws the ✓/✗ states in the Steam Patch checklist (§12). Valid paths tint the label background green `Color(200, 255, 200, 200)`. Invalid paths keep default white background. Validation checks for existence of `echovr.exe` at `<path>/ready-at-dawn-echo-arena/bin/win10/echovr.exe`.
 - **Path persistence**: install path saved to `~/.echovr_installer/paths.properties` via `Helpers.saveInstallPath()` / `Helpers.loadInstallPath()`
 
 ## 12. PC Guidance — Step Structure (`FrameGuidancePC`)
@@ -269,10 +269,11 @@ Type → Download → Install → Done
 
 ### Step 2: Path Selection
 - Header: "Choose your Echo VR install path"
-- Path label (440px wide) + "Choose path" button
+- Path label (440px wide) + "Choose path" button + "Detect Meta path" button (both `button_up_small`, 11, stacked & centered)
 - `pathFolderChooser()` opens JFileChooser for directories
 - On path chosen: saves via `Helpers.saveInstallPath()`, auto-advances to step 3
 - Loads saved path on entry, or defaults to `C:/EchoVR` (Windows) / `<cwd>/echovr` (other)
+- **"Detect Meta path"** (`detectMetaInstallPath()`, Windows-only): reads the Meta/Oculus install base from the registry via `Helpers.checkForAdminAndOculusPath()` (needs admin), sets the path to `<Base>/Software/Software` and saves it **regardless** of whether Echo is present. If `echovr.exe` is not found there, shows a warning dialog telling the user to install Echo from the Meta Store **and start it once** to use their own licence. Errors if no Meta/Oculus install is in the registry.
 
 ### Step 3: Download
 - Header: "Download Echo VR client files"
@@ -290,13 +291,26 @@ Type → Download → Install → Done
   - "Steam Patch (Revive)" → detail view (download + run ReviveInstaller.exe)
 - New Player: shows "Patch Menu" header:
   - "Licence Patch" button → OAuth2 + download flow
-  - "Steam Patch (Revive)" button (if playstyle=STEAMVR)
+  - "Steam Patch (Revive)" button — **always shown** (not playstyle-gated), so the back button from any patch substep always returns to the full overview with every patch button visible
   - Auto-advances to Licence Patch inline on first arrival (when `justArrivedAtStep4`)
 
 **Detail views:**
 - Each has a "← Back" button returning to master view
 - Licence Patch inline: path chooser with validation, OAuth2 authorization button, path indicator
-- Steam Patch detail: info text, "Start Install" button → downloads `ReviveInstaller.exe` from GitHub, runs it silently. Requires admin rights.
+- Steam Patch detail: **checkbox-driven, chained Revive setup** (covers the `steampatch.md` megathread). Five `SpecialCheckBox` rows (each with a ○/●/✓/✗ status glyph to its right) **and** the **"Install & Configure"** button (`button_up_middle`, 14) are all **enclosed in one rounded section box** via `sectionBoxAt(...)` (fill `Color(200,0,150,90)`, border `Color(50,50,50,150)`, arc 15, `opaque=false`, `contains()→false` — visual only; rows/button sit on top as siblings, box sent to back via `setComponentZOrder`). A download-% `SpecialLabel` lives inside the box too but is **hidden until the chain runs** (a `SpecialLabel` always paints its bg, so leaving it visible-but-empty would render as a stray box). Requires admin rights and a present `echovr.exe`; Windows-only.
+- Step 4 master view with **no type selected yet** (e.g. reached via chip click before choosing OWNER/NEW_PLAYER): renders the same canonical "Optional patches" menu as OWNER (No Licence Patch + Steam Patch (Revive)), so the menu is consistent in every scenario rather than dropping into the new-player licence-inline view.
+  - **Patch rows & default state** (defaults are global, user-overridable):
+
+    | Row (execution order) | Action | Default |
+    |---|---|---|
+    | Install Revive | download + run `ReviveInstaller.exe` (GitHub latest) | ✅ on |
+    | Revive injector shortcut | desktop `.lnk` → `ReviveInjector.exe "<echovr.exe>" -nosymbollookup /app ready-at-dawn-echo-arena` | ✅ on |
+    | Patch `revive.vrmanifest` | upsert Echo entry (gson) with autodetected library ID | ✅ on |
+    | Restore Dashboard entry | `.json`/`.mini` → `Meta Horizon\Manifests` (returning players) | ☐ off |
+    | Fix game artwork | download + unzip assets → `…\StoreAssets\ready-at-dawn-echo-arena_assets` | ✅ on |
+
+  - **Status glyphs**: ○ pending `Color.LIGHT_GRAY`, ● working `Color(0,180,0)`, ✓ done `Color(0,255,0)`, ✗ failed `Color(255,80,80)` (Arial Bold 14).
+  - **Chain**: runs only the checked rows in fixed order on a worker thread; checkboxes disabled during the run; reuses `stepInProgress`/`progressAnimator`/`stepCompleted` wiring. Empty/missing `revive.vrmanifest` → `EMPTY_MANIFEST` → shows the "download a free Meta app and restart SteamVR" fallback (non-fatal). Backed by `ReviveSetup` (registry-based `findReviveDir()` + verify, `createInjectorShortcut()`, `patchVrManifest()`, `installArtwork()`, guarded `restoreDashboardManifests()`).
 
 ### Step 5: Done → IMPLEMENTED (was Future Feature)
 - "You're all set!" in green (Arial Bold 24, at y=20)
@@ -483,7 +497,7 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
 - **"Delete cache"**: x=818, y=595, **VISIBLE by default** (`setVisible(true)`) — clears temp download files
 - FrameMain stays unchanged behind modal guidance dialogs
 - Window close: calls `javafx.application.Platform.exit()` then `System.exit(0)`
-- Title: `"Echo VR Installer v0.8.9 [pre alpha]"`
+- Title: `"Echo VR Installer v0.9.3b"`
 
 ### Button Positions (detailed)
 
@@ -578,9 +592,12 @@ All marked `@Deprecated` or `// TODO: Remove in v0.9.0`:
 
 > **These features are planned but NOT YET IMPLEMENTED.** Design rules here serve as pre-specifications to guide implementation.
 
-### Auto-Admin Privilege Elevation
-- When path selection requires admin/root rights, automatically request elevation
-- Replaces silent failure with proactive privilege escalation
+### Auto-Admin Privilege Elevation → IMPLEMENTED (was Future Feature)
+- **Lazy, broker-based elevation** instead of asking the user to relaunch as admin. Admin-prone operations run in-process first; only if they fail for lack of rights does `AdminBroker` ask for consent (standard `JOptionPane` YES/NO — no more "restart as Admin" `ErrorDialog`) and launch an elevated helper.
+- **`AdminHelper`** (`EchoVRInstaller` relaunched with `--admin-helper <portFile> <tokenFile> <parentPid>` via `Start-Process -Verb RunAs`): the privileged server. Listens on `127.0.0.1` only, accepts a single token-authenticated connection, executes a **fixed operation vocabulary** (`PATCH_VRMANIFEST`, `INSTALL_ARTWORK`, `RESTORE_DASHBOARD`, `CREATE_SHORTCUT`, `RUN_INSTALLER`, `PING`) by calling `ReviveSetup`, and exits when the parent dies or the client disconnects. Never executes an arbitrary command string. Logs to `%TEMP%/evr-admin-helper.log`.
+- **`AdminBroker`** (client singleton): one UAC prompt launches the helper; it is **reused** for all later operations. `patchVrManifest`/`installArtwork` use the try-in-process-then-elevate pattern; the connection is torn down on app shutdown (sends `SHUTDOWN`).
+- Token handshake: client generates a one-time token (delivered to the helper via a temp file), the helper publishes its chosen port via a temp file, the client connects and authenticates. Both temp files are deleted after handshake.
+- "Detect Meta path" reads the registry **without** elevation (HKLM read needs no admin); elevation only kicks in when a later write into a protected folder fails.
 
 ### Discord Join Redirect
 - When user is not in the patcher Discord server during OAuth2, redirect to join the server
@@ -590,8 +607,9 @@ All marked `@Deprecated` or `// TODO: Remove in v0.9.0`:
 - Link to bindings help article on the PC Done step
 - Default SteamVR bindings for Echo VR are known to be suboptimal
 
-### Desktop Shortcut (Revive variant)
-- **Revive shortcut**: `ReviveInjector.exe` with Echo VR args (for "No Licence Patch" users)
-- **vrmanifest**: create/update `revive.vrmanifest` with library ID entry
-- **Empty manifest fallback**: if vrmanifest is empty, download any free Meta app and restart SteamVR
-- **Backend exists**: `Helpers.createDesktopShortcut()`, `Helpers.openFolder()` — already implemented for direct exe shortcut
+### Desktop Shortcut (Revive variant) → IMPLEMENTED (was Future Feature)
+- **Revive shortcut**: `ReviveInjector.exe` with Echo VR args — now created by the Step 4 Steam Patch chain (`ReviveSetup.createInjectorShortcut()`, via `Helpers.createShortcut(name,target,args,workingDir,icon)`)
+- **vrmanifest**: create/update `revive.vrmanifest` with library ID entry — `ReviveSetup.patchVrManifest()` (gson upsert, library ID autodetected from existing entries)
+- **Empty manifest fallback**: if vrmanifest is empty → `EMPTY_MANIFEST` result → dialog tells user to download a free Meta app and restart SteamVR
+- **Game artwork**: `ReviveSetup.installArtwork()` downloads + unzips assets into the Meta Horizon StoreAssets folder
+- **Still future**: Dashboard manifest restore (`.json`/`.mini`) is wired but guarded (`restoreDashboardManifests()` throws `UnsupportedOperationException`) pending hosted file URLs

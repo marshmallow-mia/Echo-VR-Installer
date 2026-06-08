@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -45,9 +46,12 @@ public class DiscordOAuth2Flow {
             try {
                 if (onStatus != null) SwingUtilities.invokeLater(() -> onStatus.accept("Discord authorization opened in your browser."));
 
-                // Start a temporary HTTP server on localhost for the OAuth2 callback
-                // Port 53124 must match what's registered in Discord Developer Portal
-                ServerSocket serverSocket = new ServerSocket(53124);
+                // Start a temporary HTTP server on localhost for the OAuth2 callback.
+                // Port 53124 must match what's registered in Discord Developer Portal.
+                // Bind to 127.0.0.1 explicitly (not all interfaces) — a loopback-only listener is
+                // exempt from Windows Firewall filtering, so this avoids the "allow access on public
+                // and private networks" prompt. The redirect already targets 127.0.0.1.
+                ServerSocket serverSocket = new ServerSocket(53124, 10, InetAddress.getByName("127.0.0.1"));
                 String redirectUri = "http://127.0.0.1:53124/callback";
 
                 String authUrl = "https://discord.com/api/oauth2/authorize?"

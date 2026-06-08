@@ -28,7 +28,7 @@ public class FrameMain extends JFrame {
         });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.8.9 [pre alpha]");
+        setTitle("Echo VR Installer v0.9.3b");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
@@ -45,21 +45,70 @@ public class FrameMain extends JFrame {
         addEasterEgg(back, outFrame);
         addDeleteCached(back, outFrame);
         addGetLog(back, outFrame);
+        addCredits(back, outFrame);
         //addPlayButton(back);
         //addStopButton(back);
 
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
+    }
 
-/*      JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
-                "This installer is not at all associated with them!<br><br>" +
-                "Special thanks to Sick and SirDominik for some of the backgrounds!<br>" +
-                "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>" +
-                "I know you still feel shame when you have to look at my source code.<br>" +
-                "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
-                "This tool is still in early alpha!<br>" +
-                "If you have problems, contact me on Discord 'marshmallow_mia'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
-*/
+    private void addCredits(JPanel back, FrameMain outFrame) {
+        int size = 40;
+        // Bottom-right, but within the content pane (the window's title bar/borders eat ~40px of
+        // the 720 frame height, so anchoring to FRAME_HEIGHT pushed it off-screen). Align with the
+        // bottom button row instead.
+        int x = FRAME_WIDTH - size - 30;
+        int y = 595;
+        JLabel credits = new JLabel(infoIcon(size));
+        credits.setBounds(x, y, size, size);
+        credits.setOpaque(false);
+        credits.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        credits.setToolTipText("Credits / About");
+        credits.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) { showCredits(outFrame); }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("About this installer & credits"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        back.add(credits);
+    }
+
+    /** A vector-drawn "ⓘ" info badge: filled magenta circle with a white "i". */
+    private static Icon infoIcon(int size) {
+        return new Icon() {
+            @Override public int getIconWidth() { return size; }
+            @Override public int getIconHeight() { return size; }
+            @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(200, 0, 150));
+                g2.fillOval(x + 1, y + 1, size - 2, size - 2);
+                g2.setColor(new Color(255, 255, 255, 190));
+                g2.setStroke(new BasicStroke(Math.max(1.5f, size / 22f)));
+                g2.drawOval(x + 1, y + 1, size - 3, size - 3);
+                // white "i"
+                g2.setColor(Color.WHITE);
+                int cx = x + size / 2;
+                int dotR = Math.max(2, size / 12);
+                g2.fillOval(cx - dotR, y + Math.round(size * 0.27f) - dotR, dotR * 2, dotR * 2);
+                g2.setStroke(new BasicStroke(Math.max(2f, size / 9f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2.drawLine(cx, Math.round(y + size * 0.43f), cx, Math.round(y + size * 0.73f));
+                g2.dispose();
+            }
+        };
+    }
+
+    private void showCredits(JFrame parent) {
+        JOptionPane.showMessageDialog(parent,
+            "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>"
+            + "This installer is not at all associated with them!<br><br>"
+            + "Special thanks to Sick and SirDominik for some of the backgrounds!<br>"
+            + "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>"
+            + "I know you still feel shame when you have to look at my source code.<br>"
+            + "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>"
+            + "This tool is still in early alpha!<br>"
+            + "If you have problems, contact me on Discord 'marshmallow_mia'.</html>",
+            "Credits", JOptionPane.INFORMATION_MESSAGE);
     }
 
 

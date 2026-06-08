@@ -269,6 +269,20 @@ public class Helpers {
 
     }
 
+    /**
+     * Reads the Meta/Oculus install base from the registry. Reading
+     * {@code HKLM\SOFTWARE\WOW6432Node\Oculus VR, LLC\Oculus -> Base} does not require admin,
+     * so unlike {@link #checkForAdminAndOculusPath} this performs no elevation check.
+     *
+     * @return the base path (e.g. {@code C:\Program Files\Oculus\}) or "" if not found.
+     */
+    public static String getOculusBasePath() {
+        if (!isWindows) return "";
+        String command = "powershell.exe -Command \"(Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\WOW6432Node\\Oculus VR, LLC\\Oculus').Base\"";
+        String out = runShellCommandWithOutput(command);
+        return out == null ? "" : out.trim();
+    }
+
     public static String checkForEchoOnKnownPaths(JDialog outFrame){
         String command = "powershell.exe -Command \"(New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)\"";
         String output = runShellCommandWithOutput(command);
@@ -368,31 +382,50 @@ public class Helpers {
     }
 
     public static void createDesktopShortcut(String exePath) {
-        try {
-            File exeFile = new File(exePath);
-            String name = "Echo VR";
-            String workingDir = exeFile.getParent();
+        File exeFile = new File(exePath);
+        createShortcut("Echo VR", exePath, null, exeFile.getParent(), exePath);
+    }
 
+    /**
+     * Creates a desktop shortcut with optional launch arguments.
+     *
+     * @param name         shortcut display name (without extension)
+     * @param target       the executable the shortcut launches
+     * @param args         launch arguments, or null/empty for none
+     * @param workingDir   working directory for the launched process
+     * @param iconLocation path to the file providing the icon (",0" appended on Windows); may be null to skip
+     */
+    public static void createShortcut(String name, String target, String args, String workingDir, String iconLocation) {
+        try {
             if (isWindows) {
-                String psCommand = String.format(
-                    "$ws = New-Object -ComObject WScript.Shell; " +
-                    "$s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\%s.lnk'); " +
-                    "$s.TargetPath = '%s'; " +
-                    "$s.WorkingDirectory = '%s'; " +
-                    "$s.IconLocation = '%s,0'; " +
-                    "$s.Save()",
-                    name, exePath.replace("\\", "\\\\"), workingDir.replace("\\", "\\\\"), exePath.replace("\\", "\\\\"));
-                runShellCommand("powershell -Command \"" + psCommand + "\"");
+                StringBuilder ps = new StringBuilder();
+                ps.append("$ws = New-Object -ComObject WScript.Shell; ");
+                ps.append(String.format("$s = $ws.CreateShortcut([Environment]::GetFolderPath('Desktop') + '\\%s.lnk'); ", name));
+                ps.append(String.format("$s.TargetPath = '%s'; ", target.replace("\\", "\\\\")));
+                if (args != null && !args.isEmpty()) {
+                    ps.append(String.format("$s.Arguments = '%s'; ", args.replace("'", "''")));
+                }
+                if (workingDir != null) {
+                    ps.append(String.format("$s.WorkingDirectory = '%s'; ", workingDir.replace("\\", "\\\\")));
+                }
+                if (iconLocation != null) {
+                    ps.append(String.format("$s.IconLocation = '%s,0'; ", iconLocation.replace("\\", "\\\\")));
+                }
+                ps.append("$s.Save()");
+                runShellCommand("powershell -Command \"" + ps + "\"");
             } else if (linux) {
+                String exec = (args != null && !args.isEmpty())
+                    ? String.format("\"%s\" %s", target, args)
+                    : String.format("\"%s\"", target);
                 String desktopEntry = String.format(
-                    "[Desktop Entry]\nType=Application\nName=%s\nExec=\"%s\"\nPath=%s\nTerminal=false\n",
-                    name, exePath, workingDir);
+                    "[Desktop Entry]\nType=Application\nName=%s\nExec=%s\nPath=%s\nTerminal=false\n",
+                    name, exec, workingDir == null ? "" : workingDir);
                 Path desktopDir = Paths.get(System.getProperty("user.home"), ".local", "share", "applications");
                 Files.createDirectories(desktopDir);
-                Files.write(desktopDir.resolve("echo-vr.desktop"), desktopEntry.getBytes());
+                Files.write(desktopDir.resolve(name.toLowerCase().replace(' ', '-') + ".desktop"), desktopEntry.getBytes());
             }
         } catch (Exception e) {
-            System.err.println("Failed to create desktop shortcut: " + e.getMessage());
+            System.err.println("Failed to create shortcut: " + e.getMessage());
         }
     }
 

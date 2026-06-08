@@ -14,6 +14,12 @@ public class EchoVRInstaller {
 
     // Programmstart:
     public static void main(String[] args) {
+        // Elevated helper mode: the app relaunches itself with this flag (as admin) to perform
+        // privileged operations on behalf of the normal process. Never starts the GUI.
+        if (args.length > 0 && "--admin-helper".equals(args[0])) {
+            AdminHelper.main(args);
+            return;
+        }
         try {
             File logFile;
             String osName = getProperty("os.name").toLowerCase();
@@ -50,7 +56,10 @@ public class EchoVRInstaller {
             e.printStackTrace();
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(Platform::exit));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            AdminBroker.get().shutdown();
+            Platform.exit();
+        }));
 
         // Start your main application logic
         new FrameMain();
