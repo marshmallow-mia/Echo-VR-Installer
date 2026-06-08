@@ -227,11 +227,12 @@ public class Downloader implements Runnable {
 
     // Choose the fastest available http server
     private static String getDownloadSpeed(JLabel labelProgress, JDialog frame) {
-        String[] servers = new String[1];
+        String[] servers = new String[2];
         servers[0] = "https://files.echovr.de/";
+        servers[1] = "https://evr.echo.taxi/";
         String testFile = "randomDownloadTestFile";
 
-        labelProgress.setText("Server Test");
+        labelProgress.setText("Preparing Download...");
         frame.repaint();
         System.out.println("Server Test started");
 
