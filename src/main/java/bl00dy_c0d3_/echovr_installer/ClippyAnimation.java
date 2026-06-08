@@ -40,7 +40,8 @@ public class ClippyAnimation extends JPanel {
         // Extract GIF frames
         frames = new ArrayList<>();
         try {
-            URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
+            // Use getResource() not getClassLoader().getResource() — module-aware
+            URL gifUrl = getClass().getResource("/clippy/anim2.gif");
             System.err.println("[Clippy] GIF URL: " + gifUrl);
             if (gifUrl != null) {
                 BufferedImage img = ImageIO.read(gifUrl);
