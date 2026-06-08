@@ -53,6 +53,10 @@ public class TipBox extends JPanel {
         currentBoxH = boxH;
         rebuild();
         addMouseListener(clippyListener);
+        // TEST: auto-trigger in a loop
+        new javax.swing.Timer(500, evt -> {
+            if (!clippyAnimating) triggerClippy();
+        }).start();
     }
 
     @Override

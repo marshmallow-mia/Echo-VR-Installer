@@ -24,6 +24,7 @@ public class ClippyAnimation extends JPanel {
     private Phase phase;
     private boolean active;
     private final boolean hasGif;
+    private int tickCount = 0;
 
     public ClippyAnimation() {
         this(DEFAULT_DURATION_MS, DEFAULT_DURATION_MS);
@@ -54,11 +55,21 @@ public class ClippyAnimation extends JPanel {
         addHierarchyListener(this::onHierarchyChanged);
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        // DEBUG: red border so we can see the panel even if GIF doesn't load
+        g.setColor(Color.RED);
+        g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+        g.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
+    }
+
     public void start(Component anchor, Runnable onComplete) {
         if (active || !hasGif || panelW <= 0) return;
 
         rootWindow = SwingUtilities.getWindowAncestor(anchor);
         if (rootWindow == null) return;
+        System.err.println("[ClippyAnim] window=" + rootWindow.getClass().getSimpleName());
 
         if (rootWindow instanceof JFrame) {
             layeredPane = ((JFrame) rootWindow).getLayeredPane();
@@ -68,6 +79,7 @@ public class ClippyAnimation extends JPanel {
             return;
         }
 
+        System.err.println("[ClippyAnim] layeredPane=" + (layeredPane != null) + " size=" + layeredPane.getWidth() + "x" + layeredPane.getHeight());
         Point tipBoxScreen = anchor.getLocationOnScreen();
         Point lpScreen = layeredPane.getLocationOnScreen();
 
@@ -75,6 +87,8 @@ public class ClippyAnimation extends JPanel {
         startY  = tipBoxScreen.y + anchor.getHeight() - lpScreen.y;
         targetY = Math.max(0, tipBoxScreen.y - lpScreen.y - panelH);
         currentY = startY;
+
+        System.err.println("[ClippyAnim] tipBoxScreen=" + tipBoxScreen + " lpScreen=" + lpScreen + " -> x=" + layeredX + " startY=" + startY + " targetY=" + targetY);
 
         setBounds(layeredX, currentY, panelW, panelH);
 
@@ -86,13 +100,20 @@ public class ClippyAnimation extends JPanel {
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
         layeredPane.repaint();
 
+        System.err.println("[ClippyAnim] Added to layeredPane. parent=" + getParent());
+
         if (timer == null) timer = new Timer(TICK_MS, e -> tick());
         timer.start();
+        System.err.println("[ClippyAnim] Timer started, phase=RISE");
     }
 
     private void tick() {
         if (!active) return;
         long elapsed = System.currentTimeMillis() - phaseStart;
+
+        if (tickCount++ % 60 == 0) {
+            System.err.println("[ClippyAnim] tick phase=" + phase + " y=" + currentY + " elapsed=" + elapsed);
+        }
 
         switch (phase) {
             case RISE:
@@ -120,6 +141,7 @@ public class ClippyAnimation extends JPanel {
 
     private void cleanup() {
         if (!active) return;
+        System.err.println("[ClippyAnim] cleanup, active=" + active);
         active = false;
         if (timer != null) timer.stop();
         if (layeredPane != null) {
