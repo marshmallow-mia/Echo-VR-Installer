@@ -178,7 +178,17 @@ Type → Download → Install → Done
 - Every button has a **TipBox hover tip** via `mouseEntered`/`mouseExited` listeners
 - Button image series: 3-state (up/down/highlighted) with corresponding image name pattern
 
-## 9. Navigation
+## 9. Special Components
+
+| Component | Default Background | Default Foreground | Font | Notes |
+|-----------|-------------------|-------------------|------|-------|
+| SpecialLabel (base) | `Color(60, 70, 100, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Base class default; **overridden in path labels** (see §11) |
+| SpecialHyperlink | none (transparent) | `Color.WHITE` | conthrax-sb.otf | Hand cursor, opens URL via `Desktop.browse()` |
+| SpecialCheckBox | none (opaque=false) | `Color.WHITE` | conthrax-sb.otf | Flat border paint |
+
+> **Cross-reference**: `makeRoundedLabel()` in `BaseWizard` (§11) overrides SpecialLabel background to `Color(255, 255, 255, 200)` for path labels. `updatePathStatus()` further overrides to `Color(200, 255, 200, 200)` for valid paths.
+
+## 10. Navigation
 
 - Back: **disabled on step 0 sub 0**, enabled on all others
 - Next: **enabled after step requirements met** (checked in `canAdvanceFrom()`)
@@ -198,7 +208,7 @@ Type → Download → Install → Done
 - Step 2: requires `stepCompleted` (installation must finish)
 - Other steps: always return true
 
-## 10. Content Panel
+## 11. Content Panel
 
 - `JPanel` with null layout, `opaque=false`
 - Content switches per step: `removeAll()` → `buildContent()` → `revalidate()` + `repaint()`
@@ -209,9 +219,10 @@ Type → Download → Install → Done
 - Download files: `ready-at-dawn-echo-arena.zip` (PC), `r15_26-06-25.apk` + `_data.zip` (Quest)
 - Extract/unzip only for PC (platform=0) — Quest download does not auto-extract
 - Download progress: `SpecialLabel` with percentage text
+- **Multi-server**: auto-selects fastest of 2 CDN mirrors (`files.echovr.de`, `evr.echo.taxi`) via speed test before download
 - **Path validation**: `updatePathStatus()` shows a ✓ (green, bold 28) or ✗ (red, bold 18) indicator next to the path. Valid paths tint the label background green `Color(200, 255, 200, 200)`. Invalid paths keep default white background. Validation checks for existence of `echovr.exe` at `<path>/ready-at-dawn-echo-arena/bin/win10/echovr.exe`.
 
-## 11. PC Guidance — Step Structure (`FrameGuidancePC`)
+## 12. PC Guidance — Step Structure (`FrameGuidancePC`)
 
 ### Step 0: Type Selection
 - Header: "Do you own Echo VR on your Meta account?"
@@ -261,7 +272,7 @@ Type → Download → Install → Done
 - New Player arriving at Step 4: auto-shows Licence Patch inline view
 - After OAuth2 download for new player: returns to patch menu (`buildStep4AfterOAuth`)
 
-## 12. Quest Guidance — Step Structure (`FrameGuidanceQuest`)
+## 13. Quest Guidance — Step Structure (`FrameGuidanceQuest`)
 
 ### Step 0: Type Selection
 - Same as PC: "I own Echo on Meta" / "I'm a new player"
@@ -277,11 +288,12 @@ Type → Download → Install → Done
 - "Install to Quest" button → uses `InstallerQuest` class
 - Requires `stepCompleted` from download step
 - Installation runs on background thread
+- **ADB flow** (high-level): kill-server → devices → uninstall old → install APK (-g) → mkdir data dir → push data zip → extract → chmod 777 → grant permissions → kill-server. Exact command sequence in `InstallerQuest.java`.
 
 ### Step 3: Done
 - "You're all set!" + "Echo VR is ready to play on your Quest."
 
-## 13. OAuth2 Discord Flow (Licence Patch)
+## 14. OAuth2 Discord Flow (Licence Patch)
 
 - Triggered by "Authorize with Discord" or "Licence Patch" button
 - Opens **system default browser** (not embedded WebView) to Discord OAuth2 authorize URL
@@ -301,7 +313,27 @@ Type → Download → Install → Done
   - Other errors: generic error dialog
 - Button re-enables after completion or error via `resetAfterError()`
 
-## 14. Wizard State Model
+### DiscordWebView (JavaFX Embedded Browser)
+
+An alternative embedded-browser approach for Discord interaction, distinct from the OAuth2 system-browser flow.
+
+- **Window**: **1150×680** minimum
+- **Sidebar**: **220px** wide, background `#1a1a2e` (dark navy), border `#333`
+- **Channel list**: white text, light gray secondary, yellow accents
+- **Requires**: JavaFX runtime on classpath (`javafx.embed.swing.JFXPanel`)
+- **Note**: This path is not used in the current BaseWizard wizard flow. The primary Discord path is OAuth2 via system browser (this section).
+
+## 15. Auxiliary Modal Dialogs
+
+| Dialog | Size | Background | Purpose |
+|--------|------|------------|---------|
+| ErrorDialog | **800×200** | `Marcelus.png` | Generic error display with clickable help links |
+| UserTypeDialog | **500×300** | `Echox720.png` | Pre-wizard owner/new-player selection |
+| OptionalPatchesPanel | **500×350** | `Echox720.png` | Post-install optional patch menu |
+
+> **Known dependency**: `OptionalPatchesPanel` instantiates `FramePCPatcher` and `FrameSteamPatcher`. If these legacy frames are deleted, OptionalPatchesPanel must be updated first or in the same pass.
+
+## 16. Wizard State Model
 
 ```
 WizardState (base)
@@ -321,7 +353,7 @@ WizardState (base)
     └── getters/setters
 ```
 
-## 15. FrameMain Entry Points
+## 17. FrameMain Entry Points
 
 - **"Install Echo VR" button** (PC side, centered left): opens `new FrameGuidancePC(this)`
 - **"Update Echo (PC)" button**: opens `new FramePCEchoUpdate(this)` — standalone legacy dialog
@@ -330,12 +362,37 @@ WizardState (base)
 - Utility buttons (hidden by default): "Get Quest Logs", "Delete cache"
 - FrameMain stays unchanged behind modal guidance dialogs
 
-## 16. General
+### Button Positions
+
+- **"Install Echo VR" button** (PC): x = `(FRAME_WIDTH / 2 - buttonWidth) / 2` (centered on left half), y=**200**
+- **"Update Echo (PC)" button**: same x as PC Install button, y=**280**
+- **"Quest Install Echo" button**: x=**819**, y=**200**
+- **Section panel "rahmen1"**: positioned at `((FRAME_WIDTH / 2 - pcPanelW) / 2, 420)`, fill `Color(200, 0, 150, 150)`, arc **20**, inner padding **15**
+
+### Hidden Utility Buttons
+
+- **"Get Quest Logs"**: x=**818**, y=**547** (hidden by default)
+- **"Delete cache"**: x=**818**, y=**595** (hidden by default)
+
+### Other Elements
+
+- **Easter egg**: position (590, 430), size 100×100
+- **TipBox**: centered horizontally at `(FRAME_WIDTH - tipBox.getWidth()) / 2`, y=**240**
+
+## 18. General
 
 - All interactive elements MUST have hover tips
 - Every logical section gets a rounded section box
 - Font: `conthrax-sb.otf` for headers/chips, `Arial` for body text
-- Helpers utility class provides: `loadGUI()`, `centerFrame()`, `pathFolderChooser()`, `pause()`, `prepareAdb()`, `checkForAdmin()`, OS detection booleans (`isWindows`, `linux`, `mac`)
+- `Helpers` utility class provides:
+  - `loadGUI(String)` — loads images from classpath resources (returns nullable)
+  - `centerFrame(Window, int, int)` — centers a window on screen
+  - `pathFolderChooser(SpecialLabel, JDialog)` — opens JFileChooser for directory selection
+  - `pause(int)` — sleep with InterruptedException handling
+  - `prepareAdb()` — initializes ADB for Quest communication
+  - `checkForAdmin()` — detects admin/root privileges
+  - `saveInstallPath(String)` / `loadInstallPath()` — config persistence via `java.util.Properties`
+  - OS booleans: `isWindows`, `linux`, `mac` (detected at class load via `os.name`)
 - `BaseWizard` abstract class provides shared wizard infrastructure:
   - Window init with background, status bar, content panel, tip box, combined section box
   - `sectionBox()` and `sectionBoxAt()` for creating rounded section panels
@@ -351,3 +408,31 @@ WizardState (base)
 - `SpecialButton` — image-based 3-state button with conthrax font
 - `SpecialLabel` — label with font loading and configurable size
 - `TipBox` — composite component with `tipbox_top.png` header image and grey tip label
+
+## 19. Future Features (Planned)
+
+> **These features are planned but NOT YET IMPLEMENTED.** Design rules here serve as pre-specifications to guide implementation.
+
+### Desktop Shortcut (PC Done Step)
+- **Trigger**: button on PC wizard Done step (Step 5)
+- **Revive shortcut**: `ReviveInjector.exe` with Echo VR args
+- **vrmanifest**: create/update `revive.vrmanifest` with library ID entry
+- **Empty manifest fallback**: if vrmanifest is empty, download any free Meta app and restart SteamVR
+- **Backend exists**: `Helpers.createDesktopShortcut()`, `Helpers.openFolder()`
+
+### "Open Echo Install Path" Button (Done Step)
+- Small action button on both PC and Quest Done steps
+- Opens `<installPath>/ready-at-dawn-echo-arena/bin/win10` (PC) or install directory (Quest)
+- Uses `button_up_small.png` image series
+
+### Auto-Admin Privilege Elevation
+- When path selection requires admin/root rights, automatically request elevation
+- Replaces silent failure with proactive privilege escalation
+
+### Discord Join Redirect
+- When user is not in the patcher Discord server during OAuth2, redirect to join the server
+- Verify phone verification was completed (server access, not just membership)
+
+### SteamVR Bindings Guide
+- Link to bindings help article on the PC Done step
+- Default SteamVR bindings for Echo VR are known to be suboptimal
