@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,19 +41,36 @@ public class ClippyAnimation extends JPanel {
         frames = new ArrayList<>();
         try {
             InputStream is = getClass().getClassLoader().getResourceAsStream("clippy/anim2.gif");
+            System.err.println("[Clippy] GIF stream: " + (is != null));
             if (is != null) {
                 ImageInputStream iis = ImageIO.createImageInputStream(is);
-                Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
-                if (readers.hasNext()) {
+                Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+                System.err.println("[Clippy] GIF readers: " + (readers != null && readers.hasNext()));
+                if (readers != null && readers.hasNext()) {
                     ImageReader reader = readers.next();
                     reader.setInput(iis);
                     int n = reader.getNumImages(true);
+                    System.err.println("[Clippy] GIF frames: " + n);
                     for (int i = 0; i < n; i++) frames.add(reader.read(i));
                     reader.dispose();
+                } else {
+                    // Fallback: try loading as single image
+                    URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
+                    if (gifUrl != null) {
+                        ImageIcon icon = new ImageIcon(gifUrl);
+                        BufferedImage bi = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+                        Graphics2D bg = bi.createGraphics();
+                        bg.drawImage(icon.getImage(), 0, 0, null);
+                        bg.dispose();
+                        frames.add(bi);
+                        System.err.println("[Clippy] Fallback single frame: " + icon.getIconWidth() + "x" + icon.getIconHeight());
+                    }
                 }
                 iis.close(); is.close();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("[Clippy] GIF load error: " + e.getMessage());
+        }
 
         if (frames.isEmpty()) {
             // No frames: still works (shows empty box with border)
