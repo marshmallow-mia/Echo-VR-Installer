@@ -25,8 +25,6 @@ public class TipBox extends JPanel {
     private static final int CLIPPY_FALL_MS = 400;
     private boolean clippyAnimating = false;
     private ClippyAnimation clippyAnimation = null;
-    private boolean clippyTestStarted = false;
-
     private final MouseAdapter clippyListener = new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
             System.err.println("[Clippy] mousePressed clickCount=" + e.getClickCount() + " button=" + e.getButton());
@@ -55,17 +53,6 @@ public class TipBox extends JPanel {
         currentBoxH = boxH;
         rebuild();
         addMouseListener(clippyListener);
-        addHierarchyListener(new java.awt.event.HierarchyListener() {
-            public void hierarchyChanged(java.awt.event.HierarchyEvent e) {
-                if (!clippyTestStarted && isShowing()) {
-                    clippyTestStarted = true;
-                    System.err.println("[Clippy] Became visible, triggering first test animation in 200ms");
-                    new javax.swing.Timer(200, evt2 -> {
-                        triggerClippy();
-                    }).start();
-                }
-            }
-        });
     }
 
     @Override
@@ -219,10 +206,8 @@ public class TipBox extends JPanel {
             clippyAnimating = true;
             Rectangle tipBoxBounds = getBounds();
             clippyAnimation.start(tipBoxBounds, parent, () -> {
-                System.err.println("[Clippy] Animation complete, scheduling next in 1s");
                 clippyAnimating = false;
                 clippyAnimation = null;
-                new javax.swing.Timer(1000, evt -> triggerClippy()).start();
             });
         } catch (Exception ex) {
             System.err.println("[Clippy] EXCEPTION: " + ex.getMessage());
