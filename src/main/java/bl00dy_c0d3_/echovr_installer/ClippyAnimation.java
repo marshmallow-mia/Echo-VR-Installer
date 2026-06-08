@@ -51,6 +51,11 @@ public class ClippyAnimation extends JPanel {
             hasGif = true;
         } else {
             hasGif = false;
+            // Default visible size so debug border shows
+            setSize(100, 100);
+            setPreferredSize(new Dimension(100, 100));
+            panelW = 100;
+            panelH = 100;
         }
         addHierarchyListener(this::onHierarchyChanged);
     }
@@ -58,14 +63,16 @@ public class ClippyAnimation extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // DEBUG: red border so we can see the panel even if GIF doesn't load
+        // DEBUG: yellow fill + red border — impossible to miss
+        g.setColor(new Color(255, 255, 0, 128));
+        g.fillRect(0, 0, getWidth(), getHeight());
         g.setColor(Color.RED);
         g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
         g.drawRect(1, 1, getWidth() - 3, getHeight() - 3);
     }
 
     public void start(Component anchor, Runnable onComplete) {
-        if (active || !hasGif || panelW <= 0) return;
+        if (active) return;
 
         rootWindow = SwingUtilities.getWindowAncestor(anchor);
         if (rootWindow == null) return;
