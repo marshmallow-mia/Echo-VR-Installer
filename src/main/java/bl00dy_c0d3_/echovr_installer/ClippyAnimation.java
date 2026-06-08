@@ -80,14 +80,30 @@ public class ClippyAnimation extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
-        if (framesAvailable && currentFrame >= 0 && currentFrame < frames.size()) {
-            g.drawImage(frames.get(currentFrame), 0, 0, this);
-        } else {
-            // Fallback yellow debug
-            g.setColor(new Color(255, 255, 0, 128));
-            g.fillRect(0, 0, getWidth(), getHeight());
-        }
-        // Red border always
+        // DEBUG: pulsing circle — obvious animation to verify frame cycling works
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Background: dark base
+        g2.setColor(new Color(30, 30, 30, 200));
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        
+        // Pulsing circle: size changes with currentFrame
+        int cx = getWidth() / 2;
+        int cy = getHeight() / 2;
+        int r = 5 + (currentFrame % 15);
+        float hue = (currentFrame * 0.03f) % 1.0f;
+        g2.setColor(Color.getHSBColor(hue, 1f, 1f));
+        g2.fillOval(cx - r, cy - r, r * 2, r * 2);
+        
+        // Frame counter
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Monospaced", Font.BOLD, 12));
+        g2.drawString("f:" + currentFrame + " y:" + currentY, 4, 12);
+        
+        g2.dispose();
+        
+        // Red border
         g.setColor(Color.RED);
         g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
     }
