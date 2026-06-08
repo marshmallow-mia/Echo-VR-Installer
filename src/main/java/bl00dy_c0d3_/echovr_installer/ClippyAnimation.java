@@ -2,6 +2,7 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.MediaTracker;
 import java.awt.event.HierarchyEvent;
 import java.net.URL;
 
@@ -38,20 +39,28 @@ public class ClippyAnimation extends JPanel {
 
         URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
         if (gifUrl != null) {
-            ImageIcon icon = new ImageIcon(gifUrl);
+            // Load via Toolkit for proper animation support
+            Image gifImage = Toolkit.getDefaultToolkit().createImage(gifUrl);
+            ImageIcon icon = new ImageIcon(gifImage);
+            // Wait for image to fully load
+            MediaTracker tracker = new MediaTracker(this);
+            tracker.addImage(gifImage, 0);
+            try { tracker.waitForID(0, 2000); } catch (InterruptedException ignored) {}
+            
             panelW = icon.getIconWidth();
             panelH = icon.getIconHeight();
-            if (panelW > 0 && panelH > 0) {
-                setSize(panelW, panelH);
-                setPreferredSize(new Dimension(panelW, panelH));
-            }
+            if (panelW <= 0) { panelW = 124; panelH = 93; }
+            setSize(panelW, panelH);
+            setPreferredSize(new Dimension(panelW, panelH));
+            
             JLabel label = new JLabel(icon);
             label.setOpaque(false);
+            // CRITICAL: set the label as the image observer so GIF animates
+            icon.setImageObserver(label);
             add(label, BorderLayout.CENTER);
             hasGif = true;
         } else {
             hasGif = false;
-            // Default visible size so debug border shows
             setSize(100, 100);
             setPreferredSize(new Dimension(100, 100));
             panelW = 100;
@@ -140,6 +149,7 @@ public class ClippyAnimation extends JPanel {
         }
 
         setBounds(layeredX, currentY, panelW, panelH);
+        repaint();
     }
 
     private void onHierarchyChanged(HierarchyEvent e) {
