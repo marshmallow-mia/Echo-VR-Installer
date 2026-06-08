@@ -88,6 +88,7 @@ public class ClippyAnimation extends JPanel {
         this.startY = position.y;
         this.targetY = Math.max(0, position.y - getHeight());
         this.currentY = startY;
+        System.err.println("[Clippy] Y: start=" + startY + " target=" + targetY + " h=" + getHeight());
 
         setBounds(panelX, currentY, getWidth(), getHeight());
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
