@@ -1,260 +1,116 @@
 package bl00dy_c0d3_.echovr_installer;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
-/**
- * Swing JPanel that displays a Clippy sprite animation with concurrent
- * slide-in/slide-out motion.  Animates upward from behind a UI element,
- * cycles through PNG frames, then slides back down and removes itself.
- */
 public class ClippyAnimation extends JPanel {
 
     private enum Phase { RISE, HOLD, FALL }
 
-    private static final int FRAME_INTERVAL_MS = 80;
-    private static final int TIMER_INTERVAL_MS = 16;
     private static final int DEFAULT_DURATION_MS = 400;
+    private static final int HOLD_MS = 2000;
+    private static final int TICK_MS = 16;
 
-    private final int riseDurationMs;
-    private final int fallDurationMs;
-
-    private List<BufferedImage> frames;
+    private final int riseMs, fallMs;
     private Timer timer;
-    private int currentFrame;
-    private Phase phase;
-    private long phaseStartTime;
-    private long lastFrameTime;
-    private int startY;
-    private int targetY;
-    private int panelX;
-    private int currentY;
-    private boolean active;
-    private Runnable onComplete;
+    private int startY, targetY, panelX, currentY;
     private Container parent;
-    private int tickCount;
+    private Runnable onComplete;
+    private long phaseStart;
+    private Phase phase;
+    private boolean active;
+    private final boolean hasGif;
 
     public ClippyAnimation() {
         this(DEFAULT_DURATION_MS, DEFAULT_DURATION_MS);
     }
 
-    public ClippyAnimation(int riseDurationMs, int fallDurationMs) {
-        this.riseDurationMs = Math.max(riseDurationMs, 1);
-        this.fallDurationMs = Math.max(fallDurationMs, 1);
-        this.frames = loadFrames();
-
+    public ClippyAnimation(int riseMs, int fallMs) {
+        this.riseMs = Math.max(riseMs, 1);
+        this.fallMs = Math.max(fallMs, 1);
         setOpaque(false);
+        setLayout(new BorderLayout());
 
-        if (frames.isEmpty()) {
-            System.err.println(
-                "ClippyAnimation: No frame_*.png files found in clippy/ -- start() is a no-op.");
-            setSize(0, 0);
+        URL gifUrl = getClass().getClassLoader().getResource("clippy/anim2.gif");
+        if (gifUrl != null) {
+            ImageIcon icon = new ImageIcon(gifUrl);
+            int w = icon.getIconWidth();
+            int h = icon.getIconHeight();
+            if (w > 0 && h > 0) {
+                setSize(w, h);
+                setPreferredSize(new Dimension(w, h));
+            }
+            JLabel label = new JLabel(icon);
+            label.setOpaque(false);
+            add(label, BorderLayout.CENTER);
+            hasGif = true;
         } else {
-            setSize(frames.get(0).getWidth(), frames.get(0).getHeight());
+            hasGif = false;
         }
-
         addHierarchyListener(this::onHierarchyChanged);
     }
 
-    /**
-     * Start the animation, sliding upward from below {@code tipBoxBounds},
-     * cycling frames, holding above, then sliding back down.
-     *
-     * @param tipBoxBounds bounds of the UI element the clippy should pop up behind/above
-     * @param parent       container to add this panel to
-     * @param onComplete   callback invoked after the animation finishes (or window closes)
-     */
     public void start(Rectangle tipBoxBounds, Container parent, Runnable onComplete) {
-        System.err.println("[ClippyAnim] start() called. active=" + active
-                + " framesEmpty=" + frames.isEmpty()
-                + " panelSize=" + getWidth() + "x" + getHeight());
+        if (active || !hasGif) return;
+        int w = getWidth(), h = getHeight();
+        if (w <= 0 || h <= 0) return;
 
-        if (active || frames.isEmpty()) {
-            return;
-        }
-
-        int panelWidth = getWidth();
-        int panelHeight = getHeight();
-
-        if (panelWidth <= 0 || panelHeight <= 0) {
-            return;
-        }
-
-        panelX = tipBoxBounds.x + (tipBoxBounds.width - panelWidth) / 2;
-        startY = tipBoxBounds.y + tipBoxBounds.height;
-        targetY = Math.max(0, tipBoxBounds.y - panelHeight);
+        panelX  = tipBoxBounds.x + (tipBoxBounds.width - w) / 2;
+        startY  = tipBoxBounds.y + tipBoxBounds.height;
+        targetY = Math.max(0, tipBoxBounds.y - h);
         currentY = startY;
-
-        setBounds(panelX, currentY, panelWidth, panelHeight);
-
-        System.err.println("[ClippyAnim] Positioned at x=" + panelX
-                + " startY=" + startY + " targetY=" + targetY);
+        setBounds(panelX, currentY, w, h);
 
         this.parent = parent;
         this.onComplete = onComplete;
         this.active = true;
-
-        currentFrame = 0;
-        phase = Phase.RISE;
-        lastFrameTime = System.currentTimeMillis();
-        phaseStartTime = lastFrameTime;
-        tickCount = 0;
+        this.phase = Phase.RISE;
+        this.phaseStart = System.currentTimeMillis();
 
         parent.add(this);
         parent.setComponentZOrder(this, parent.getComponentCount() - 1);
         parent.revalidate();
         parent.repaint();
 
-        System.err.println("[ClippyAnim] Added to parent, z-order="
-                + parent.getComponentZOrder(this)
-                + " of " + parent.getComponentCount());
-
-        if (timer == null) {
-            timer = new Timer(TIMER_INTERVAL_MS, e -> onTick());
-        }
+        if (timer == null) timer = new Timer(TICK_MS, e -> tick());
         timer.start();
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        if (frames == null || frames.isEmpty() || currentFrame >= frames.size()) {
-            return;
-        }
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2.drawImage(frames.get(currentFrame), 0, 0, this);
-        g2.dispose();
-        super.paintComponent(g);
-    }
-
-    private void onTick() {
+    private void tick() {
         if (!active) return;
-
-        tickCount++;
-        if (tickCount % 30 == 0) {
-            System.err.println("[ClippyAnim] phase=" + phase + " y=" + currentY
-                    + " frame=" + currentFrame + "/" + frames.size());
-        }
-
-        long now = System.currentTimeMillis();
-        long elapsed = now - phaseStartTime;
-
+        long elapsed = System.currentTimeMillis() - phaseStart;
         switch (phase) {
             case RISE:
-                float riseProgress = Math.min(1.0f, (float) elapsed / riseDurationMs);
-                currentY = startY - (int) ((startY - targetY) * riseProgress);
-                if (riseProgress >= 1.0f) {
-                    currentY = targetY;
-                    phase = Phase.HOLD;
-                    phaseStartTime = now;
-                }
+                float rp = Math.min(1f, (float) elapsed / riseMs);
+                currentY = startY - (int)((startY - targetY) * rp);
+                if (rp >= 1f) { currentY = targetY; phase = Phase.HOLD; phaseStart = System.currentTimeMillis(); }
                 break;
-
             case HOLD:
                 currentY = targetY;
-                if (currentFrame >= frames.size() - 1) {
-                    phase = Phase.FALL;
-                    phaseStartTime = now;
-                }
+                if (elapsed >= HOLD_MS) { phase = Phase.FALL; phaseStart = System.currentTimeMillis(); }
                 break;
-
             case FALL:
-                float fallProgress = Math.min(1.0f, (float) elapsed / fallDurationMs);
-                currentY = targetY + (int) ((startY - targetY) * fallProgress);
-                if (fallProgress >= 1.0f) {
-                    currentY = startY;
-                    cleanup();
-                    return;
-                }
+                float fp = Math.min(1f, (float) elapsed / fallMs);
+                currentY = targetY + (int)((startY - targetY) * fp);
+                if (fp >= 1f) { currentY = startY; cleanup(); return; }
                 break;
         }
-
-        if (now - lastFrameTime >= FRAME_INTERVAL_MS) {
-            lastFrameTime = now;
-            if (currentFrame < frames.size() - 1) {
-                currentFrame++;
-            }
-        }
-
         setBounds(panelX, currentY, getWidth(), getHeight());
-        repaint();
     }
 
     private void onHierarchyChanged(HierarchyEvent e) {
-        if (active && getParent() == null) {
-            cleanup();
-        }
+        if (active && getParent() == null) cleanup();
     }
 
     private void cleanup() {
         if (!active) return;
-        System.err.println("[ClippyAnim] cleanup() called");
         active = false;
-
-        if (timer != null) {
-            timer.stop();
-        }
-        if (parent != null) {
-            parent.remove(this);
-            parent.revalidate();
-            parent.repaint();
-            parent = null;
-        }
-
+        if (timer != null) timer.stop();
+        if (parent != null) { parent.remove(this); parent.revalidate(); parent.repaint(); parent = null; }
         Runnable cb = onComplete;
         onComplete = null;
-        if (cb != null) {
-            cb.run();
-        }
-
-        if (frames != null) {
-            frames.clear();
-            frames = null;
-        }
-    }
-
-    private static List<BufferedImage> loadFrames() {
-        List<BufferedImage> list = new ArrayList<>();
-        ClassLoader cl = ClippyAnimation.class.getClassLoader();
-
-        for (int i = 0; i < 1000; i++) {
-            BufferedImage img = loadFrame(cl, i);
-            if (img != null) {
-                list.add(img);
-            } else if (!list.isEmpty()) {
-                break;
-            }
-        }
-
-        System.err.println("[ClippyAnim] Loaded " + list.size() + " frames");
-        return list;
-    }
-
-    private static BufferedImage loadFrame(ClassLoader cl, int index) {
-        String[] names = {
-            String.format("clippy/frame_%03d.png", index),
-            String.format("clippy/frame_%04d.png", index),
-            "clippy/frame_" + index + ".png"
-        };
-        for (String name : names) {
-            URL url = cl.getResource(name);
-            if (url != null) {
-                try {
-                    return ImageIO.read(url);
-                } catch (IOException e) {
-                    System.err.println(
-                        "ClippyAnimation: Failed to read " + name + ": " + e.getMessage());
-                }
-            }
-        }
-        return null;
+        if (cb != null) cb.run();
     }
 }
