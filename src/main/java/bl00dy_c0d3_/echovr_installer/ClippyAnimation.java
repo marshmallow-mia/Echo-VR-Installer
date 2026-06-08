@@ -14,59 +14,124 @@ import java.util.List;
 
 public class ClippyAnimation extends JPanel {
 
+    private enum Phase { RISE, HOLD, FALL }
+
+    private static final int RISE_MS = 400;
+    private static final int HOLD_MS = 2000;
+    private static final int FALL_MS = 400;
     private static final int TICK_MS = 80;
-    private final int riseMs, fallMs;
+
+    private List<BufferedImage> frames;
+    private int currentFrame;
     private Timer timer;
-    private int startY, targetY;
-    public int debugCounter; // public so TipBox can read if needed
+
+    // Position / phase
+    private int panelX, startY, targetY, currentY;
+    private boolean visible;
+    private Phase phase;
+    private long phaseStart;
+    private Runnable onComplete;
 
     public ClippyAnimation() {
-        this(400, 400);
+        setOpaque(false);
+        setLayout(null);
+
+        // Extract GIF frames
+        frames = new ArrayList<>();
+        try {
+            InputStream is = getClass().getClassLoader().getResourceAsStream("clippy/anim2.gif");
+            if (is != null) {
+                ImageInputStream iis = ImageIO.createImageInputStream(is);
+                Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("gif");
+                if (readers.hasNext()) {
+                    ImageReader reader = readers.next();
+                    reader.setInput(iis);
+                    int n = reader.getNumImages(true);
+                    for (int i = 0; i < n; i++) frames.add(reader.read(i));
+                    reader.dispose();
+                }
+                iis.close(); is.close();
+            }
+        } catch (Exception ignored) {}
+
+        if (frames.isEmpty()) {
+            // No frames: still works (shows empty box with border)
+            setSize(124, 93);
+        } else {
+            setSize(frames.get(0).getWidth(), frames.get(0).getHeight());
+        }
+        setPreferredSize(getSize());
+
+        // Timer runs forever — drives both frame cycling and position update
+        timer = new Timer(TICK_MS, e -> onTick());
+        timer.start();
     }
 
-    public ClippyAnimation(int riseMs, int fallMs) {
-        this.riseMs = Math.max(riseMs, 1);
-        this.fallMs = Math.max(fallMs, 1);
-        setOpaque(false);
+    public void start(Rectangle position, JLayeredPane layeredPane, Runnable onComplete) {
+        this.onComplete = onComplete;
+        this.visible = true;
+        this.phase = Phase.RISE;
+        this.phaseStart = System.currentTimeMillis();
+        this.currentFrame = 0;
+        this.panelX = position.x;
+        this.startY = position.y + position.height;
+        this.targetY = Math.max(0, position.y - getHeight());
+        this.currentY = startY;
 
-        setSize(124, 93);
-        setPreferredSize(new Dimension(124, 93));
+        setBounds(panelX, currentY, getWidth(), getHeight());
+        layeredPane.add(this, JLayeredPane.POPUP_LAYER);
+        layeredPane.repaint();
+    }
 
-        // Timer starts in constructor, runs forever, just calls repaint()
-        timer = new Timer(TICK_MS, e -> {
-            debugCounter++;
-            repaint();
-        });
-        timer.start();
+    private void onTick() {
+        if (!visible) return;
+
+        long elapsed = System.currentTimeMillis() - phaseStart;
+
+        // Advance frame (loop while visible)
+        if (!frames.isEmpty()) {
+            currentFrame = (currentFrame + 1) % frames.size();
+        }
+
+        // Update Y position based on phase
+        switch (phase) {
+            case RISE:
+                float rp = Math.min(1f, (float) elapsed / RISE_MS);
+                currentY = startY - (int) ((startY - targetY) * rp);
+                if (rp >= 1f) { currentY = targetY; phase = Phase.HOLD; phaseStart = System.currentTimeMillis(); }
+                break;
+            case HOLD:
+                currentY = targetY;
+                if (elapsed >= HOLD_MS) { phase = Phase.FALL; phaseStart = System.currentTimeMillis(); }
+                break;
+            case FALL:
+                float fp = Math.min(1f, (float) elapsed / FALL_MS);
+                currentY = targetY + (int) ((startY - targetY) * fp);
+                if (fp >= 1f) { cleanup(); return; }
+                break;
+        }
+
+        setBounds(panelX, currentY, getWidth(), getHeight());
+        repaint();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        // Draw pulsing/color-changing circle
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        if (frames.isEmpty()) {
+            g.setColor(Color.RED);
+            g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            return;
+        }
+        g.drawImage(frames.get(currentFrame), 0, 0, this);
+    }
 
-        // Dark background
-        g2.setColor(new Color(30, 30, 30, 200));
-        g2.fillRect(0, 0, getWidth(), getHeight());
-
-        // Pulsing circle: size changes with debugCounter
-        int cx = getWidth() / 2;
-        int cy = getHeight() / 2;
-        int r = 5 + (debugCounter % 15);
-        float hue = (debugCounter * 0.03f) % 1.0f;
-        g2.setColor(Color.getHSBColor(hue, 1f, 1f));
-        g2.fillOval(cx - r, cy - r, r * 2, r * 2);
-
-        // Frame counter
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Monospaced", Font.BOLD, 12));
-        g2.drawString("f:" + debugCounter, 4, 12);
-
-        g2.dispose();
-
-        // Red border
-        g.setColor(Color.RED);
-        g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+    private void cleanup() {
+        if (!visible) return;
+        visible = false;
+        Container p = getParent();
+        if (p != null) { p.remove(this); p.repaint(); }
+        Runnable cb = onComplete;
+        onComplete = null;
+        if (cb != null) cb.run();
     }
 }
