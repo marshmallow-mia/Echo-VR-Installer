@@ -15,19 +15,29 @@ import java.util.List;
 
 public class ClippyAnimation extends JPanel {
 
-    private static final int HOLD_MS = 2000;
     private static final int TICK_MS = 80;
+    private static final int DEFAULT_HOLD_MS = 2000;
 
     private List<BufferedImage> frames;
     private int currentFrame;
     private Timer timer;
 
-    private int panelX, panelY;
+    private int panelX, startY, targetY, currentY;
     private boolean visible;
-    private long startTime;
+    private long phaseStart;
+    private boolean rising;
+    private boolean falling;
+    private int riseFrames;
+    private int fallFrames;
     private Runnable onComplete;
 
     public ClippyAnimation() {
+        this(10, 10);
+    }
+
+    public ClippyAnimation(int riseFrames, int fallFrames) {
+        this.riseFrames = Math.max(riseFrames, 1);
+        this.fallFrames = Math.max(fallFrames, 1);
         setOpaque(false);
         setLayout(null);
 
@@ -70,30 +80,62 @@ public class ClippyAnimation extends JPanel {
     public void start(Rectangle position, JLayeredPane layeredPane, Runnable onComplete) {
         this.onComplete = onComplete;
         this.visible = true;
-        this.startTime = System.currentTimeMillis();
+        this.rising = true;
+        this.falling = false;
+        this.phaseStart = System.currentTimeMillis();
         this.currentFrame = 0;
         this.panelX = position.x;
-        this.panelY = Math.max(0, position.y - getHeight());
+        this.startY = position.y + position.height;
+        this.targetY = Math.max(0, position.y - getHeight());
+        this.currentY = startY;
 
-        setBounds(panelX, panelY, getWidth(), getHeight());
+        setBounds(panelX, currentY, getWidth(), getHeight());
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
         layeredPane.repaint();
     }
 
     private void onTick() {
         if (!visible) return;
+        long now = System.currentTimeMillis();
 
-        // Advance frame
-        if (!frames.isEmpty()) {
-            currentFrame = (currentFrame + 1) % frames.size();
+        if (rising) {
+            // Rise: slide up while playing first riseFrames
+            float p = (float) (now - phaseStart) / (riseFrames * TICK_MS);
+            currentY = startY - (int) ((startY - targetY) * Math.min(1f, p));
+            currentFrame = Math.min(currentFrame, riseFrames - 1);
+            if (p >= 1f) {
+                currentY = targetY;
+                rising = false;
+                phaseStart = now;
+            }
+            setBounds(panelX, currentY, getWidth(), getHeight());
+        } else if (falling) {
+            // Fall: slide down while playing last fallFrames
+            long elapsed = now - phaseStart;
+            float p = (float) elapsed / (fallFrames * TICK_MS);
+            currentY = targetY + (int) ((startY - targetY) * Math.min(1f, p));
+            if (p >= 1f) { cleanup(); return; }
+            // Map currentFrame to last fallFrames frames
+            int fi = Math.min((int) (elapsed / TICK_MS), fallFrames - 1);
+            currentFrame = Math.max(0, frames.size() - fallFrames + fi);
+            setBounds(panelX, currentY, getWidth(), getHeight());
+        } else {
+            // Hold: loop middle frames at top, then start falling
+            long elapsed = now - phaseStart;
+            currentFrame = riseFrames + (int)((elapsed / TICK_MS) % Math.max(1, frames.size() - riseFrames - fallFrames));
+            if (currentFrame >= frames.size() - fallFrames) {
+                currentFrame = riseFrames;
+            }
+            currentY = targetY;
+            if (elapsed >= DEFAULT_HOLD_MS) {
+                falling = true;
+                phaseStart = now;
+            }
         }
 
-        // After HOLD_MS, cleanup
-        if (System.currentTimeMillis() - startTime >= HOLD_MS) {
-            cleanup();
-            return;
+        if (!frames.isEmpty() && !falling) {
+            currentFrame = currentFrame % frames.size();
         }
-
         repaint();
     }
 

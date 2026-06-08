@@ -23,6 +23,8 @@ public class TipBox extends JPanel {
 
     private static final int CLIPPY_RISE_MS = 400;
     private static final int CLIPPY_FALL_MS = 400;
+    private static final int CLIPPY_RISE_FRAMES = 10;
+    private static final int CLIPPY_FALL_FRAMES = 10;
     private boolean clippyAnimating = false;
     private ClippyAnimation clippyAnimation = null;
     private final MouseAdapter clippyListener = new MouseAdapter() {
@@ -203,7 +205,7 @@ public class TipBox extends JPanel {
         if (!isShowing()) { System.err.println("[Clippy] BLOCKED: not showing"); return; }
         if (getWidth() <= 0 || getHeight() <= 0) { System.err.println("[Clippy] BLOCKED: zero size w="+getWidth()+" h="+getHeight()); return; }
         try {
-            clippyAnimation = new ClippyAnimation();
+            clippyAnimation = new ClippyAnimation(CLIPPY_RISE_FRAMES, CLIPPY_FALL_FRAMES);
             clippyAnimating = true;
 
             Window rootWindow = SwingUtilities.getWindowAncestor(this);
