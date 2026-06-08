@@ -10,6 +10,7 @@ import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 public class FrameMain extends JFrame {
     private static final int FRAME_WIDTH = 1280;
     private static final int FRAME_HEIGHT = 720;
+    private TipBox tipBox;
 
     public FrameMain() {
         initComponents();
@@ -19,36 +20,95 @@ public class FrameMain extends JFrame {
 
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                try { javafx.application.Platform.exit(); } catch (Exception ignored) {}
+                System.exit(0);
+            }
+        });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.8.5 [pre alpha]");
+        setTitle("Echo VR Installer v0.9.3b");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
         setContentPane(back);
 
+        tipBox = new TipBox();
+        tipBox.setLocation((FRAME_WIDTH - tipBox.getWidth()) / 2, 240);
+        back.add(tipBox);
+
         FrameMain outFrame = this;
         addPCButtons(back, outFrame);
         addQuestButtons(back, outFrame);
-        addBackgroundFrames(back);
+        addBackgroundFrames(back, outFrame);
         addEasterEgg(back, outFrame);
         addDeleteCached(back, outFrame);
         addGetLog(back, outFrame);
+        addCredits(back, outFrame);
         //addPlayButton(back);
         //addStopButton(back);
 
         pack();
         centerFrame(this, FRAME_WIDTH, FRAME_HEIGHT);
+    }
 
-        JOptionPane.showMessageDialog(this, "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>" +
-                "This installer is not at all associated with them!<br><br>" +
-                "Special thanks to Sick and SirDominik for some of the backgrounds!<br>" +
-                "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>" +
-                "I know you still feel shame when you have to look at my source code.<br>" +
-                "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>" +
-                "This tool is still in early alpha!<br>" +
-                "If you have problems, contact me on Discord 'marshmallow_mia'.</html>", "Notification", JOptionPane.INFORMATION_MESSAGE);
+    private void addCredits(JPanel back, FrameMain outFrame) {
+        int size = 40;
+        // Bottom-right, but within the content pane (the window's title bar/borders eat ~40px of
+        // the 720 frame height, so anchoring to FRAME_HEIGHT pushed it off-screen). Align with the
+        // bottom button row instead.
+        int x = FRAME_WIDTH - size - 30;
+        int y = 595;
+        JLabel credits = new JLabel(infoIcon(size));
+        credits.setBounds(x, y, size, size);
+        credits.setOpaque(false);
+        credits.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        credits.setToolTipText("Credits / About");
+        credits.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) { showCredits(outFrame); }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("About this installer & credits"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        back.add(credits);
+    }
 
+    /** A vector-drawn "ⓘ" info badge: filled magenta circle with a white "i". */
+    private static Icon infoIcon(int size) {
+        return new Icon() {
+            @Override public int getIconWidth() { return size; }
+            @Override public int getIconHeight() { return size; }
+            @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(200, 0, 150));
+                g2.fillOval(x + 1, y + 1, size - 2, size - 2);
+                g2.setColor(new Color(255, 255, 255, 190));
+                g2.setStroke(new BasicStroke(Math.max(1.5f, size / 22f)));
+                g2.drawOval(x + 1, y + 1, size - 3, size - 3);
+                // white "i"
+                g2.setColor(Color.WHITE);
+                int cx = x + size / 2;
+                int dotR = Math.max(2, size / 12);
+                g2.fillOval(cx - dotR, y + Math.round(size * 0.27f) - dotR, dotR * 2, dotR * 2);
+                g2.setStroke(new BasicStroke(Math.max(2f, size / 9f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2.drawLine(cx, Math.round(y + size * 0.43f), cx, Math.round(y + size * 0.73f));
+                g2.dispose();
+            }
+        };
+    }
+
+    private void showCredits(JFrame parent) {
+        JOptionPane.showMessageDialog(parent,
+            "<html>Copyright for Echo VR is by Meta/Ready at Dawn!<br>"
+            + "This installer is not at all associated with them!<br><br>"
+            + "Special thanks to Sick and SirDominik for some of the backgrounds!<br>"
+            + "Special thanks to F-A-N-G-O-R-N for getting me into Java and helping with this project.<br>"
+            + "I know you still feel shame when you have to look at my source code.<br>"
+            + "Special thanks to Leon(leon1273) for contributing and cleaning stuff in my code<br>"
+            + "This tool is still in early alpha!<br>"
+            + "If you have problems, contact me on Discord 'marshmallow_mia'.</html>",
+            "Credits", JOptionPane.INFORMATION_MESSAGE);
     }
 
 
@@ -62,15 +122,20 @@ public class FrameMain extends JFrame {
                 GetLogFilesFromQuest.getLogFilesFromQuest();
             }
         });
+        btn_addGetLog.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Retrieve log files from your Quest for troubleshooting");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_addGetLog);
+        btn_addGetLog.setVisible(false);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         //back.add(addDeleteIcon);
-
-        SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
-        cacheLabel.setLocation(818, 640);
-        //back.add(cacheLabel);
 
     }
 
@@ -84,25 +149,39 @@ public class FrameMain extends JFrame {
                 deleteCache.executeDeletion(outFrame);
             }
         });
+        btn_deleteCache.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Clear cached downloaded files to free up space");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_deleteCache);
+        btn_deleteCache.setVisible(true);
 
         SpecialButton addDeleteIcon = new SpecialButton("", "delete.png", "delete.png", "delete.png", 20);
         addDeleteIcon.setLocation(770, 595);
         back.add(addDeleteIcon);
-
-        SpecialLabel cacheLabel = createSpecialLabel("Delete the known files cache. (Downloaded files)", 12);
-        cacheLabel.setLocation(818, 640);
-        back.add(cacheLabel);
+        addDeleteIcon.setVisible(true);
 
     }
 
 
     private void addPCButtons(JPanel back, FrameMain outFrame) {
-        SpecialButton btn_PCInstallEcho = new SpecialButton("Step 1: Install Echo", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        SpecialButton btn_PCInstallEcho = new SpecialButton("Install Echo VR", "button_up.png", "button_down.png", "button_highlighted.png", 20);
         btn_PCInstallEcho.setLocation((FRAME_WIDTH / 2 - btn_PCInstallEcho.getWidth()) / 2, 200);
         btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCDownload(outFrame);
+                new FrameGuidancePC(outFrame);
+            }
+        });
+        btn_PCInstallEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Download and install Echo VR for PC");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
             }
         });
         back.add(btn_PCInstallEcho);
@@ -115,42 +194,15 @@ public class FrameMain extends JFrame {
                 new FramePCEchoUpdate(outFrame);
             }
         });
+        btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Update an existing Echo VR PC installation");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
         back.add(btn_PCUpdateEcho);
-
-
-        SpecialLabel optionalPCLabel = createSpecialLabel("Step 2: Use these patches if needed!", 20);
-        optionalPCLabel.setLocation((FRAME_WIDTH / 2 - optionalPCLabel.getPreferredSize().width) / 2, 360);
-        back.add(optionalPCLabel);
-
-        SpecialLabel optionalPCLabel2 = createSpecialLabel("(These patches are fully optional, you may need them though!)", 10);
-        optionalPCLabel2.setLocation((FRAME_WIDTH / 2 - optionalPCLabel2.getPreferredSize().width) / 2, 395);
-        back.add(optionalPCLabel2);
-
-        SpecialButton btn_PCnonLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
-        btn_PCnonLicence.setLocation((FRAME_WIDTH / 2 - btn_PCnonLicence.getWidth()) / 2, 440);
-        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FramePCPatcher();
-            }
-        });
-        back.add(btn_PCnonLicence);
-
-        SpecialLabel noLincencePCLabel = createSpecialLabel("If you don't own Echo on your Account, use this Patch", 10);
-        noLincencePCLabel.setLocation((FRAME_WIDTH / 2 - noLincencePCLabel.getPreferredSize().width) / 2, 500);
-        back.add(noLincencePCLabel);
-
-        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch (Revive)", "button_up.png", "button_down.png", "button_highlighted.png", 19);
-        btn_PCnoOVRHeadset.setLocation((FRAME_WIDTH / 2 - btn_PCnoOVRHeadset.getWidth()) / 2, 560);
-        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FrameSteamPatcher(outFrame);
-            }
-        });
-        back.add(btn_PCnoOVRHeadset);
-
-        SpecialLabel steamPatchLabel = createSpecialLabel("If you Play with an Steam only Headset use this Patch. (Normally not needed)", 10);
-        steamPatchLabel.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2, 620);
-        back.add(steamPatchLabel);
     }
 
     private void addQuestButtons(JPanel back, FrameMain outFrame) {
@@ -158,62 +210,95 @@ public class FrameMain extends JFrame {
         btn_QuestInstallEcho.setLocation(819, 200);
         btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FrameQuestDownload(outFrame);
+                new FrameGuidanceQuest(outFrame);
+            }
+        });
+        btn_QuestInstallEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Download and install Echo VR on your Quest headset");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
             }
         });
         back.add(btn_QuestInstallEcho);
-
-        SpecialLabel questInstallNoticeLabel1 = createSpecialLabel("If you don't own Echo on your account,", 20);
-        questInstallNoticeLabel1.setLocation((FRAME_WIDTH / 4 * 3 - questInstallNoticeLabel1.getPreferredSize().width / 2), 265);
-        back.add(questInstallNoticeLabel1);
-
-        SpecialLabel questInstallNoticeLabel2 = createSpecialLabel("use the method below instead of the top one!", 20);
-        questInstallNoticeLabel2.setLocation((FRAME_WIDTH / 4 * 3 - questInstallNoticeLabel2.getPreferredSize().width / 2), 300);
-        back.add(questInstallNoticeLabel2);
-
-        SpecialLabel optionalQuestLabel = createSpecialLabel("The following patches are optional", 20);
-        optionalQuestLabel.setLocation((FRAME_WIDTH / 4 * 3 - optionalQuestLabel.getPreferredSize().width / 2), 360);
-        back.add(optionalQuestLabel);
-
-        SpecialLabel optionalQuestLabel2 = createSpecialLabel("(Only use them if you have to)", 10);
-        optionalQuestLabel2.setLocation((FRAME_WIDTH / 4 * 3 - optionalQuestLabel2.getPreferredSize().width / 2), 395);
-        back.add(optionalQuestLabel2);
-
-        SpecialButton btn_QuestNoLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
-        btn_QuestNoLicence.setLocation((FRAME_WIDTH / 4 * 3 - btn_QuestNoLicence.getWidth() / 2), 440);
-        btn_QuestNoLicence.addMouseListener(new MouseAdapter() {
-            public void mouseReleased(MouseEvent event) {
-                new FrameQuestPatcher();
-            }
-        });
-        back.add(btn_QuestNoLicence);
-
-        SpecialLabel noLincenceQuestLabel = createSpecialLabel("If you don't own Echo on your Account, use this Patch", 10);
-        noLincenceQuestLabel.setLocation((FRAME_WIDTH / 4 * 3 - noLincenceQuestLabel.getPreferredSize().width / 2), 500);
-        back.add(noLincenceQuestLabel);
     }
 
-    private void addBackgroundFrames(JPanel back) {
-        SpecialLabel steamPatchLabel = createSpecialLabel("If you Play with an Steam only Headset use this Patch. (Normally not needed)", 10);
+    private void addBackgroundFrames(JPanel back, FrameMain outFrame) {
+        // ---- PC side: No licence patch + Steam Patch ----
+        SpecialButton btn_PCnonLicence = new SpecialButton("No licence patch", "button_up.png", "button_down.png", "button_highlighted.png", 20);
+        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FramePCPatcher();
+            }
+        });
+        btn_PCnonLicence.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Patch Echo VR if you don't own it on your Oculus account");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
 
-        Background rahmen1 = new Background("Rahmenbild.png");
-        rahmen1.setLayout(null);
-        rahmen1.setLocation((FRAME_WIDTH / 2 - steamPatchLabel.getPreferredSize().width) / 2 - 8, 350);
-        rahmen1.setSize(steamPatchLabel.getPreferredSize().width + 30, 305);
-        rahmen1.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
-        rahmen1.setBackground(new Color(255, 255, 255, 0));
+        SpecialButton btn_PCnoOVRHeadset = new SpecialButton("Steam Patch (Revive)", "button_up.png", "button_down.png", "button_highlighted.png", 19);
+        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FrameSteamPatcher(outFrame);
+            }
+        });
+        btn_PCnoOVRHeadset.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Install Revive for SteamVR headsets like Valve Index");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
+
+        final int ARC = 20;
+        final int PAD = 15;
+
+        // Position inside rahmen1 with PAD padding
+        int b1w = btn_PCnonLicence.getWidth();
+        int b1h = btn_PCnonLicence.getHeight();
+        int b2w = btn_PCnoOVRHeadset.getWidth();
+        int b2h = btn_PCnoOVRHeadset.getHeight();
+
+        btn_PCnonLicence.setLocation(PAD, PAD);
+        btn_PCnoOVRHeadset.setLocation(PAD, PAD + b1h + PAD);
+
+        int pcPanelW = Math.max(b1w, b2w) + PAD * 2;
+        int pcPanelH = PAD + b1h + PAD + b2h + PAD;
+
+        JPanel rahmen1 = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(200, 0, 150, 150));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC, ARC);
+                g2.setColor(new Color(50, 50, 50, 150));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC, ARC);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+            @Override
+            protected void paintChildren(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setClip(new java.awt.geom.RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), ARC, ARC));
+                super.paintChildren(g2);
+                g2.dispose();
+            }
+        };
+        rahmen1.setOpaque(false);
+        rahmen1.setBounds((FRAME_WIDTH / 2 - pcPanelW) / 2, 420, pcPanelW, pcPanelH);
+        rahmen1.add(btn_PCnonLicence);
+        rahmen1.add(btn_PCnoOVRHeadset);
         back.add(rahmen1);
+        rahmen1.setVisible(false);
 
-        SpecialLabel optionalQuestLabel = createSpecialLabel("The following patches are optional", 20);
-
-
-        Background rahmen2 = new Background("Rahmenbild.png");
-        rahmen2.setLayout(null);
-            rahmen2.setLocation((FRAME_WIDTH / 4 * 3 + optionalQuestLabel.getPreferredSize().width) / 2 + 18, 350);
-        rahmen2.setSize(optionalQuestLabel.getPreferredSize().width + 30, 186);
-        rahmen2.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255), 3));
-        rahmen2.setBackground(new Color(255, 255, 255, 0));
-        back.add(rahmen2);
     }
 
     private void addEasterEgg(JPanel back, FrameMain outFrame) {

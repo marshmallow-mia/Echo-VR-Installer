@@ -4,6 +4,11 @@ import java.nio.file.Paths;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
+// TODO: Remove in v0.9.0 — replaced by FrameGuidanceQuest
+/**
+ * @deprecated Replaced by {@link FrameGuidanceQuest}. Will be removed in a future version.
+ */
+@Deprecated
 public class GetLogFilesFromQuest {
     static boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
     static boolean mac = System.getProperty("os.name").toLowerCase().startsWith("mac");

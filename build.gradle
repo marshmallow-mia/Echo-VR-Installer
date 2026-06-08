@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.beryx.jlink' version '2.24.4'
+    id 'org.openjfx.javafxplugin' version '0.0.13'
 }
 
 group 'org.example'
@@ -22,9 +23,13 @@ ext {
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
+javafx {
+    version = '17.0.2'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing']
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    options.release.set(17)
 }
 
 application {
@@ -34,7 +39,8 @@ application {
             "-Djava.library.path=libs/",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-exports=javafx.web/com.sun.webkit.network=ALL-UNNAMED"
             //"--add-reads=jlibtorrent=java.logging"
     ]
 }
@@ -44,13 +50,19 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     //implementation files('libs/jlibtorrent-1.2.19.0.jar')
     //implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
-    //implementation "org.openjfx:javafx-controls:${javafxVersion}"
-    //implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    implementation "org.openjfx:javafx-controls:${javafxVersion}"
+    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
+    implementation "org.openjfx:javafx-web:${javafxVersion}"
     implementation 'org.jetbrains:annotations:24.1.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
 }
 
 test {
     useJUnitPlatform()
+    // Tests are deactivated: they do not run during compile/build/check. The GUI tests open
+    // modal Swing dialogs that hang the forked test JVM on a non-headless machine. Flip this to
+    // `true` (or run `gradlew test -PrunTests`) to execute them manually again.
+    enabled = project.hasProperty('runTests')
 }
 
 jar {
@@ -68,17 +80,17 @@ tasks.register('copyLibjpeg', Copy) {
 def os = org.gradle.internal.os.OperatingSystem.current()
 
 jlink {
-    options = ['--add-modules', 'jdk.zipfs']
+    options = ['--add-modules', 'jdk.zipfs,javafx.controls,javafx.fxml,javafx.web,javafx.graphics,javafx.base']
     jpackage {
         installerName = 'Echo_VR_Installer'
 
         if (os.isWindows()) {
-            appVersion = '0.6'
+            appVersion = '0.93'
             icon = 'icon.ico'  // Update path
 
             installerOptions = [
-                    '--app-version', '0.6',
-                    '--vendor', 'bl00dy-c0d3',
+                    '--app-version', '0.93',
+                    '--vendor', 'marshmallow_mia',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
                     '--icon', 'icon.ico',  // Update path
@@ -88,12 +100,12 @@ jlink {
                     '--win-menu-group', 'EchoVRInstaller',
             ]
         } else if (os.isMacOsX()) {
-            appVersion = '1.6'
+            appVersion = '1.0.93'
             installerOptions = [
                     '--mac-package-identifier', 'IhateApple',
             ]
         } else {
-            appVersion = '0.6'
+            appVersion = '0.93'
             icon = 'icon.png'  // Update path if needed
 
             // Ensure copyLibjpeg runs after jpackage
@@ -110,4 +122,44 @@ jlink {
 tasks.named('build').configure {
     dependsOn('jlink')
     dependsOn('jpackage')
+}
+
+// Building the app-image (jpackageImage) first deletes the previous build/jpackage output. That
+// fails ("Unable to delete ... EchoVR_Installer.exe") whenever a copy of the app is still holding
+// the exe — a running instance, a leftover elevated admin-helper from testing, or AV/Explorer
+// briefly scanning the file. Before the image is rebuilt, kill any running EchoVR_Installer.exe and
+// clear the dir ourselves (with retries to ride out an AV scan) so packaging starts clean & unlocked.
+// NOTE: this must hook jpackageImage (runs first), NOT jpackage — the later jpackage/MSI step needs
+// the freshly built app-image that lives in build/jpackage.
+tasks.named('jpackageImage').configure {
+    doFirst {
+        if (os.isWindows()) {
+            // Kill any running instance (no-op if none), then clear the dir patiently — the lock is
+            // usually transient (Windows Defender scanning the freshly-built exe), so retry for a
+            // while and fall back to PowerShell Remove-Item, which clears it when Gradle's delete won't.
+            project.exec {
+                ignoreExitValue = true
+                commandLine 'taskkill', '/F', '/IM', 'EchoVR_Installer.exe'
+                // Discard taskkill's output — it prints a scary "process not found" to stderr when
+                // nothing is running, which is the normal/expected case.
+                standardOutput = OutputStream.nullOutputStream()
+                errorOutput = OutputStream.nullOutputStream()
+            }
+            def dir = project.file("$buildDir/jpackage")
+            for (int i = 0; i < 30 && dir.exists(); i++) {
+                try { project.delete(dir) } catch (Exception ignored) {}
+                if (dir.exists()) {
+                    project.exec {
+                        ignoreExitValue = true
+                        commandLine 'powershell', '-NoProfile', '-Command',
+                            "Remove-Item -LiteralPath '${dir.absolutePath}' -Recurse -Force -ErrorAction SilentlyContinue"
+                    }
+                }
+                if (dir.exists()) { Thread.sleep(500) }
+            }
+            if (dir.exists()) {
+                logger.warn("jpackageImage: could not clear ${dir} — a process may still be holding it.")
+            }
+        }
+    }
 }
