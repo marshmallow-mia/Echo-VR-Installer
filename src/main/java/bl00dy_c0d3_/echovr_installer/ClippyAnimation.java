@@ -15,22 +15,16 @@ import java.util.List;
 
 public class ClippyAnimation extends JPanel {
 
-    private enum Phase { RISE, HOLD, FALL }
-
-    private static final int RISE_MS = 400;
     private static final int HOLD_MS = 2000;
-    private static final int FALL_MS = 400;
     private static final int TICK_MS = 80;
 
     private List<BufferedImage> frames;
     private int currentFrame;
     private Timer timer;
 
-    // Position / phase
-    private int panelX, startY, targetY, currentY;
+    private int panelX, panelY;
     private boolean visible;
-    private Phase phase;
-    private long phaseStart;
+    private long startTime;
     private Runnable onComplete;
 
     public ClippyAnimation() {
@@ -76,15 +70,12 @@ public class ClippyAnimation extends JPanel {
     public void start(Rectangle position, JLayeredPane layeredPane, Runnable onComplete) {
         this.onComplete = onComplete;
         this.visible = true;
-        this.phase = Phase.RISE;
-        this.phaseStart = System.currentTimeMillis();
+        this.startTime = System.currentTimeMillis();
         this.currentFrame = 0;
         this.panelX = position.x;
-        this.startY = position.y + position.height;
-        this.targetY = Math.max(0, position.y - getHeight());
-        this.currentY = startY;
+        this.panelY = Math.max(0, position.y - getHeight());
 
-        setBounds(panelX, currentY, getWidth(), getHeight());
+        setBounds(panelX, panelY, getWidth(), getHeight());
         layeredPane.add(this, JLayeredPane.POPUP_LAYER);
         layeredPane.repaint();
     }
@@ -92,32 +83,17 @@ public class ClippyAnimation extends JPanel {
     private void onTick() {
         if (!visible) return;
 
-        long elapsed = System.currentTimeMillis() - phaseStart;
-
-        // Advance frame (loop while visible)
+        // Advance frame
         if (!frames.isEmpty()) {
             currentFrame = (currentFrame + 1) % frames.size();
         }
 
-        // Update Y position based on phase
-        switch (phase) {
-            case RISE:
-                float rp = Math.min(1f, (float) elapsed / RISE_MS);
-                currentY = startY - (int) ((startY - targetY) * rp);
-                if (rp >= 1f) { currentY = targetY; phase = Phase.HOLD; phaseStart = System.currentTimeMillis(); }
-                break;
-            case HOLD:
-                currentY = targetY;
-                if (elapsed >= HOLD_MS) { phase = Phase.FALL; phaseStart = System.currentTimeMillis(); }
-                break;
-            case FALL:
-                float fp = Math.min(1f, (float) elapsed / FALL_MS);
-                currentY = targetY + (int) ((startY - targetY) * fp);
-                if (fp >= 1f) { cleanup(); return; }
-                break;
+        // After HOLD_MS, cleanup
+        if (System.currentTimeMillis() - startTime >= HOLD_MS) {
+            cleanup();
+            return;
         }
 
-        setBounds(panelX, currentY, getWidth(), getHeight());
         repaint();
     }
 
