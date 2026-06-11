@@ -188,7 +188,41 @@ public class FrameGuidancePC extends BaseWizard {
         if (downloader != null) { downloader.cancelDownload(); pause(1); }
         new Thread(() -> {
             downloader = new Downloader();
-            downloader.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> { dlProgressLabel.setText("Complete"); nextBtn.setEnabled(true); stepInProgress = false; stepCompleted = true; progressAnimator.stop(); progPanel.repaint(); statusBarBox.repaint(); if (dlButton != null) dlButton.changeText("Start Download"); }));
+            downloader.setOnCompleteListener(() -> {
+                final String binPath = root + "/ready-at-dawn-echo-arena/bin/win10";
+                final String tempDir = System.getProperty("java.io.tmpdir") + "/echo_update_fresh/";
+
+                SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Applying update..."));
+
+                Downloader updateDl = new Downloader();
+                updateDl.setOnCompleteListener(() -> {
+                    try {
+                        File zipFile = new File(tempDir + "bullet_patch.zip");
+                        if (zipFile.exists() && zipFile.length() > 0) {
+                            SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Extracting update..."));
+                            UnzipFile.unzip(zipFile.getAbsolutePath(), binPath);
+                            System.out.println("Update extracted to: " + binPath);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Update extraction failed: " + e.getMessage());
+                    }
+                    SwingUtilities.invokeLater(() -> {
+                        dlProgressLabel.setText("Installation complete!");
+                        nextBtn.setEnabled(true);
+                        stepInProgress = false;
+                        stepCompleted = true;
+                        progressAnimator.stop();
+                        progPanel.repaint();
+                        statusBarBox.repaint();
+                        if (dlButton != null) dlButton.changeText("Start Download");
+                    });
+                });
+                updateDl.startDownload(
+                    "https://files.echovr.de/updates/bullet_patch.zip",
+                    tempDir, "bullet_patch.zip",
+                    dlProgressLabel, FrameGuidancePC.this, frameMain,
+                    1, false, -1, true);
+            });
             downloader.startDownload("ready-at-dawn-echo-arena.zip", root, "ready-at-dawn-echo-arena.zip", dlProgressLabel, FrameGuidancePC.this, frameMain, 0, false, 0, false);
         }).start();
     }
