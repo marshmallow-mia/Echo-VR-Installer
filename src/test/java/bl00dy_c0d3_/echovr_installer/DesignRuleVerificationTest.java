@@ -59,6 +59,19 @@ public class DesignRuleVerificationTest {
     }
 
     @Test
+    void testFramePCUpdateStepCount() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FramePCUpdate wizard = new FramePCUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        assertEquals(3, wizard.getStepCount(),
+                "PC Update wizard must have exactly 3 steps: Path, Update, Done");
+    }
+
+    @Test
     void testFrameGuidancePCChipLabels() {
         if (GraphicsEnvironment.isHeadless()) return;
         FrameGuidancePC wizard = new FrameGuidancePC(null) {
@@ -91,6 +104,39 @@ public class DesignRuleVerificationTest {
     }
 
     @Test
+    void testFramePCUpdateChipLabels() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FramePCUpdate wizard = new FramePCUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        String[] expected = {"Path", "Update", "Done"};
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals(expected[i], wizard.getChipLabel(i),
+                    "PC Update wizard chip label at step " + i);
+        }
+    }
+
+    @Test
+    void testFramePCUpdateSubstepCounts() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FramePCUpdate wizard = new FramePCUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        assertEquals(1, wizard.getSubstepCount(0),
+                "PC Update step 0 (Path) must have 1 substep");
+        assertEquals(2, wizard.getSubstepCount(1),
+                "PC Update step 1 (Update) must have 2 substeps");
+        assertEquals(1, wizard.getSubstepCount(2),
+                "PC Update step 2 (Done) must have 1 substep");
+    }
+
+    @Test
     void testPCWizardStateExtendsWizardState() {
         assertTrue(WizardState.class.isAssignableFrom(PCWizardState.class),
                 "PCWizardState must extend WizardState");
@@ -114,6 +160,11 @@ public class DesignRuleVerificationTest {
     @Test
     void testAllAbstractMethodsImplementedInQuest() throws Exception {
         assertAbstractMethodsImplemented(BaseWizard.class, FrameGuidanceQuest.class, "FrameGuidanceQuest");
+    }
+
+    @Test
+    void testAllAbstractMethodsImplementedInPCUpdate() throws Exception {
+        assertAbstractMethodsImplemented(BaseWizard.class, FramePCUpdate.class, "FramePCUpdate");
     }
 
     private static void assertAbstractMethodsImplemented(
