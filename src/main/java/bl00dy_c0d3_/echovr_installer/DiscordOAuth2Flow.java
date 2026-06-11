@@ -4,7 +4,9 @@ import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.BindException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -27,12 +29,56 @@ public class DiscordOAuth2Flow {
 
     private static final String CLIENT_ID = "1326594571584409650";
     private static final String SERVER_URL = "https://files.echovr.de";
-    private static final int CALLBACK_TIMEOUT_SECONDS = 300;
+    // Kept short: Discord's "Service got rate limited" page is shown in the browser and never
+    // redirects back, so the only signal we get is the callback not arriving. A 60s wait lets the
+    // user fail fast and Retry instead of staring at a 5-minute hang.
+    private static final int CALLBACK_TIMEOUT_SECONDS = 60;
+    private static final int CALLBACK_PORT = 53124;
 
     private final String fileType;
+    // Held so a retry can free the port: cancel() closes the socket, which both frees port 53124
+    // for the next attempt and unblocks any accept() still waiting from a previous attempt.
+    private volatile ServerSocket serverSocket;
+    private volatile boolean cancelled;
 
     public DiscordOAuth2Flow(String fileType) {
         this.fileType = fileType;
+    }
+
+    /**
+     * Cancels an in-flight flow and releases the callback port. Safe to call from another thread
+     * (e.g. the UI thread on a Retry click) and safe to call when nothing is running.
+     */
+    public void cancel() {
+        cancelled = true;
+        ServerSocket s = serverSocket;
+        if (s != null && !s.isClosed()) {
+            try { s.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    /**
+     * Binds the loopback callback listener, retrying briefly so a just-closed socket from a previous
+     * attempt (lingering in TIME_WAIT) doesn't surface as "Address already in use: Bind".
+     * SO_REUSEADDR lets us re-bind immediately.
+     */
+    private ServerSocket bindCallbackSocket() throws Exception {
+        BindException last = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            ServerSocket s = new ServerSocket();
+            try {
+                s.setReuseAddress(true);
+                s.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), CALLBACK_PORT), 10);
+                return s;
+            } catch (BindException be) {
+                last = be;
+                try { s.close(); } catch (Exception ignored) {}
+                Thread.sleep(250);
+            }
+        }
+        throw new OAuth2Exception("port_in_use",
+            "Couldn't open the Discord callback port (" + CALLBACK_PORT + ").\n"
+            + "Another authorization may still be finishing — wait a moment and hit Retry.");
     }
 
     /**
@@ -51,8 +97,8 @@ public class DiscordOAuth2Flow {
                 // Bind to 127.0.0.1 explicitly (not all interfaces) — a loopback-only listener is
                 // exempt from Windows Firewall filtering, so this avoids the "allow access on public
                 // and private networks" prompt. The redirect already targets 127.0.0.1.
-                ServerSocket serverSocket = new ServerSocket(53124, 10, InetAddress.getByName("127.0.0.1"));
-                String redirectUri = "http://127.0.0.1:53124/callback";
+                serverSocket = bindCallbackSocket();
+                String redirectUri = "http://127.0.0.1:" + CALLBACK_PORT + "/callback";
 
                 String authUrl = "https://discord.com/api/oauth2/authorize?"
                         + "client_id=" + CLIENT_ID
@@ -66,16 +112,24 @@ public class DiscordOAuth2Flow {
                     future.completeExceptionally(new OAuth2Exception("no_browser",
                             "Could not open your browser automatically.\n"
                             + "Please open this URL manually:\n" + authUrl));
-                    serverSocket.close();
                     return;
                 }
 
                 // Wait for the callback from Discord (blocking)
                 String authCode = waitForCallback(serverSocket);
-                serverSocket.close();
 
+                if (cancelled) {
+                    future.completeExceptionally(new OAuth2Exception("cancelled",
+                            "Authorization was cancelled."));
+                    return;
+                }
                 if (authCode == null) {
-                    future.completeExceptionally(new RuntimeException("OAuth2 authorization cancelled or timed out"));
+                    // No redirect arrived within the window. Most often this is Discord's in-browser
+                    // "Service got rate limited" page, which never redirects back to us.
+                    future.completeExceptionally(new OAuth2Exception("timeout",
+                            "Discord didn't complete the authorization in time.\n\n"
+                            + "If you saw a \"Service got rate limited\" message, that's Discord throttling — "
+                            + "wait about a minute, then hit Retry."));
                     return;
                 }
 
@@ -91,6 +145,13 @@ public class DiscordOAuth2Flow {
 
             } catch (Exception e) {
                 future.completeExceptionally(e);
+            } finally {
+                // Always free the port — on success, timeout, error, or cancel — so the next attempt
+                // (Retry) can re-bind without "Address already in use: Bind".
+                ServerSocket s = serverSocket;
+                if (s != null && !s.isClosed()) {
+                    try { s.close(); } catch (Exception ignored) {}
+                }
             }
         }, "OAuth2-Login-Thread").start();
 

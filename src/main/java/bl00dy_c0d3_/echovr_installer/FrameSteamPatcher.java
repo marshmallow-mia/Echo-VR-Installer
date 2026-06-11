@@ -93,7 +93,7 @@ public class FrameSteamPatcher extends JDialog {
                             installRevive();
                         });
                     });
-                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/latest/download/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1, false);
+                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/download/3.1.1/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1, false);
 
                 }
                 else{
