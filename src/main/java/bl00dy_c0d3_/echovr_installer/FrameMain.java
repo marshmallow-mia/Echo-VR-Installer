@@ -28,7 +28,7 @@ public class FrameMain extends JFrame {
         });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.9.3b");
+        setTitle("Echo VR Installer v0.9.4b");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
