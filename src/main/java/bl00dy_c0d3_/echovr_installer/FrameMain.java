@@ -191,12 +191,12 @@ public class FrameMain extends JFrame {
         btn_PCUpdateEcho.setLocation(btn_PCInstallEcho.getX(), 280);
         btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCEchoUpdate(outFrame);
+                new FramePCUpdate(outFrame);
             }
         });
         btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent event) {
-                tipBox.showTip("Update an existing Echo VR PC installation");
+                tipBox.showTip("Download and install the latest Echo VR game update");
             }
             public void mouseExited(MouseEvent event) {
                 tipBox.showDefault();
