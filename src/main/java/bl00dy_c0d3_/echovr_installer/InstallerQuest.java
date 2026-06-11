@@ -162,7 +162,10 @@ public class InstallerQuest {
         }
         else if (deviceConnected == 1) {
             ErrorDialog error = new ErrorDialog();
-            error.errorDialog(parrentFrame, "Not authorized", "<html>You need to allow this PC to use adb on your Quest. <br>Replug the cable and check inside your Quest. You should get asked if you allow the connection.</html>", 0);
+            error.errorDialog(parrentFrame, "Allow your PC on the Quest",
+                "<html><center>Your Quest is connected, but it hasn't allowed this PC yet.<br>"
+                + "Put on your headset and tap&nbsp;<b>Allow</b>&nbsp;when the USB debugging prompt appears "
+                + "(replug the cable if you don't see it).</center></html>", 3);
             System.out.println("Device is unauthorized!");
             return false;
         }
@@ -182,6 +185,15 @@ public class InstallerQuest {
 
 
 
+
+    /**
+     * Prepares ADB and returns the Quest connection status.
+     * @return 0 = connected &amp; authorized, 1 = connected but unauthorized, -1 = not detected.
+     */
+    public static int checkConnection() {
+        prepareAdb();
+        return checkQuestStatus();
+    }
 
     //0 = connected, 1 = unauthorized, -1 not connected
     // Method to check if any device is connected based on the adb devices output

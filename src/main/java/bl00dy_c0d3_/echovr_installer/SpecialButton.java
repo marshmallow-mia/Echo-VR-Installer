@@ -122,4 +122,8 @@ public class SpecialButton extends JPanel {
         label.setText(text);
     }
 
+    public String getText(){
+        return label != null ? label.getText() : "";
+    }
+
 }
