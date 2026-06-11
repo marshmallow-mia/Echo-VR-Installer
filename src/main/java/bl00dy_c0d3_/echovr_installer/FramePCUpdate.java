@@ -281,7 +281,7 @@ public class FramePCUpdate extends BaseWizard {
                 "https://files.echovr.de/updates/bullet_patch.zip",
                 tempDir, "bullet_patch.zip",
                 updateProgressLabel, FramePCUpdate.this, frameMain,
-                1, false, 0, true);
+                1, false, -1, true);
         }).start();
     }
 
