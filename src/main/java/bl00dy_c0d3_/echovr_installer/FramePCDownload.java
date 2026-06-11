@@ -181,7 +181,7 @@ public class FramePCDownload extends JDialog {
                                     "https://files.echovr.de/updates/bullet_patch.zip",
                                     tempDir, "bullet_patch.zip",
                                     labelPcProgress2, thisFrame, frameMain,
-                                    1, false, 0, true);
+                                    1, false, -1, true);
                             } catch (Exception e) {
                                 System.err.println("Update download failed (non-blocking): " + e.getMessage());
                             }
