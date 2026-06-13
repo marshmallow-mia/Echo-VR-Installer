@@ -190,22 +190,9 @@ public class FrameGuidancePC extends BaseWizard {
             downloader = new Downloader();
             downloader.setOnCompleteListener(() -> {
                 final String binPath = root + "/ready-at-dawn-echo-arena/bin/win10";
-                final String tempDir = System.getProperty("java.io.tmpdir") + "/echo_update_fresh/";
 
                 SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Applying update..."));
-
-                Downloader updateDl = new Downloader();
-                updateDl.setOnCompleteListener(() -> {
-                    try {
-                        File zipFile = new File(tempDir + "bullet_patch.zip");
-                        if (zipFile.exists() && zipFile.length() > 0) {
-                            SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Extracting update..."));
-                            UnzipFile.unzip(zipFile.getAbsolutePath(), binPath);
-                            System.out.println("Update extracted to: " + binPath);
-                        }
-                    } catch (Exception e) {
-                        System.err.println("Update extraction failed: " + e.getMessage());
-                    }
+                UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, dlProgressLabel, FrameGuidancePC.this, frameMain, () -> {
                     SwingUtilities.invokeLater(() -> {
                         dlProgressLabel.setText("Installation complete!");
                         nextBtn.setEnabled(true);
@@ -217,11 +204,6 @@ public class FrameGuidancePC extends BaseWizard {
                         if (dlButton != null) dlButton.changeText("Start Download");
                     });
                 });
-                updateDl.startDownload(
-                    "https://files.echovr.de/updates/bullet_patch.zip",
-                    tempDir, "bullet_patch.zip",
-                    dlProgressLabel, FrameGuidancePC.this, frameMain,
-                    1, false, -1, true);
             });
             downloader.startDownload("ready-at-dawn-echo-arena.zip", root, "ready-at-dawn-echo-arena.zip", dlProgressLabel, FrameGuidancePC.this, frameMain, 0, false, 0, false);
         }).start();
