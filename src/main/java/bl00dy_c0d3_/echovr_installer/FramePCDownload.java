@@ -59,7 +59,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.9.4b.002");
+        this.setTitle("Echo VR Installer v0.9.4b.003");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
