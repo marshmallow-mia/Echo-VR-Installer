@@ -24,6 +24,12 @@ public class OAuth2ErrorHandler {
                     "Please verify your phone number in Discord Settings → Account → Phone Number, then try again.", 0);
             } else if ("busy".equals(oae.getErrorCode())) {
                 new ErrorDialog().errorDialog(parent, "Bot Busy", oae.getMessage(), 0);
+            } else if ("cancelled".equals(oae.getErrorCode())) {
+                // User-initiated (or retry-initiated) cancel — no dialog, just re-enable the button below.
+            } else if ("timeout".equals(oae.getErrorCode())) {
+                new ErrorDialog().errorDialog(parent, "Try again in a minute", oae.getMessage(), 0);
+            } else if ("port_in_use".equals(oae.getErrorCode())) {
+                new ErrorDialog().errorDialog(parent, "Authorization busy", oae.getMessage(), 0);
             } else {
                 new ErrorDialog().errorDialog(parent, "Authorization Failed", oae.getMessage(), 0);
             }

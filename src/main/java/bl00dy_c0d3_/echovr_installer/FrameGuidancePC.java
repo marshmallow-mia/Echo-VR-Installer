@@ -2,6 +2,8 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
@@ -9,6 +11,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +20,14 @@ import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 public class FrameGuidancePC extends BaseWizard {
 
     private PCWizardState wizardState = new PCWizardState();
-    private SpecialLabel pathLbl;
+    private SpecialTextfield pathField;
+    // Cancelled before a Retry so the previous attempt's callback socket is freed (avoids
+    // "Already in use: Bind").
+    private DiscordOAuth2Flow activeLicenceFlow;
+    // True once a patch dll has actually been downloaded in THIS dialog session — only then may a
+    // Retry reuse the staged temp file. Without this, a stale pnsovr.dll from a previous run would
+    // be reused on the very first click and OAuth would never run.
+    private boolean licenceTempReady = false;
     private SpecialButton steamPatchStartBtn;
     private SpecialLabel steamPatchProgressLbl;
     private SpecialCheckBox[] steamPatchBoxes;
@@ -47,7 +57,7 @@ public class FrameGuidancePC extends BaseWizard {
     protected int getWindowHeight() { return FH; }
 
     @Override
-    protected String getWindowTitle() { return "Echo VR Installer v0.9.3b"; }
+    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b.002"; }
 
     @Override
     protected int getStepCount() { return 6; }
@@ -170,7 +180,7 @@ public class FrameGuidancePC extends BaseWizard {
     private void triggerDownload() {
         dlProgressLabel.setText("Downloading...");
         nextBtn.setEnabled(false);
-        wizardState.setInstallPath(pathLbl.getText());
+        String root = wizardState.getInstallPath();
         stepInProgress = true;
         stepCompleted = false;
         progressAnimator.start();
@@ -178,8 +188,24 @@ public class FrameGuidancePC extends BaseWizard {
         if (downloader != null) { downloader.cancelDownload(); pause(1); }
         new Thread(() -> {
             downloader = new Downloader();
-            downloader.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> { dlProgressLabel.setText("Complete"); nextBtn.setEnabled(true); stepInProgress = false; stepCompleted = true; progressAnimator.stop(); progPanel.repaint(); statusBarBox.repaint(); if (dlButton != null) dlButton.changeText("Start Download"); }));
-            downloader.startDownload("ready-at-dawn-echo-arena.zip", pathLbl.getText(), "ready-at-dawn-echo-arena.zip", dlProgressLabel, FrameGuidancePC.this, frameMain, 0, false, 0, false);
+            downloader.setOnCompleteListener(() -> {
+                final String binPath = root + "/ready-at-dawn-echo-arena/bin/win10";
+
+                SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Applying update..."));
+                UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, dlProgressLabel, FrameGuidancePC.this, frameMain, () -> {
+                    SwingUtilities.invokeLater(() -> {
+                        dlProgressLabel.setText("Installation complete!");
+                        nextBtn.setEnabled(true);
+                        stepInProgress = false;
+                        stepCompleted = true;
+                        progressAnimator.stop();
+                        progPanel.repaint();
+                        statusBarBox.repaint();
+                        if (dlButton != null) dlButton.changeText("Start Download");
+                    });
+                });
+            });
+            downloader.startDownload("ready-at-dawn-echo-arena.zip", root, "ready-at-dawn-echo-arena.zip", dlProgressLabel, FrameGuidancePC.this, frameMain, 0, false, 0, false);
         }).start();
     }
 
@@ -237,33 +263,82 @@ public class FrameGuidancePC extends BaseWizard {
         }); contentPanel.add(meta);
     }
 
+    /** The current install root, falling back to the saved/default path. */
+    private String currentInstallRoot() {
+        String p = wizardState.getInstallPath();
+        if (p == null || p.isEmpty()) {
+            String cfg = Helpers.loadInstallPath();
+            p = (cfg != null && !cfg.isEmpty()) ? cfg
+                : (Helpers.isWindows ? "C:/EchoVR" : System.getProperty("user.dir") + File.separator + "echovr");
+        }
+        wizardState.setInstallPath(p);
+        return wizardState.getInstallPath();
+    }
+
+    /**
+     * Reads whatever the user typed/pasted into a path field, resolves it back to the install ROOT
+     * (so picking the ready-at-dawn-echo-arena folder, a subfolder, or the root all work), stores +
+     * saves it, re-validates the ✓/✗ indicator, and rewrites the field. When {@code arena} is true
+     * the field shows the full path up to ready-at-dawn-echo-arena (patch stages); otherwise the root.
+     * Returns the resolved root.
+     */
+    private String commitPathField(SpecialTextfield tf, boolean arena, JLabel indicator) {
+        String resolved = Helpers.resolveEchoInstallRoot(tf.getText().trim());
+        wizardState.setInstallPath(resolved);
+        String root = wizardState.getInstallPath();
+        Helpers.saveInstallPath(root);
+        // Keep an emptied field genuinely empty (don't re-add the arena suffix to nothing).
+        tf.setText(root.isEmpty() ? "" : (arena ? root + "/" + Helpers.ARENA_DIR : root));
+        if (indicator != null) updatePathStatus(indicator, root, null);
+        return root;
+    }
+
+    /** Editable, pastable path field (440px wide, centered) wired to live re-validation. */
+    private SpecialTextfield makeEditablePathField(int cx, int y, boolean arena, JLabel indicator) {
+        return makeEditablePathField((cx - 440) / 2, y, 440, arena, indicator);
+    }
+
+    /** Editable, pastable path field at an explicit x/width, re-validating on Enter and focus loss. */
+    private SpecialTextfield makeEditablePathField(int x, int y, int w, boolean arena, JLabel indicator) {
+        String root = currentInstallRoot();
+        SpecialTextfield tf = new SpecialTextfield();
+        tf.specialTextfield(w, 24, x, y, 12);
+        tf.setText(arena ? root + "/" + Helpers.ARENA_DIR : root);
+        if (indicator != null) {
+            updatePathStatus(indicator, root, null);
+            // The ✓/✗ also clears the field (then re-validates) — pairs with the patch Paste affordance.
+            wireClearOnClick(indicator, tf, () -> commitPathField(tf, arena, indicator));
+        }
+        tf.addActionListener(e -> commitPathField(tf, arena, indicator));
+        tf.addFocusListener(new FocusAdapter() {
+            public void focusLost(FocusEvent e) { commitPathField(tf, arena, indicator); }
+        });
+        return tf;
+    }
+
     private void buildStep2(int cx) {
         JLabel h = makeHeader("Choose your Echo VR install path");
         h.setBounds((cx - 450) / 2, 5, 450, 55); contentPanel.add(h);
 
-        String savedPath = wizardState.getInstallPath();
-        if (savedPath == null || savedPath.isEmpty()) {
-            String configPath = Helpers.loadInstallPath();
-            savedPath = (configPath != null && !configPath.isEmpty()) ? configPath
-                : (System.getProperty("os.name").toLowerCase().contains("win") ? "C:/EchoVR" 
-                   : System.getProperty("user.dir") + File.separator + "echovr");
-        }
-        wizardState.setInstallPath(savedPath);
-        pathLbl = makeRoundedLabel(savedPath, 12);
-        pathLbl.setLocation((cx - 440) / 2, 70); pathLbl.setSize(440, 22);
-        pathLbl.setBackground(new Color(255, 255, 255, 200)); pathLbl.setForeground(Color.BLACK);
-        contentPanel.add(pathLbl);
+        pathIndicator = new JLabel();
+        pathIndicator.setBounds((cx - 440) / 2 + 445, 64, 90, 34);
+        pathIndicator.setFont(new Font("Arial", Font.BOLD, 14));
+        contentPanel.add(pathIndicator);
+
+        pathField = makeEditablePathField(cx, 70, false, pathIndicator);
+        contentPanel.add(pathField);
 
         SpecialButton pick = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 11);
         pick.setLocation((cx - pick.getWidth()) / 2, 102);
         pick.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
-                pathFolderChooser(pathLbl, FrameGuidancePC.this);
-                wizardState.setInstallPath(pathLbl.getText());
-                Helpers.saveInstallPath(pathLbl.getText());
+                String chosen = Helpers.chooseFolder(FrameGuidancePC.this);
+                if (chosen == null) return;
+                pathField.setText(chosen);
+                commitPathField(pathField, false, pathIndicator);
                 showStep(3, 0);
             }
-            public void mouseEntered(MouseEvent e) { tipBox.showTip("Manually choose install folder"); }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Manually choose install folder — picking the game folder or a subfolder works too"); }
             public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
         }); contentPanel.add(pick);
 
@@ -302,7 +377,8 @@ public class FrameGuidancePC extends BaseWizard {
         installPath += "Software\\Software";
         wizardState.setInstallPath(installPath);
         String normalized = wizardState.getInstallPath();
-        pathLbl.setText(normalized);
+        if (pathField != null) pathField.setText(normalized);
+        if (pathIndicator != null) updatePathStatus(pathIndicator, normalized, null);
         Helpers.saveInstallPath(normalized);
 
         String exe = normalized + "/ready-at-dawn-echo-arena/bin/win10/echovr.exe";
@@ -327,19 +403,13 @@ public class FrameGuidancePC extends BaseWizard {
         JLabel h = makeHeader("Download Echo VR client files");
         h.setBounds((cx - 450) / 2, 5, 450, 55); contentPanel.add(h);
 
-        String savedPath = wizardState.getInstallPath();
-        if (savedPath == null || savedPath.isEmpty()) savedPath = System.getProperty("os.name").toLowerCase().contains("win") ? "C:/EchoVR" : System.getProperty("user.dir") + File.separator + "echovr";
-        wizardState.setInstallPath(savedPath);
-        pathLbl = makeRoundedLabel(savedPath, 12);
-        pathLbl.setLocation((cx - 440) / 2, 70); pathLbl.setSize(440, 22);
-        pathLbl.setBackground(new Color(255, 255, 255, 200)); pathLbl.setForeground(Color.BLACK);
-        contentPanel.add(pathLbl);
-
         this.pathIndicator = new JLabel();
         this.pathIndicator.setBounds((cx - 440) / 2 + 445, 64, 90, 34);
         this.pathIndicator.setFont(new Font("Arial", Font.BOLD, 14));
         contentPanel.add(this.pathIndicator);
-        updatePathStatus(this.pathIndicator, savedPath, pathLbl);
+
+        pathField = makeEditablePathField(cx, 70, false, this.pathIndicator);
+        contentPanel.add(pathField);
 
         dlButton = new SpecialButton("Start Download", "button_up.png", "button_down.png", "button_highlighted.png", 18);
         dlButton.setLocation((cx - dlButton.getWidth()) / 2, 102);
@@ -354,7 +424,7 @@ public class FrameGuidancePC extends BaseWizard {
                     dlProgressLabel.setText("Ready to download");
                     nextBtn.setEnabled(true);
                 } else {
-                    String installPath = wizardState.getInstallPath();
+                    String installPath = commitPathField(pathField, false, pathIndicator);
                     if (installPath != null && !installPath.isEmpty()) {
                         String exePath = installPath + "/ready-at-dawn-echo-arena/bin/win10/echovr.exe";
                         if (new File(exePath).exists()) {
@@ -367,8 +437,6 @@ public class FrameGuidancePC extends BaseWizard {
                         }
                     }
                     dlButton.changeText("Cancel Download");
-                    wizardState.setInstallPath(pathLbl.getText());
-                    Helpers.saveInstallPath(wizardState.getInstallPath());
                     triggerDownload();
                 }
             }
@@ -399,13 +467,9 @@ public class FrameGuidancePC extends BaseWizard {
         } else {
             if (justArrivedAtStep4) {
                 showLicencePatchInline(cx, true);
-                if (currentStep == 4) {
-                    for (int i = 0; i < 3; i++) {
-                        if (sidebarSubLabels[i] != null) {
-                            sidebarSubLabels[i].setText(getSubstepName(4, i));
-                        }
-                    }
-                }
+                // Re-sync the sidebar (substep names depend on userType) — via updateSidebar so the
+                // labels keep their HTML multi-line wrapping instead of being overwritten with plain text.
+                if (currentStep == 4) updateSidebar();
             } else {
                 JLabel h = makeHeader("Patch Menu");
                 h.setBounds((cx - 450) / 2, 8, 450, 55); contentPanel.add(h);
@@ -528,76 +592,6 @@ public class FrameGuidancePC extends BaseWizard {
         }
     }
 
-    /** A font-independent check (\u2713) or cross (\u2717) icon, drawn as antialiased strokes. */
-    private static Icon markIcon(boolean check, Color color, int size) {
-        return new Icon() {
-            @Override public int getIconWidth() { return size; }
-            @Override public int getIconHeight() { return size; }
-            @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(color);
-                g2.setStroke(new BasicStroke(Math.max(2f, size / 7f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                if (check) {
-                    g2.drawPolyline(
-                        new int[]{x + size / 6, x + size * 2 / 5, x + size * 5 / 6},
-                        new int[]{y + size / 2, y + size * 4 / 5, y + size / 5}, 3);
-                } else {
-                    g2.drawLine(x + size / 5, y + size / 5, x + size * 4 / 5, y + size * 4 / 5);
-                    g2.drawLine(x + size * 4 / 5, y + size / 5, x + size / 5, y + size * 4 / 5);
-                }
-                g2.dispose();
-            }
-        };
-    }
-
-
-    private void startLicenceOAuth2(SpecialButton triggerBtn) {
-        triggerBtn.setEnabled(false);
-        nextBtn.setEnabled(false);
-        stepInProgress = true;
-        progressAnimator.start();
-
-        new Thread(() -> {
-            try {
-                DiscordOAuth2Flow flow = new DiscordOAuth2Flow("dll");
-                String patchUrl = flow.start(status -> dlProgressLabel.setText(status)).get(300, TimeUnit.SECONDS);
-
-                String finalPatchUrl = patchUrl;
-                System.out.println("OAuth2 SUCCESS: URL=" + finalPatchUrl);
-                SwingUtilities.invokeLater(() -> {
-                    dlProgressLabel.setText("Downloading patch file...");
-
-                    String ep = wizardState.getInstallPath() + "/ready-at-dawn-echo-arena/bin/win10";
-                    if (!new File(ep).exists()) {
-                        new ErrorDialog().errorDialog(FrameGuidancePC.this, "Wrong path", "Check your path", 0);
-                        resetAfterError(triggerBtn);
-                        return;
-                    }
-                    if (downloadPatch != null) { downloadPatch.cancelDownload(); pause(1); }
-                    downloadPatch = new Downloader();
-                    downloadPatch.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> {
-                        stepInProgress = false;
-                        stepCompleted = true;
-                        progressAnimator.stop();
-                        nextBtn.setEnabled(true);
-                        triggerBtn.setEnabled(true);
-                        dlProgressLabel.setText("License patch applied!");
-                        System.out.println("OAuth2: License patch download complete from " + finalPatchUrl);
-                        progPanel.repaint();
-                        statusBarBox.repaint();
-                    }));
-                    downloadPatch.startDownload(patchUrl, ep, "pnsovr.dll", new SpecialLabel(" 0%", 13), FrameGuidancePC.this, null, 3, true, -1, false);
-                });
-            } catch (java.util.concurrent.ExecutionException ex) {
-                OAuth2ErrorHandler.handleError(ex.getCause(), FrameGuidancePC.this, triggerBtn);
-                resetAfterError(triggerBtn);
-            } catch (Exception ex) {
-                OAuth2ErrorHandler.handleError(ex, FrameGuidancePC.this, triggerBtn);
-                resetAfterError(triggerBtn);
-            }
-        }).start();
-    }
 
     // === Patch Detail Views (master-detail pattern) ===
 
@@ -623,8 +617,6 @@ public class FrameGuidancePC extends BaseWizard {
     }
 
     private void showLicencePatchInline(int cx, boolean redirectAfterDownload) {
-        JLabel h = makeHeader("No Licence Patch");
-        h.setBounds((cx - 450) / 2, 35, 450, 55); contentPanel.add(h);
         SpecialButton backBtn = new SpecialButton("← Back", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 11);
         backBtn.setLocation(10, 5);
         backBtn.addMouseListener(new MouseAdapter() {
@@ -634,122 +626,221 @@ public class FrameGuidancePC extends BaseWizard {
         });
         contentPanel.add(backBtn);
 
-        String savedPath = wizardState.getInstallPath();
-        if (savedPath == null || savedPath.isEmpty()) savedPath = System.getProperty("os.name").toLowerCase().contains("win") ? "C:/EchoVR" : System.getProperty("user.dir") + File.separator + "echovr";
-        wizardState.setInstallPath(savedPath);
-        SpecialLabel patchPathLbl = makeRoundedLabel(savedPath, 12);
-        patchPathLbl.setLocation((cx - 440) / 2, 100); patchPathLbl.setSize(440, 22);
-        patchPathLbl.setBackground(new Color(255, 255, 255, 200)); patchPathLbl.setForeground(Color.BLACK);
-        contentPanel.add(patchPathLbl);
+        // Header at y=4/h=42, consistent with the sibling Steam-patch detail (Back button shows
+        // through the header image's transparent edge). Even 6–8px gaps down the column.
+        JLabel h = makeHeader("No Licence Patch");
+        h.setBounds((cx - 450) / 2, 4, 450, 42); contentPanel.add(h);
 
+        // Path: 440-wide editable field (same as the Path stage), centred, with the ✓/✗ indicator to
+        // its right and the "Choose path" button stacked below it — all on the window centre axis.
         JLabel pathStatusLabel = new JLabel();
-        pathStatusLabel.setBounds((cx - 440) / 2 + 445, 94, 90, 34);
+        pathStatusLabel.setBounds((cx - 440) / 2 + 445, 52, 40, 28);
         pathStatusLabel.setFont(new Font("Arial", Font.BOLD, 14));
         contentPanel.add(pathStatusLabel);
-        updatePathStatus(pathStatusLabel, savedPath, patchPathLbl);
+
+        // Patch path shows the full path up to ready-at-dawn-echo-arena (and is editable/pastable).
+        SpecialTextfield patchPathField = makeEditablePathField(cx, 54, true, pathStatusLabel);
+        contentPanel.add(patchPathField);
 
         SpecialButton choosePathBtn = new SpecialButton("Choose path", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 11);
-        choosePathBtn.setLocation((cx - choosePathBtn.getWidth()) / 2, 127);
+        choosePathBtn.setLocation((cx - choosePathBtn.getWidth()) / 2, 86);
         choosePathBtn.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
-                pathFolderChooser(patchPathLbl, FrameGuidancePC.this);
-                String newPath = patchPathLbl.getText();
-                wizardState.setInstallPath(newPath);
-                updatePathStatus(pathStatusLabel, newPath, patchPathLbl);
+                String chosen = Helpers.chooseFolder(FrameGuidancePC.this);
+                if (chosen == null) return;
+                patchPathField.setText(chosen);
+                commitPathField(patchPathField, true, pathStatusLabel);
             }
-            public void mouseEntered(MouseEvent e) { tipBox.showTip("Choose your Echo VR install folder"); }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Choose your Echo VR install folder — the game folder or a subfolder works too"); }
             public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
         });
         contentPanel.add(choosePathBtn);
 
+        // Patch-options panel: "Authorize with Discord" + "— or —" + custom-URL row, in one box.
         SpecialButton oauthBtn = new SpecialButton("Authorize with Discord", "button_up.png", "button_down.png", "button_highlighted.png", 18);
-        oauthBtn.setLocation((cx - oauthBtn.getWidth()) / 2, 160);
+        SpecialTextfield urlField = buildPatchOptionsPanel(cx, 119, oauthBtn, "Start Patching",
+            "Paste patch URL here…",
+            "Paste a direct URL to use a custom patch instead of generating one.",
+            t -> validateDllUrl(t) != null,
+            () -> licenceTempReady = false);   // mode switch → don't reuse the staged download
         oauthBtn.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
-                oauthBtn.setEnabled(false);
-                nextBtn.setEnabled(false);
-                stepInProgress = true;
-                progressAnimator.start();
-
-                new Thread(() -> {
-                    try {
-                        DiscordOAuth2Flow flow = new DiscordOAuth2Flow("dll");
-                        String patchUrl = flow.start(status -> dlProgressLabel.setText(status)).get(300, TimeUnit.SECONDS);
-
-                        String finalPatchUrl = patchUrl;
-                        System.out.println("OAuth2 SUCCESS: URL=" + finalPatchUrl);
-                        SwingUtilities.invokeLater(() -> {
-                            dlProgressLabel.setText("Downloading patch file...");
-
-                            String ep = wizardState.getInstallPath() + "/ready-at-dawn-echo-arena/bin/win10";
-                            if (!new File(ep).exists()) {
-                                new ErrorDialog().errorDialog(FrameGuidancePC.this, "Wrong path", "Check your path", 0);
-                                resetAfterError(oauthBtn);
-                                return;
-                            }
-                            if (downloadPatch != null) { downloadPatch.cancelDownload(); pause(1); }
-                            downloadPatch = new Downloader();
-                            downloadPatch.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> {
-                                stepInProgress = false;
-                                stepCompleted = true;
-                                progressAnimator.stop();
-                                nextBtn.setEnabled(true);
-                                dlProgressLabel.setText("Patch applied successfully!");
-                                System.out.println("OAuth2: Patch download complete from " + finalPatchUrl);
-                                progPanel.repaint();
-                                statusBarBox.repaint();
-                                if (redirectAfterDownload) {
-                                    if (wizardState.getPlayStyle() == PCWizardState.PlayStyle.STEAMVR) {
-                                        // New player + SteamVR: chain straight into the Steam patch
-                                        // (substep 1) once the licence patch is done.
-                                        showStep(4, 1);
-                                    } else {
-                                        contentPanel.removeAll();
-                                        buildStep4AfterOAuth(cx);
-                                        contentPanel.revalidate();
-                                        contentPanel.repaint();
-                                        getContentPane().revalidate();
-                                        getContentPane().repaint();
-                                    }
-                                }
-                            }));
-                            downloadPatch.startDownload(patchUrl, ep, "pnsovr.dll", new SpecialLabel(" 0%", 13), FrameGuidancePC.this, null, 3, true, -1, false);
-                        });
-                    } catch (java.util.concurrent.ExecutionException ex) {
-                        OAuth2ErrorHandler.handleError(ex.getCause(), FrameGuidancePC.this, oauthBtn);
-                        resetAfterError(oauthBtn);
-                    } catch (Exception ex) {
-                        OAuth2ErrorHandler.handleError(ex, FrameGuidancePC.this, oauthBtn);
-                        resetAfterError(oauthBtn);
-                    }
-                }).start();
+                startLicencePatch(oauthBtn, cx, redirectAfterDownload, patchPathField, pathStatusLabel, urlField);
             }
-            public void mouseEntered(MouseEvent e) { tipBox.showTip("Generate your personalized licence patch"); }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip(urlField.isEnabled()
+                ? "Download and apply the patch from your pasted URL"
+                : "Generate your personalized licence patch"); }
             public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
         });
-        contentPanel.add(oauthBtn);
+    }
+
+    /**
+     * Drives the licence patch: a valid custom URL (pasted into the patch-options panel) bypasses
+     * OAuth; an already-downloaded temp file is reused on Retry without re-authorizing; otherwise the
+     * Discord OAuth flow runs. Any previous in-flight OAuth attempt is cancelled first to free the port.
+     */
+    private void startLicencePatch(SpecialButton btn, int cx, boolean redirectAfter,
+                                   SpecialTextfield patchField, JLabel indicator,
+                                   SpecialTextfield urlField) {
+        // Apply any path edit before validating/copying.
+        commitPathField(patchField, true, indicator);
+
+        // Free the previous attempt's resources so Retry can re-bind the callback port.
+        if (activeLicenceFlow != null) { activeLicenceFlow.cancel(); activeLicenceFlow = null; }
+        if (downloadPatch != null) { downloadPatch.cancelDownload(); }
+
+        btn.setEnabled(false);
+        nextBtn.setEnabled(false);
+        stepInProgress = true;
+        progressAnimator.start();
+
+        // The custom-URL path is taken only when its field is enabled (checkbox ticked).
+        boolean advancedOn = urlField.isEnabled();
+        String advUrl = advancedOn ? validateDllUrl(urlField.getText().trim()) : null;
+        if (advancedOn && advUrl == null) {
+            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Wrong URL provided",
+                "Your provided Download Link is wrong. Please check!", 0);
+            markLicenceRetry(btn);
+            resetAfterError(btn);
+            return;
+        }
+
+        btn.changeText("Please Wait...");   // work is starting (OAuth / download / install)
+
+        Path tempDll = Helpers.PATCH_TEMP_DIR.resolve("pnsovr.dll");
+
+        // Advanced: download straight from the pasted URL.
+        if (advUrl != null) {
+            downloadDllToTempThenInstall(advUrl, btn, cx, redirectAfter);
+            return;
+        }
+
+        // Reuse a patch downloaded earlier in THIS session on Retry (skips OAuth + re-download).
+        // Gated on licenceTempReady so a stale temp file from a previous run can't short-circuit OAuth.
+        if (licenceTempReady && java.nio.file.Files.exists(tempDll)) {
+            dlProgressLabel.setText("Using downloaded patch...");
+            installLicenceFromTemp(btn, cx, redirectAfter);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                DiscordOAuth2Flow flow = new DiscordOAuth2Flow("dll");
+                activeLicenceFlow = flow;
+                String patchUrl = flow.start(status -> SwingUtilities.invokeLater(() -> dlProgressLabel.setText(status)))
+                        .get(120, TimeUnit.SECONDS);
+                activeLicenceFlow = null;
+                System.out.println("OAuth2 SUCCESS: URL=" + patchUrl);
+                SwingUtilities.invokeLater(() -> downloadDllToTempThenInstall(patchUrl, btn, cx, redirectAfter));
+            } catch (java.util.concurrent.ExecutionException ex) {
+                activeLicenceFlow = null;
+                SwingUtilities.invokeLater(() -> {
+                    OAuth2ErrorHandler.handleError(ex.getCause(), FrameGuidancePC.this, btn);
+                    markLicenceRetry(btn);
+                    resetAfterError(btn);
+                });
+            } catch (Exception ex) {
+                activeLicenceFlow = null;
+                SwingUtilities.invokeLater(() -> {
+                    OAuth2ErrorHandler.handleError(ex, FrameGuidancePC.this, btn);
+                    markLicenceRetry(btn);
+                    resetAfterError(btn);
+                });
+            }
+        }).start();
+    }
+
+    /** Downloads the patch dll into the temp staging dir, then copies it into the install folder. */
+    private void downloadDllToTempThenInstall(String url, SpecialButton btn, int cx, boolean redirectAfter) {
+        dlProgressLabel.setText("Downloading patch file...");
+        if (downloadPatch != null) { downloadPatch.cancelDownload(); pause(1); }
+        downloadPatch = new Downloader();
+        downloadPatch.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> {
+            licenceTempReady = true;     // a real download finished this session → safe to reuse on Retry
+            installLicenceFromTemp(btn, cx, redirectAfter);
+        }));
+        downloadPatch.startDownload(url, Helpers.PATCH_TEMP_DIR.toString(), "pnsovr.dll",
+            new SpecialLabel(" 0%", 13), FrameGuidancePC.this, null, 3, true, -1, false);
+    }
+
+    /** Copies the staged pnsovr.dll into the install folder. On any failure the temp file is KEPT so a Retry reuses it. */
+    private void installLicenceFromTemp(SpecialButton btn, int cx, boolean redirectAfter) {
+        Path tempDll = Helpers.PATCH_TEMP_DIR.resolve("pnsovr.dll");
+        if (!java.nio.file.Files.exists(tempDll)) {
+            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Download missing",
+                "The patch file wasn't downloaded. Please try again.", 0);
+            markLicenceRetry(btn); resetAfterError(btn); return;
+        }
+        String root = wizardState.getInstallPath();
+        String ep = root + "/ready-at-dawn-echo-arena/bin/win10";
+        if (!new File(ep).exists()) {
+            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Wrong path",
+                "Couldn't find ready-at-dawn-echo-arena\\bin\\win10 at your path.\n"
+                + "Fix the path above and hit Retry — your downloaded patch will be reused.", 0);
+            markLicenceRetry(btn); resetAfterError(btn); return;
+        }
+        try {
+            Helpers.copyInto(tempDll, ep, "pnsovr.dll");
+        } catch (Exception ioe) {
+            new ErrorDialog().errorDialog(FrameGuidancePC.this, "Couldn't write patch",
+                "Couldn't copy the patch into your install folder.\n" + ioe.getMessage()
+                + "\n\nTry running the installer as administrator, then hit Retry.", 0);
+            markLicenceRetry(btn); resetAfterError(btn); return;
+        }
+        stepInProgress = false;
+        stepCompleted = true;
+        progressAnimator.stop();
+        nextBtn.setEnabled(true);
+        btn.setEnabled(true);
+        btn.changeText("Done");          // success → "Done" (only here); failures use "Retry"
+        dlProgressLabel.setText("License patch applied!");
+        progPanel.repaint();
+        statusBarBox.repaint();
+        if (redirectAfter) {
+            if (wizardState.getPlayStyle() == PCWizardState.PlayStyle.STEAMVR) {
+                // New player + SteamVR: chain straight into the Steam patch (substep 1).
+                showStep(4, 1);
+            } else {
+                contentPanel.removeAll();
+                buildStep4AfterOAuth(cx);
+                contentPanel.revalidate();
+                contentPanel.repaint();
+                getContentPane().revalidate();
+                getContentPane().repaint();
+            }
+        }
+    }
+
+    private void markLicenceRetry(SpecialButton btn) {
+        if (btn != null) btn.changeText("Retry");
+    }
+
+    /** Accepts the legacy Discord-CDN pnsovr.dll link or a files.echovr.de URL; null if neither. */
+    private String validateDllUrl(String url) {
+        if (url == null || url.isEmpty()) return null;
+        if (url.matches("https://cdn\\.discordapp\\.com/attachments/.*/pnsovr\\.dll.*")) return url;
+        if (url.matches("https://files\\.echovr\\.de/.*")) return url;
+        return null;
     }
 
     // === Steam Patch (Revive) — checkbox-driven, chained setup ===
     // Patch rows, in execution order.
     private static final int ROW_REVIVE = 0;
     private static final int ROW_SHORTCUT = 1;
-    private static final int ROW_VRMANIFEST = 2;
-    private static final int ROW_DASHBOARD = 3;
-    private static final int ROW_ARTWORK = 4;
+    private static final int ROW_DASHBOARD = 2;
+    private static final int ROW_ARTWORK = 3;
     private static final String[] PATCH_LABELS = {
-        "Install Revive", "Revive injector shortcut", "Patch revive.vrmanifest",
+        "Install Revive", "Revive injector shortcut",
         "Restore Dashboard entry", "Fix game artwork"
     };
     private static final String[] PATCH_TIPS = {
         "Download and run the latest Revive installer",
         "Add a desktop shortcut that launches Echo through Revive (fixes 'can't press buttons in-game')",
-        "Add Echo to Revive's vrmanifest so SteamVR can launch it",
         "Only for players who had Echo on PC before shutdown — restores the Revive Dashboard entry",
         "Download the correct Echo artwork into your Meta Horizon store assets"
     };
     // Default check state (per design decision): Dashboard off, everything else on.
-    private static final boolean[] PATCH_DEFAULTS = {true, true, true, false, true};
+    private static final boolean[] PATCH_DEFAULTS = {true, true, false, true};
 
     // Row status glyphs.
     private static final int ST_PENDING = 0, ST_WORKING = 1, ST_DONE = 2, ST_FAIL = 3;
@@ -862,7 +953,6 @@ public class FrameGuidancePC extends BaseWizard {
         // Snapshot selections, lock the UI.
         boolean doRevive = steamPatchBoxes[ROW_REVIVE].isSelected();
         boolean doShortcut = steamPatchBoxes[ROW_SHORTCUT].isSelected();
-        boolean doVrManifest = steamPatchBoxes[ROW_VRMANIFEST].isSelected();
         boolean doDashboard = steamPatchBoxes[ROW_DASHBOARD].isSelected();
         boolean doArtwork = steamPatchBoxes[ROW_ARTWORK].isSelected();
 
@@ -878,9 +968,8 @@ public class FrameGuidancePC extends BaseWizard {
                 String exe = new File(wizardState.getExePath()).getAbsolutePath();
                 System.out.println("[SteamPatch] === chain start === exe=" + exe
                     + " | selected: Revive=" + doRevive + " Shortcut=" + doShortcut
-                    + " VrManifest=" + doVrManifest + " Dashboard=" + doDashboard + " Artwork=" + doArtwork);
+                    + " Dashboard=" + doDashboard + " Artwork=" + doArtwork);
 
-                boolean reviveStarted = false;
                 if (doRevive) {
                     System.out.println("[SteamPatch] step: Install Revive");
                     markRow(ROW_REVIVE, ST_WORKING);
@@ -895,22 +984,12 @@ public class FrameGuidancePC extends BaseWizard {
                             + "Re-run, or install Revive manually, then try again.");
                         return;
                     }
-                    // Start Revive so SteamVR/Revive can populate revive.vrmanifest (needed by the
-                    // manifest patch). The installer often auto-starts Revive itself, so only launch
-                    // it if it isn't already running — otherwise we'd end up with two instances.
-                    if (ReviveSetup.isReviveRunning()) {
-                        System.out.println("[SteamPatch] Revive already running (auto-started by installer) — not launching a second instance");
-                        reviveStarted = true;
-                    } else {
-                        setStatus("Starting Revive...");
-                        reviveStarted = ReviveSetup.startRevive(dir);
-                    }
                     markRow(ROW_REVIVE, ST_DONE);
                 }
 
                 String reviveDir = ReviveSetup.findReviveDir();
                 System.out.println("[SteamPatch] resolved Revive dir = " + reviveDir);
-                if ((doShortcut || doVrManifest) && reviveDir == null) {
+                if (doShortcut && reviveDir == null) {
                     failChain("Revive is not installed. Tick 'Install Revive' and run again, or install Revive manually first.");
                     return;
                 }
@@ -944,41 +1023,6 @@ public class FrameGuidancePC extends BaseWizard {
                     }
                 }
 
-                // vrmanifest LAST: it needs a library ID that only exists once Revive/SteamVR has
-                // populated the manifest. If we just started Revive, give it time to do so.
-                if (doVrManifest) {
-                    System.out.println("[SteamPatch] step: Patch revive.vrmanifest");
-                    markRow(ROW_VRMANIFEST, ST_WORKING);
-                    if (reviveStarted && ReviveSetup.detectLibraryIdFromManifest(reviveDir) == null) {
-                        setStatus("Waiting for Revive to populate the manifest...");
-                        long deadline = System.currentTimeMillis() + 90_000;
-                        while (System.currentTimeMillis() < deadline
-                            && ReviveSetup.detectLibraryIdFromManifest(reviveDir) == null) {
-                            Thread.sleep(2000);
-                        }
-                    }
-                    setStatus("Updating Revive manifest...");
-                    ReviveSetup.VrManifestResult r = AdminBroker.patchVrManifest(FrameGuidancePC.this, reviveDir, exe);
-                    System.out.println("[SteamPatch] vrmanifest result = " + r);
-                    if (r == ReviveSetup.VrManifestResult.EMPTY_MANIFEST) {
-                        markRow(ROW_VRMANIFEST, ST_FAIL);
-                        showInfo("Revive manifest not ready yet",
-                            "Revive hasn't registered any apps yet, so there is no library ID to use.\n\n"
-                                + "Make sure Revive/SteamVR has started and finished scanning your Meta library "
-                                + "(launch a free Meta app once if needed), then re-run just the 'Patch revive.vrmanifest' option.");
-                    } else {
-                        markRow(ROW_VRMANIFEST, ST_DONE);
-                    }
-                }
-
-                // Revive was only started so it could populate the manifest — don't leave it (or the
-                // installer's auto-started copy) running afterwards.
-                if (reviveStarted) {
-                    System.out.println("[SteamPatch] closing Revive");
-                    setStatus("Closing Revive...");
-                    AdminBroker.stopRevive(FrameGuidancePC.this);
-                }
-
                 System.out.println("[SteamPatch] === chain complete ===");
                 finishChain();
             } catch (Exception ex) {
@@ -1010,7 +1054,7 @@ public class FrameGuidancePC extends BaseWizard {
             Downloader d = new Downloader();
             d.setOnCompleteListener(latch::countDown);
             d.startDownload(
-                "https://github.com/LibreVR/Revive/releases/latest/download/ReviveInstaller.exe",
+                "https://github.com/LibreVR/Revive/releases/download/3.1.1/ReviveInstaller.exe",
                 dir, "/ReviveInstaller.exe", steamPatchProgressLbl, FrameGuidancePC.this,
                 null, 1, true, -1, false);
             latch.await(10, TimeUnit.MINUTES);
