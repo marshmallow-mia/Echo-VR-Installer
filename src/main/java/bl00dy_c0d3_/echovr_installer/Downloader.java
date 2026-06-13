@@ -187,7 +187,7 @@ public class Downloader implements Runnable {
     }
 
     public void checkHash() throws IOException, NoSuchAlgorithmException {
-        String[] fileHash = getFileAndReturnArray("https://echo.marceldomain.de:6969/updates/" + filename + ".hash",filename  + ".hash");
+        String[] fileHash = getFileAndReturnArray("https://files.echovr.de/updates/" + filename + ".hash", filename + ".hash");
         Path filePath = Path.of(localFilePath + "/" + filename);
         System.out.println("File to check hash: " + filePath);
 

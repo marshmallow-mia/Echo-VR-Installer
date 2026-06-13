@@ -59,7 +59,7 @@ public class FramePCDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.9.3b");
+        this.setTitle("Echo VR Installer v0.9.4b.002");
         this.setModal(true);
 
         Background back = new Background("EchoArena.jpg");
@@ -157,22 +157,12 @@ public class FramePCDownload extends JDialog {
                     downloader = new Downloader();
                     downloader.setOnCompleteListener(() -> {
                         nextButton.setVisible(true);
-                        SwingUtilities.invokeLater(() -> {
-                            String[] updateFiles = getFileAndReturnArray("https://files.echovr.de/updates/files", "updateFiles");
-                            String URL = "https://files.echovr.de/updates/";
-                            //Download all updated files
-                            for (String file : updateFiles) {
-                                System.out.println("Updatefile:" + file);
+                        // Best-effort update: failure does not block installation
+                        final String installPath = labelPcDownloadPath.getText();
+                        final String binPath = installPath + "/ready-at-dawn-echo-arena/bin/win10";
 
-                                Thread downloadThread2 = new Thread(() -> {
-                                    downloader = new Downloader();
-                                    downloader.startDownload(URL + file, labelPcDownloadPath.getText() + "/ready-at-dawn-echo-arena/bin/win10", file, labelPcProgress2, thisFrame, frameMain, 1, true, -1, true);
-                                });
-
-                                downloadThread2.start();  // This runs the download in a separate thread
-                                System.out.println("UPDATE after regular install is DONE");
-                            }
-                        });
+                        SwingUtilities.invokeLater(() -> labelPcProgress2.setText("Applying update..."));
+                        UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, labelPcProgress2, thisFrame, frameMain, null);
                     });
                     downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0, false);
                 });

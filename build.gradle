@@ -85,11 +85,11 @@ jlink {
         installerName = 'Echo_VR_Installer'
 
         if (os.isWindows()) {
-            appVersion = '0.93'
+            appVersion = '0.94.002'
             icon = 'icon.ico'  // Update path
 
             installerOptions = [
-                    '--app-version', '0.93',
+                    '--app-version', '0.94.002',
                     '--vendor', 'marshmallow_mia',
                     '--name', 'Echo_VR_Installer',
                     '--install-dir', 'EchoVRInstaller',
@@ -100,12 +100,12 @@ jlink {
                     '--win-menu-group', 'EchoVRInstaller',
             ]
         } else if (os.isMacOsX()) {
-            appVersion = '1.0.93'
+            appVersion = '1.0.94.002'
             installerOptions = [
                     '--mac-package-identifier', 'IhateApple',
             ]
         } else {
-            appVersion = '0.93'
+            appVersion = '0.94.002'
             icon = 'icon.png'  // Update path if needed
 
             // Ensure copyLibjpeg runs after jpackage

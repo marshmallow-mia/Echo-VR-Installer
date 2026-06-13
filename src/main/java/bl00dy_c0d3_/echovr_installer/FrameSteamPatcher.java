@@ -48,7 +48,7 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.9.3b");
+        this.setTitle("Echo VR Installer v0.9.4b.002");
         this.setModal(true);
 
 
@@ -93,7 +93,7 @@ public class FrameSteamPatcher extends JDialog {
                             installRevive();
                         });
                     });
-                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/latest/download/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1, false);
+                    downloader1.startDownload("https://github.com/LibreVR/Revive/releases/download/3.1.1/ReviveInstaller.exe", tempPath + "/revive", "/ReviveInstaller.exe", labelPatchProgress1, outFrame, null, 1, true, -1, false);
 
                 }
                 else{

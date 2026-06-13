@@ -28,7 +28,7 @@ public class FrameMain extends JFrame {
         });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.9.3b");
+        setTitle("Echo VR Installer v0.9.4b.002");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
@@ -191,12 +191,12 @@ public class FrameMain extends JFrame {
         btn_PCUpdateEcho.setLocation(btn_PCInstallEcho.getX(), 280);
         btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
-                new FramePCEchoUpdate(outFrame);
+                new FramePCUpdate(outFrame);
             }
         });
         btn_PCUpdateEcho.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent event) {
-                tipBox.showTip("Update an existing Echo VR PC installation");
+                tipBox.showTip("Download and install the latest Echo VR game update");
             }
             public void mouseExited(MouseEvent event) {
                 tipBox.showDefault();

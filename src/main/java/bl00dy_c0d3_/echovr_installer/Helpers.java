@@ -94,6 +94,19 @@ public class Helpers {
         }
     }
 
+    /** Opens a directory picker and returns the chosen path, or {@code null} if cancelled. */
+    public static String chooseFolder(JDialog outFrame) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            String directory = chooser.getSelectedFile().getPath();
+            if (outFrame != null) outFrame.repaint();
+            return directory;
+        }
+        return null;
+    }
+
 
     public static void pause(int timeInSecond){
         try {
@@ -353,6 +366,91 @@ public class Helpers {
             System.err.println("Failed to load install path: " + e.getMessage());
         }
         return null;
+    }
+
+    // === Echo install-path resolution ===
+    // The Echo client always lives at <root>/ready-at-dawn-echo-arena/bin/win10/echovr.exe.
+    public static final String ARENA_DIR = "ready-at-dawn-echo-arena";
+    private static final String ARENA_MARKER = ARENA_DIR + "/bin/win10/echovr.exe";
+
+    /** True when an Echo install exists directly under {@code root}. */
+    public static boolean hasEchoInstall(String root) {
+        if (root == null || root.isEmpty()) return false;
+        return new File(root + "/" + ARENA_MARKER).exists();
+    }
+
+    /**
+     * Resolves the Echo install ROOT from whatever folder the user actually picked: the root itself,
+     * the {@code ready-at-dawn-echo-arena} folder, a folder deeper inside it (bin, win10…), a sibling
+     * subfolder, or a folder one or two levels above the install. Returns the normalized root if an
+     * Echo install is found near the selection; otherwise returns the cleaned selection unchanged
+     * (the caller's validation then flags it invalid).
+     */
+    public static String resolveEchoInstallRoot(String selected) {
+        if (selected == null || selected.isEmpty()) return selected;
+        String norm = selected.replace('\\', '/');
+        while (norm.endsWith("/") && norm.length() > 1) norm = norm.substring(0, norm.length() - 1);
+
+        // 1) Walk up: the root is the ancestor (incl. the selection) holding the arena marker.
+        File cur = new File(norm);
+        for (int depth = 0; cur != null && depth < 8; depth++) {
+            String c = cur.getPath().replace('\\', '/');
+            if (hasEchoInstall(c)) return c;
+            // Selection is the arena folder itself → its parent is the root.
+            if (cur.getName().equalsIgnoreCase(ARENA_DIR)
+                && new File(c + "/bin/win10/echovr.exe").exists()
+                && cur.getParentFile() != null) {
+                return cur.getParentFile().getPath().replace('\\', '/');
+            }
+            cur = cur.getParentFile();
+        }
+
+        // 2) Bounded downward search (max 3 levels) — covers picking a folder above the install.
+        String down = searchDownForRoot(new File(norm), 3);
+        if (down != null) return down;
+
+        return norm;
+    }
+
+    private static String searchDownForRoot(File dir, int depth) {
+        if (dir == null || depth < 0 || !dir.isDirectory()) return null;
+        String c = dir.getPath().replace('\\', '/');
+        if (hasEchoInstall(c)) return c;
+        File[] kids = dir.listFiles(File::isDirectory);
+        if (kids == null) return null;
+        for (File k : kids) {
+            String r = searchDownForRoot(k, depth - 1);
+            if (r != null) return r;
+        }
+        return null;
+    }
+
+    // === Patched-file temp staging ===
+    // Patched downloads are staged here so a retry can reuse an already-downloaded file instead of
+    // re-running OAuth, and so they can be wiped when the installer exits.
+    public static final Path PATCH_TEMP_DIR = Paths.get(System.getProperty("java.io.tmpdir"), "echo");
+
+    static {
+        // Wipe staged patch files when the installer exits (including when killed) so reusable or
+        // half-finished downloads never linger between runs.
+        Runtime.getRuntime().addShutdownHook(new Thread(Helpers::deletePatchTempFiles, "patch-temp-cleanup"));
+    }
+
+    /** Best-effort removal of staged patch temp files (PC dll + Quest patched APK). */
+    public static void deletePatchTempFiles() {
+        String[] names = {"pnsovr.dll", "r15_26-06-25.apk", "personilizedechoapk.apk"};
+        for (String n : names) {
+            try { Files.deleteIfExists(PATCH_TEMP_DIR.resolve(n)); } catch (Exception ignored) {}
+        }
+    }
+
+    /** Copies {@code src} into {@code dstDir/name}, creating the directory. Throws on failure. */
+    public static void copyInto(Path src, String dstDir, String name) throws IOException {
+        File dir = new File(dstDir);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException("Could not create directory: " + dstDir);
+        }
+        Files.copy(src, Paths.get(dstDir, name), StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static boolean openUrl(String url) {

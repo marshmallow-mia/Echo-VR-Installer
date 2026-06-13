@@ -1,10 +1,16 @@
 package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.function.Predicate;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -248,9 +254,11 @@ public abstract class BaseWizard extends JDialog {
             public void mouseReleased(MouseEvent e) {
                 int my = e.getY();
                 int sc = getSubstepCount(currentStep);
-                for (int i = 0; i < sc; i++) {
-                    int sy = 38 + i * 18;
-                    if (my >= sy && my < sy + 16 && i < currentSubstep) {
+                // Hit-test against each label's actual bounds (rows have variable height when wrapped).
+                for (int i = 0; i < sc && i < sidebarSubLabels.length; i++) {
+                    JLabel lbl = sidebarSubLabels[i];
+                    if (i < currentSubstep && lbl.isVisible()
+                        && my >= lbl.getY() && my < lbl.getY() + lbl.getHeight()) {
                         if (!confirmAbortDownload()) break;
                         showStep(currentStep, i); break;
                     }
@@ -259,6 +267,44 @@ public abstract class BaseWizard extends JDialog {
         });
         back.add(sidebarPanel);
         back.setComponentZOrder(sidebarPanel, 0);
+    }
+
+    /**
+     * Word-wraps {@code text} to fit {@code maxPx} using the label's own {@link FontMetrics}, with the
+     * {@code prefix} glyph (e.g. "● ") in its own cell so wrapped lines <b>hang-indent</b> — every text
+     * line starts at the same x, just past the prefix. Deterministic explicit {@code <br>} breaks inside
+     * an HTML table (Swing's CSS {@code width} wrapping is honoured inconsistently, so it's not relied on).
+     * A single word wider than the available width is left whole.
+     */
+    protected static String wrapToWidth(JLabel lbl, String prefix, String text, int maxPx) {
+        FontMetrics fm = lbl.getFontMetrics(lbl.getFont());
+        int textMax = Math.max(20, maxPx - fm.stringWidth(prefix));
+        StringBuilder body = new StringBuilder();
+        StringBuilder line = new StringBuilder();
+        boolean firstLine = true;
+        for (String word : text.split(" ")) {
+            String trial = line.length() == 0 ? word : line + " " + word;
+            if (fm.stringWidth(trial) > textMax && line.length() > 0) {
+                if (!firstLine) body.append("<br>");
+                body.append(escapeHtml(line.toString()));
+                firstLine = false;
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(trial);
+            }
+        }
+        if (line.length() > 0) {
+            if (!firstLine) body.append("<br>");
+            body.append(escapeHtml(line.toString()));
+        }
+        String pfx = escapeHtml(prefix).replace(" ", "&nbsp;");
+        return "<html><table border='0' cellpadding='0' cellspacing='0'><tr>"
+            + "<td valign='top'>" + pfx + "</td><td valign='top'>" + body + "</td>"
+            + "</tr></table></html>";
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     protected void updateSidebar() {
@@ -277,17 +323,25 @@ public abstract class BaseWizard extends JDialog {
             sidebarPanel.revalidate();
         }
         sidebarStepLabel.setText("Step " + (currentStep + 1));
+        // Wrap long substep names across multiple lines (HTML) instead of cropping; each row is sized
+        // to its wrapped height and the rows below reflow down.
+        final int wrapW = SIDEBAR_W - 16;
+        int yPos = 38;
         for (int i = 0; i < sidebarSubLabels.length; i++) {
+            JLabel lbl = sidebarSubLabels[i];
             if (i < sc) {
-                sidebarSubLabels[i].setVisible(true);
                 String p; Color c;
                 if (i < currentSubstep) { p = "\u2713 "; c = Color.GRAY; }
                 else if (i == currentSubstep) { p = "\u25CF "; c = new Color(0, 180, 0); }
                 else { p = "\u25CB "; c = Color.WHITE; }
-                sidebarSubLabels[i].setText(p + getSubstepName(currentStep, i));
-                sidebarSubLabels[i].setForeground(c);
+                lbl.setText(wrapToWidth(lbl, p, getSubstepName(currentStep, i), wrapW - 4));
+                lbl.setForeground(c);
+                lbl.setVisible(true);
+                int hh = Math.max(22, lbl.getPreferredSize().height);
+                lbl.setBounds(8, yPos, wrapW, hh);
+                yPos += hh + 4;
             } else {
-                sidebarSubLabels[i].setVisible(false);
+                lbl.setVisible(false);
             }
         }
     }
@@ -443,5 +497,224 @@ public abstract class BaseWizard extends JDialog {
         dlProgressLabel.setText("Patch failed. Try again.");
         progPanel.repaint();
         statusBarBox.repaint();
+    }
+
+    /**
+     * A font-independent check (✓) or cross (✗) icon, drawn as antialiased strokes — used for
+     * status hooks. Avoids relying on unicode glyphs Arial may not render.
+     */
+    protected static Icon markIcon(boolean check, Color color, int size) {
+        return new Icon() {
+            @Override public int getIconWidth() { return size; }
+            @Override public int getIconHeight() { return size; }
+            @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(color);
+                g2.setStroke(new BasicStroke(Math.max(2f, size / 7f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                if (check) {
+                    g2.drawPolyline(
+                        new int[]{x + size / 6, x + size * 2 / 5, x + size * 5 / 6},
+                        new int[]{y + size / 2, y + size * 4 / 5, y + size / 5}, 3);
+                } else {
+                    g2.drawLine(x + size / 5, y + size / 5, x + size * 4 / 5, y + size * 4 / 5);
+                    g2.drawLine(x + size * 4 / 5, y + size / 5, x + size / 5, y + size * 4 / 5);
+                }
+                g2.dispose();
+            }
+        };
+    }
+
+    /**
+     * Live URL validation: as the user types/pastes, a ✓ (green) / ✗ (red) {@link #markIcon} appears
+     * beside the field and the field tints done-green / error-red (same idiom as the path indicator).
+     * Empty resets to the neutral dark background; a <b>disabled</b> field is greyed with no icon.
+     * Returns the updater so callers can re-run it after toggling the field's enabled state.
+     */
+    protected Runnable wireUrlValidation(SpecialTextfield field, JLabel indicator, Predicate<String> valid) {
+        Runnable upd = () -> {
+            if (!field.isEnabled()) {                       // greyed-out / not usable
+                indicator.setVisible(false);
+                field.setBackground(new Color(55, 55, 55, 130));
+                field.repaint();
+                return;
+            }
+            String t = field.getText().trim();
+            if (t.isEmpty()) {
+                indicator.setIcon(null);
+                indicator.setVisible(false);
+                field.setBackground(new Color(30, 30, 30, 200));
+            } else if (valid.test(t)) {
+                indicator.setIcon(markIcon(true, new Color(80, 255, 0), 22));
+                indicator.setVisible(true);
+                field.setBackground(new Color(40, 130, 40, 210));
+            } else {
+                indicator.setIcon(markIcon(false, new Color(255, 80, 80), 22));
+                indicator.setVisible(true);
+                field.setBackground(new Color(150, 45, 45, 210));
+            }
+            field.repaint();
+        };
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { upd.run(); }
+            public void removeUpdate(DocumentEvent e) { upd.run(); }
+            public void changedUpdate(DocumentEvent e) { upd.run(); }
+        });
+        return upd;
+    }
+
+    /**
+     * Makes a ✓/✗ validity {@code indicator} double as a one-click "clear" button for its {@code field}
+     * (pairs naturally with the Paste affordance): clicking it empties the field and runs {@code afterClear}
+     * (re-validation). Hovering explains it via the TipBox. No-op while the field is disabled.
+     */
+    protected void wireClearOnClick(JLabel indicator, JTextComponent field, Runnable afterClear) {
+        indicator.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        indicator.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                if (!field.isEnabled()) return;
+                field.setText("");
+                if (afterClear != null) afterClear.run();
+            }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Click the check / cross icon to clear this field"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+    }
+
+    /**
+     * Builds the "patch options" panel: one tinted, bordered {@link #sectionBoxAt} container (440-wide,
+     * centred on the window) that groups the supplied primary {@code actionBtn} (e.g. "Authorize with
+     * Discord"), a centred "— or — use a custom URL" toggle {@link SpecialCheckBox} (the divider), and
+     * a URL row — a placeholder {@link SpecialTextfield}, a live ✓/✗ validity indicator, and a
+     * clipboard-icon paste button. The URL row is <b>hidden until the "Advanced Options" checkbox is
+     * ticked, and the box collapses/expands accordingly</b>, so it never shows dead space or an inactive
+     * field. Hovering the URL row shows {@code hoverTip}. Everything is centred on the window axis.
+     *
+     * <p>The caller passes a freshly-created {@code actionBtn} (this method positions and adds it) and
+     * wires its click listener afterwards using the returned URL field. The custom-patch path is taken
+     * when the URL field {@link JComponent#isEnabled() is enabled} (checkbox ticked); while enabled the
+     * button relabels from its default text to {@code customActionLabel} (e.g. "Start Patching") so it
+     * matches what it will actually do (use the pasted URL, not OAuth).
+     */
+    protected SpecialTextfield buildPatchOptionsPanel(int cx, int topY, SpecialButton actionBtn,
+                                                      String customActionLabel, String placeholder,
+                                                      String hoverTip, Predicate<String> valid, Runnable onToggle) {
+        final String defaultActionLabel = actionBtn.getText();
+        final int pw = 440, pad = 10, gap = 6, cbH = 18, rowH = 24;
+        final int px = (cx - pw) / 2;
+        final int btnH = actionBtn.getHeight();
+        final int collapsedH = pad + btnH + gap + cbH + pad;                 // button + checkbox
+        final int expandedH = pad + btnH + gap + cbH + gap + rowH + pad;     // + URL row
+
+        JPanel box = sectionBoxAt(px, topY, collapsedH, 15, pw, new Color(200, 0, 150, 90));
+        contentPanel.add(box);
+
+        // Primary action button — centred in the panel (and on the window axis).
+        actionBtn.setLocation((cx - actionBtn.getWidth()) / 2, topY + pad);
+        contentPanel.add(actionBtn);
+
+        // Toggle: ticking it expands the box and reveals the usable URL row.
+        SpecialCheckBox advCb = new SpecialCheckBox("Advanced Options", 12);
+        advCb.setHorizontalAlignment(SwingConstants.CENTER);
+        advCb.setHorizontalTextPosition(SwingConstants.RIGHT);
+        advCb.setBounds(px, topY + pad + btnH + gap, pw, cbH);
+        contentPanel.add(advCb);
+
+        // URL row: [ field .......... ✓/✗  📋 ] within the panel padding (hidden until expanded).
+        int rowY = topY + pad + btnH + gap + cbH + gap;
+        int iconW = 26, indW = 24;
+        int fieldX = px + pad;
+        int iconX = px + pw - pad - iconW;
+        int indX = iconX - 6 - indW;
+        int fieldW = indX - 8 - fieldX;
+
+        SpecialTextfield url = new SpecialTextfield();
+        url.specialTextfield(fieldW, rowH, fieldX, rowY, 12);
+        url.setPlaceholder(placeholder);
+        url.setEnabled(false);
+        url.setVisible(false);
+        url.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { tipBox.showTip(hoverTip); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        contentPanel.add(url);
+
+        JLabel ind = new JLabel();
+        ind.setBounds(indX, rowY - 2, indW, 28);
+        ind.setVisible(false);
+        contentPanel.add(ind);
+
+        JLabel pasteIcon = new JLabel(clipboardIcon(20, new Color(230, 230, 230)));
+        pasteIcon.setBounds(iconX, rowY, iconW, rowH);
+        pasteIcon.setHorizontalAlignment(SwingConstants.CENTER);
+        pasteIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        pasteIcon.setToolTipText("Paste from clipboard");
+        pasteIcon.setVisible(false);
+        pasteIcon.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                String clip = readClipboardText();
+                if (clip != null && !clip.isBlank()) url.setText(clip.trim());
+            }
+            public void mouseEntered(MouseEvent e) { tipBox.showTip("Paste a link from your clipboard"); }
+            public void mouseExited(MouseEvent e) { tipBox.showDefault(); }
+        });
+        contentPanel.add(pasteIcon);
+
+        Runnable revalidate = wireUrlValidation(url, ind, valid);
+        // The ✓/✗ also clears the field (the doc listener then re-validates). Pairs with Paste.
+        wireClearOnClick(ind, url, null);
+        advCb.addItemListener(e -> {
+            boolean on = advCb.isSelected();
+            url.setEnabled(on);
+            url.setVisible(on);
+            pasteIcon.setVisible(on);
+            // Relabel so the button matches what it does: use the pasted URL vs. authorize via Discord.
+            actionBtn.changeText(on ? customActionLabel : defaultActionLabel);
+            box.setBounds(px, topY, pw, on ? expandedH : collapsedH);
+            contentPanel.setComponentZOrder(box, contentPanel.getComponentCount() - 1);
+            revalidate.run();                       // refresh ✓/✗ (hidden when collapsed)
+            // Switching modes is a fresh start: let the caller drop any staged-download reuse so the
+            // next click actually runs the chosen mode (e.g. OAuth, not the URL-downloaded file).
+            if (onToggle != null) onToggle.run();
+            if (on) url.requestFocusInWindow();
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        });
+
+        // Box must sit behind the controls that were added on top of it.
+        contentPanel.setComponentZOrder(box, contentPanel.getComponentCount() - 1);
+        return url;
+    }
+
+    /** A font-independent clipboard glyph drawn as antialiased strokes (no asset / unicode needed). */
+    protected static Icon clipboardIcon(int size, Color color) {
+        return new Icon() {
+            @Override public int getIconWidth() { return size; }
+            @Override public int getIconHeight() { return size; }
+            @Override public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(color);
+                g2.setStroke(new BasicStroke(Math.max(1.4f, size / 13f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                int bx = x + size / 6, by = y + size / 5, bw = size * 2 / 3, bh = size * 7 / 10;
+                g2.drawRoundRect(bx, by, bw, bh, 3, 3);                 // board
+                int clipW = size / 3, clipH = Math.max(3, size / 7);
+                g2.fillRoundRect(x + size / 2 - clipW / 2, y + size / 12, clipW, clipH, 2, 2); // top clip
+                g2.drawLine(bx + bw / 5, by + bh / 3, bx + bw * 4 / 5, by + bh / 3);     // paper lines
+                g2.drawLine(bx + bw / 5, by + bh * 3 / 5, bx + bw * 4 / 5, by + bh * 3 / 5);
+                g2.dispose();
+            }
+        };
+    }
+
+    /** Returns the system clipboard's text, or {@code null} if it holds none / is unavailable. */
+    protected String readClipboardText() {
+        try {
+            Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (cb.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
+                return (String) cb.getData(DataFlavor.stringFlavor);
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }

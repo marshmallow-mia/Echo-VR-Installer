@@ -22,16 +22,28 @@ public class ErrorDialog {
         errorDialog.setModal(true);
 
 
+        // Centered error text near the top.
         SpecialLabel errorText = new SpecialLabel(errorText_st, 14);
-        int XPos2 = ( ( errorDialog.getWidth() - errorText.getWidth() )   /2) - 4 ;
-        // TODO BAD WAY TO CORRECT THE POSITION
-        errorText.setLocation(XPos2, 35);
+        errorText.setLocation((errorDialog.getWidth() - errorText.getWidth()) / 2, 30);
         back.add(errorText);
 
+        int nextY = errorText.getY() + errorText.getHeight() + 12;
+
+        // Optional, on-theme help link (white, underlined, transparent — sits cleanly on the
+        // dark background rather than as a blue-on-white box).
+        if (hyperlink == 1) {
+            nextY = addHelpLink("How to enable Developer Mode on your Quest",
+                "https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode", nextY);
+        } else if (hyperlink == 2) {
+            nextY = addHelpLink("Open the Java Runtime download page",
+                "https://www.java.com/de/download/manual.jsp", nextY);
+        } else if (hyperlink == 3) {
+            nextY = addHelpLink("How to allow USB debugging on your Quest",
+                "https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode", nextY);
+        }
+
         SpecialButton btn_errorClose = new SpecialButton("Close", "button_up_small.png", "button_down_small.png", "button_highlighted_small.png", 14);
-        int XPos3 = ( ( errorDialog.getWidth() - btn_errorClose.getWidth() )   /2) ;
-        int YPos3 = ( errorText.getHeight() + errorText.getY() + 30 );
-        btn_errorClose.setLocation(XPos3, YPos3);
+        btn_errorClose.setLocation((errorDialog.getWidth() - btn_errorClose.getWidth()) / 2, nextY + 6);
         btn_errorClose.addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent event) {
                 errorDialog.dispose();
@@ -39,31 +51,17 @@ public class ErrorDialog {
         });
         back.add(btn_errorClose);
 
-        if (hyperlink == 1) {
-            debugMode();
-        }
-        else if (hyperlink == 2) {
-            javaRuntimeLink();
-        }
         errorDialog.setVisible(true);
     }
 
-    public void debugMode(){
-        SpecialHyperlink hyperlinkPC = new SpecialHyperlink(115, 70, "Click on me for infos on how to enable the debugmode", "https://learn.adafruit.com/sideloading-on-oculus-quest/enable-developer-mode", 16);
-        hyperlinkPC.setOpaque(true); // Make the label opaque
-        hyperlinkPC.setForeground(Color.BLUE); // Set text color to white
-        hyperlinkPC.setBackground(Color.WHITE);
-
-        back.add(hyperlinkPC);
-    }
-
-    public void javaRuntimeLink(){
-        SpecialHyperlink hyperlinkPC = new SpecialHyperlink(112, 70, "Click on me to go to the Java Runtime Download Page", "https://www.java.com/de/download/manual.jsp", 16);
-        hyperlinkPC.setOpaque(true); // Make the label opaque
-        hyperlinkPC.setForeground(Color.BLUE); // Set text color to white
-        hyperlinkPC.setBackground(Color.WHITE);
-
-        back.add(hyperlinkPC);
+    /** Adds a centered, underlined white help link at y; returns the y below it. */
+    private int addHelpLink(String text, String url, int y) {
+        SpecialHyperlink link = new SpecialHyperlink(0, y, "<html><u>" + text + "</u></html>", url, 14);
+        link.setForeground(Color.WHITE);
+        link.setSize(link.getPreferredSize());
+        link.setLocation((errorDialog.getWidth() - link.getWidth()) / 2, y);
+        back.add(link);
+        return y + link.getHeight();
     }
 }
 

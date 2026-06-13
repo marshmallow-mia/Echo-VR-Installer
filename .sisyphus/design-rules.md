@@ -168,8 +168,8 @@ Type → Download → Install → Done
 - **Fill**: `Color(100, 0, 50, 220)` — same as progress bar box
 - **Inner panel**: y+**10**, h-**20** (10px top/bottom padding), x+5, w=`SIDEBAR_W`=**120**
 - **Step number label**: `conthrax-sb.otf` bold **13**, white, at (8, 12) in sidebar panel
-- **Substep labels**: `Arial` **14** (plain), bounds: x=**8**, y=`38 + i * 22`, w=`SIDEBAR_W - 16`, h=**22**
-  - Completed: `✓ ` prefix, `Color.GRAY` — **clickable** navigates to that substep (y hit test: `38 + i * 18` with 16px height)
+- **Substep labels**: `Arial` **14** (plain), x=**8**, w=`SIDEBAR_W - 16`. **Long names wrap to multiple lines** instead of cropping, via `BaseWizard.wrapToWidth(lbl, prefix, text, maxPx)` — a deterministic `FontMetrics` word-wrap that emits HTML with explicit `<br>` breaks (Swing's CSS `width` wrapping is honoured inconsistently, so it's not relied on). The ✓/●/○ **prefix sits in its own table cell** so wrapped lines **hang-indent** — every text line starts at the same x, just past the prefix. Each row is sized to its wrapped `getPreferredSize().height` (min 22) and the rows below **reflow** down (cumulative y from 38, +4px gap). Names are HTML-escaped (`& < >`).
+  - Completed: `✓ ` prefix, `Color.GRAY` — **clickable** navigates to that substep (hit-test against each label's actual bounds, since row heights vary)
   - Current: `● ` prefix, `Color(0, 180, 0)`
   - Upcoming: `○ ` prefix, `Color.WHITE`
   - Substep label array dynamically resized if step has more substeps than initially allocated (min 3)
@@ -205,7 +205,7 @@ Type → Download → Install → Done
 | SpecialLabel (base) | `Color(60, 70, 100, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Base class default; **overridden in path labels** (see §11) |
 | SpecialHyperlink | none (transparent) | `Color.WHITE` | conthrax-sb.otf | Hand cursor, opens URL via `Desktop.browse()` |
 | SpecialCheckBox | none (opaque=false) | `Color.WHITE` | conthrax-sb.otf | Flat border paint. Used for the Step 4 Steam Patch row toggles (size 14), each paired with a ○/●/✓/✗ status glyph (see §12) |
-| SpecialTextfield | `Color(30, 30, 30, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Always same dark bg, sized via `specialTextfield(w,h,x,y,textSize)` |
+| SpecialTextfield | `Color(30, 30, 30, 200)` | `Color.WHITE` | conthrax-sb.otf → Arial | Dark translucent bg, sized via `specialTextfield(w,h,x,y,textSize)`. **Not opaque** + overrides `paintComponent` to fill a rounded (arc 8) translucent bg each repaint — same anti-ghosting pattern as SpecialLabel (an opaque JTextField filling a translucent colour leaves old text visible on change). Supports grey **placeholder** text via `setPlaceholder()` (drawn only while empty, so `getText()` stays genuinely empty). Used for the editable/pastable path fields and the patch-options URL box (the latter tints green/red via `setBackground` on live validation). |
 | SpecialButtonSmall | 3-state image panel | `Color(230, 230, 230)` / `Color(250, 250, 250)` | conthrax-sb.otf **20** | Identical to SpecialButton but hardcoded font size 20; **unused in current wizard flow** |
 | SpecialButtonInvisible | opaque true | label fg `Color.WHITE`, label bg `Color.BLUE` | n/a (hardcoded) | **Incomplete/debug component** — not used in production flow |
 
@@ -251,7 +251,11 @@ Type → Download → Install → Done
 - Extract/unzip only for PC (platform=0) — Quest download does not auto-extract
 - Download progress: `SpecialLabel` with percentage text
 - **Multi-server**: auto-selects fastest of 2 CDN mirrors (`files.echovr.de`, `evr.echo.taxi`) via speed test before download
-- **Path validation**: `updatePathStatus()` shows a **vector-drawn** check (`Color(80, 255, 0)`, 26px) or cross (`Color(255, 80, 80)`, 22px) icon next to the path via `markIcon()` — drawn with `Graphics2D` strokes, **not** a unicode glyph, because Windows Arial lacks U+2713/U+2717 (they render as empty "tofu" boxes). The same `markIcon()` draws the ✓/✗ states in the Steam Patch checklist (§12). Valid paths tint the label background green `Color(200, 255, 200, 200)`. Invalid paths keep default white background. Validation checks for existence of `echovr.exe` at `<path>/ready-at-dawn-echo-arena/bin/win10/echovr.exe`.
+- **Editable/pastable path fields**: path fields are **editable `SpecialTextfield`s** (dark bg `Color(30,30,30,200)`, white text), not read-only labels — users can type or paste a path. Re-validation runs on **Enter** and on **focus loss** (`commitPathField()`): the typed/pasted value is resolved to the install root, stored, saved, and the ✓/✗ indicator refreshed. Because the textfield has a fixed dark background, the old green "valid path" tint no longer applies; the `markIcon()` ✓/✗ indicator is the sole validity signal.
+- **Failproof path resolution**: `Helpers.resolveEchoInstallRoot(selected)` accepts the install root, the `ready-at-dawn-echo-arena` folder itself, any folder deeper inside it (bin, win10…), a sibling subfolder, or a folder one–two levels above, and resolves the actual install ROOT (walk-up + bounded downward search for `ready-at-dawn-echo-arena/bin/win10/echovr.exe`). Used by the path fields and the "Choose path" picker so a mis-pick no longer triggers a "Check your path" dead end.
+- **Patch-stage path display**: licence-patch path field shows the **full path up to `ready-at-dawn-echo-arena`** (root + `/ready-at-dawn-echo-arena`); install/download stages show the root.
+- **Path validation**: `updatePathStatus()` shows a **vector-drawn** check (`Color(80, 255, 0)`, 26px) or cross (`Color(255, 80, 80)`, 22px) icon next to the path via `markIcon()` — drawn with `Graphics2D` strokes, **not** a unicode glyph, because Windows Arial lacks U+2713/U+2717 (they render as empty "tofu" boxes). The same `markIcon()` draws the ✓/✗ states in the Steam Patch checklist (§12). Validation checks for existence of `echovr.exe` at `<path>/ready-at-dawn-echo-arena/bin/win10/echovr.exe`.
+- **Clear-on-click indicators**: on every user-editable input field (path fields + the patch-options URL box), the ✓/✗ `markIcon` indicator doubles as a **one-click clear** (`BaseWizard.wireClearOnClick()`) — clicking it empties the field and re-validates (hand cursor; TipBox: *"Click the check / cross icon to clear this field"*). Pairs with the clipboard Paste affordance.
 - **Path persistence**: install path saved to `~/.echovr_installer/paths.properties` via `Helpers.saveInstallPath()` / `Helpers.loadInstallPath()`
 
 ## 12. PC Guidance — Step Structure (`FrameGuidancePC`)
@@ -296,21 +300,25 @@ Type → Download → Install → Done
 
 **Detail views:**
 - Each has a "← Back" button returning to master view
-- Licence Patch inline: path chooser with validation, OAuth2 authorization button, path indicator
-- Steam Patch detail: **checkbox-driven, chained Revive setup** (covers the `steampatch.md` megathread). Five `SpecialCheckBox` rows (each with a ○/●/✓/✗ status glyph to its right) **and** the **"Install & Configure"** button (`button_up_middle`, 14) are all **enclosed in one rounded section box** via `sectionBoxAt(...)` (fill `Color(200,0,150,90)`, border `Color(50,50,50,150)`, arc 15, `opaque=false`, `contains()→false` — visual only; rows/button sit on top as siblings, box sent to back via `setComponentZOrder`). A download-% `SpecialLabel` lives inside the box too but is **hidden until the chain runs** (a `SpecialLabel` always paints its bg, so leaving it visible-but-empty would render as a stray box). Requires admin rights and a present `echovr.exe`; Windows-only.
+- Licence Patch inline: editable/pastable arena-path field (full path up to `ready-at-dawn-echo-arena`) with live validation + ✓/✗ indicator, "Choose path" picker, and a **patch-options panel**. The patched `pnsovr.dll` is staged in the temp dir and **reused on Retry** (no re-auth); on a path/copy failure the temp file is kept so a corrected Retry reuses it. **Every element is centred on the window's vertical axis** (path field, Choose path, the panel and its contents) — varied widths read as intentional when symmetric.
+  - **Patch-options panel** (`BaseWizard.buildPatchOptionsPanel()`, shared with Quest): one tinted, bordered `sectionBoxAt` (440-wide, centred) that groups the **"Authorize with Discord"** primary button (becomes **"Retry"** after the first attempt), a centred **"Advanced Options"** toggle `SpecialCheckBox`, and a URL row. The panel's edges give the varied-width buttons a shared alignment. URL row = a `SpecialTextfield` with placeholder *"Paste patch URL here…"*, a live ✓/✗ validity indicator (**click it to clear the field**, see §11), and a **clipboard icon** (`clipboardIcon()`, drawn — not an asset) that pastes from the clipboard. **The URL row is hidden and the box collapses until "Advanced Options" is ticked, then the box expands and the row becomes usable** (`collapsedH` = pad+button+gap+checkbox+pad ≈ 94; `expandedH` adds gap+24 ≈ 124) — so it never shows dead space or an inactive field. **Ticking it also relabels the primary button from "Authorize with Discord" → "Start Patching"** (and the click switches from OAuth to using the pasted URL), so the button always matches what it will do. The custom-patch path is taken when the field is **enabled** (checkbox ticked); a valid URL (Discord-CDN `pnsovr.dll` link or `files.echovr.de`) **bypasses OAuth**. Hovering the URL row shows the TipBox: *"Paste a direct URL to use a custom patch instead of generating one."*
+  - **Live URL validation** (`BaseWizard.wireUrlValidation()`): as the user types/pastes, a ✓ (`Color(80,255,0)`) / ✗ (`Color(255,80,80)`) `markIcon` appears beside the field and the field tints **done-green `Color(40,130,40,210)`** / **error-red `Color(150,45,45,210)`**; empty resets to the neutral dark bg with no icon — the same idiom as the path indicator.
+  - Layout (content height 245px; header y=4/h=42 like the Steam-patch detail, Back button shows through; **even 8px gaps**): 440-wide editable arena-path field at y=54 (✓/✗ indicator right); **"Choose path" (small)** at y=86; **patch-options panel** at y=119 (collapsed h≈94 · expanded h≈124 → ends ≈243 < 245). (Note: PC content width is wide — the background scales to FH so `FW`≈1055 → content ≈875px — so path/URL fields use the fixed 440px column, never `cx`-relative widths.)
+- Steam Patch detail: **checkbox-driven, chained Revive setup** (covers the `steampatch.md` megathread). Four `SpecialCheckBox` rows (each with a ○/●/✓/✗ status glyph to its right) **and** the **"Install & Configure"** button (`button_up_middle`, 14) are all **enclosed in one rounded section box** via `sectionBoxAt(...)` (fill `Color(200,0,150,90)`, border `Color(50,50,50,150)`, arc 15, `opaque=false`, `contains()→false` — visual only; rows/button sit on top as siblings, box sent to back via `setComponentZOrder`). A download-% `SpecialLabel` lives inside the box too but is **hidden until the chain runs** (a `SpecialLabel` always paints its bg, so leaving it visible-but-empty would render as a stray box). Requires admin rights and a present `echovr.exe`; Windows-only.
 - Step 4 master view with **no type selected yet** (e.g. reached via chip click before choosing OWNER/NEW_PLAYER): renders the same canonical "Optional patches" menu as OWNER (No Licence Patch + Steam Patch (Revive)), so the menu is consistent in every scenario rather than dropping into the new-player licence-inline view.
   - **Patch rows & default state** (defaults are global, user-overridable):
 
     | Row (execution order) | Action | Default |
     |---|---|---|
-    | Install Revive | download + run `ReviveInstaller.exe` (GitHub latest) | ✅ on |
+    | Install Revive | download + run `ReviveInstaller.exe` (**pinned to v3.1.1**) | ✅ on |
     | Revive injector shortcut | desktop `.lnk` → `ReviveInjector.exe "<echovr.exe>" -nosymbollookup /app ready-at-dawn-echo-arena` | ✅ on |
-    | Patch `revive.vrmanifest` | upsert Echo entry (gson) with autodetected library ID | ✅ on |
     | Restore Dashboard entry | `.json`/`.mini` → `Meta Horizon\Manifests` (returning players) | ☐ off |
     | Fix game artwork | download + unzip assets → `…\StoreAssets\ready-at-dawn-echo-arena_assets` | ✅ on |
 
+  - **Removed**: the `Patch revive.vrmanifest` row (gson upsert) was removed from the chain/UI. `ReviveSetup.patchVrManifest()` / `AdminBroker.patchVrManifest()` remain in the backend but are no longer invoked by the wizard.
+
   - **Status glyphs**: ○ pending `Color.LIGHT_GRAY`, ● working `Color(0,180,0)`, ✓ done `Color(0,255,0)`, ✗ failed `Color(255,80,80)` (Arial Bold 14).
-  - **Chain**: runs only the checked rows in fixed order on a worker thread; checkboxes disabled during the run; reuses `stepInProgress`/`progressAnimator`/`stepCompleted` wiring. Empty/missing `revive.vrmanifest` → `EMPTY_MANIFEST` → shows the "download a free Meta app and restart SteamVR" fallback (non-fatal). Backed by `ReviveSetup` (registry-based `findReviveDir()` + verify, `createInjectorShortcut()`, `patchVrManifest()`, `installArtwork()`, guarded `restoreDashboardManifests()`).
+  - **Chain**: runs only the checked rows in fixed order on a worker thread; checkboxes disabled during the run; reuses `stepInProgress`/`progressAnimator`/`stepCompleted` wiring. Backed by `ReviveSetup` (registry-based `findReviveDir()` + verify, `createInjectorShortcut()`, `installArtwork()`, guarded `restoreDashboardManifests()`). Revive is no longer auto-started/stopped during the chain (that only existed to populate the now-removed vrmanifest patch).
 
 ### Step 5: Done → IMPLEMENTED (was Future Feature)
 - "You're all set!" in green (Arial Bold 24, at y=20)
@@ -354,6 +362,7 @@ Type → Download → Install → Done
 
 ### Step 2: Install to Quest
 - Header: "Install Echo VR to your Quest"
+- **"Connect to Quest" button** + status row with a ✓/✗ `markIcon` hook: on entry the page auto-runs `InstallerQuest.checkConnection()` (background thread) and shows the hook (✓ "Quest connected" / ✗ "not authorized" / ✗ "No Quest detected"). Pressing "Connect to Quest" re-checks and, if unauthorized/not-detected, shows the styled guidance dialog.
 - "Install to Quest" button → uses `InstallerQuest` class
 - Requires `stepCompleted` from download step
 - Installation runs on background thread
@@ -392,17 +401,24 @@ Type → Download → Install → Done
   - Client ID: `1326594571584409650`
   - Redirect URI: `http://127.0.0.1:53124/callback`
   - Scopes: `identify guilds`
-- Starts a **temporary HTTP server on localhost:53124** to capture the OAuth2 callback (300s timeout)
+- Starts a **temporary HTTP server on localhost:53124** to capture the OAuth2 callback (**60s timeout** — kept short because Discord's in-browser "Service got rate limited" page never redirects back, so the only signal is the callback not arriving; a 60s fail-fast beats a 5-minute hang)
+- **Callback socket lifecycle**: bound via `new ServerSocket()` + `setReuseAddress(true)` + `bind(...)` with a short bind-retry loop, and **always closed in a `finally`** (success, timeout, error, cancel). `DiscordOAuth2Flow.cancel()` closes the socket — used before a **Retry** so the port is freed and any pending `accept()` unblocks. This fixes the old "Failed: Already in use: Bind" on retry.
 - On redirect, extracts `?code=XXX` from the URL, sends to `POST https://files.echovr.de/api/exchange`
   - Body: `{"code":"<code>","type":"<fileType>"}`
   - File types: `"dll"` (PC), `"apk"` (Quest)
 - Server exchanges code → verifies guild membership → generates patch file → returns `{"patchUrl": "..."}`
 - **No cookie persistence needed** — flow is fully stateless
+- **Patched file staging**: the returned patch is downloaded into `%TEMP%/echo/` (`Helpers.PATCH_TEMP_DIR`) and reused on Retry without re-authorizing. **Reuse is gated on a per-session "downloaded this session" flag** (`licenceTempReady` / `patchedApkReady`), set only when a download actually completes — so a stale temp file from a previous run can NOT short-circuit OAuth on the first click (this was a real bug: OAuth never ran). **Toggling "Advanced Options" resets the flag** (`onToggle` callback) so switching modes always runs the chosen mode rather than reusing the other mode's staged file (e.g. unchecking → "Authorize with Discord" actually runs OAuth, not the URL-downloaded file). A JVM shutdown hook (`Helpers.deletePatchTempFiles()`) wipes the staged `pnsovr.dll` / patched APK when the installer exits or is killed.
+- **Button states**: the primary button shows **"Please Wait..."** while an attempt is running, then relabels to **"Retry"** after a failed/aborted attempt and to **"Done"** only on a successful patch (PC + Quest). Toggling "Advanced Options" overrides this with the mode label ("Authorize with Discord" ↔ "Start Patching").
+- **Patch-options panel**: a bordered, centred container (`BaseWizard.buildPatchOptionsPanel()`, shared PC+Quest) grouping the "Authorize with Discord" button, an "Advanced Options" toggle checkbox, and a custom-URL row (placeholder field + live ✓/✗ `markIcon` & green/red tint via `wireUrlValidation()` + a drawn clipboard paste icon). The URL row is **hidden and the box collapsed until "Advanced Options" is ticked** (box expands + row becomes usable, and the primary button relabels "Authorize with Discord" → "Start Patching" with its click switching from OAuth to the pasted URL). PC accepts a Discord-CDN `pnsovr.dll` or `files.echovr.de` URL; Quest accepts `files.echovr.de`. When enabled, a valid URL bypasses OAuth and downloads directly. URL-row hover shows a TipBox explaining the alternative.
 - Status bar shows progress: "Discord authorization opened..." → "Generating your patch file..." → "Downloading patch file..." → Success text
 - On error:
   - `403 not_in_guild`: "You must join the Echo VR Patcher server first." — shows "Join Server" / "Close" option dialog
   - `409 busy`: "Bot is busy. Try again in 30 seconds."
   - `phone_verification_required`: "Discord requires a verified phone number to interact in this server."
+  - `timeout`: "Try again in a minute" — likely Discord rate-limiting (callback never arrived)
+  - `port_in_use`: callback port couldn't be bound after retries — wait and Retry
+  - `cancelled`: silent (user/retry-initiated), no dialog
   - Other errors: generic error dialog
 - Button re-enables after completion or error via `resetAfterError()` or `OAuth2ErrorHandler.handleError()`
 
@@ -438,7 +454,7 @@ An alternative embedded-browser approach for Discord interaction, distinct from 
 
 | Dialog | Size | Background | Purpose |
 |--------|------|------------|---------|
-| ErrorDialog | **800×200** | `Marcelus.png` | Generic error display with clickable help links (debug mode, Java runtime) |
+| ErrorDialog | **800×200** | `Marcelus.png` | Generic error display. Centered white text + optional centered, **underlined white** help link (transparent — not a blue-on-white box) + centered Close button. `hyperlink` codes: 1=enable Developer Mode, 2=Java Runtime download, 3=allow USB debugging on Quest |
 | UserTypeDialog | **500×300** | `Echox720.png` | Pre-wizard owner/new-player selection (legacy, replaced by wizard step 0) |
 | OptionalPatchesPanel | **500×350** | `Echox720.png` | Post-install optional patch menu (legacy, replaced by wizard step 4) |
 | UnzipDialog | **900×200** | `vr_lounge_banner.png` | Unzip progress dialog (legacy — unzip now inline in downloader) |
@@ -564,6 +580,7 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
   - `advanceWithConfirm()` — checks `confirmAbortDownload()` before navigating
   - `confirmAbortDownload()` — confirmation dialog when navigating during active work
   - `resetAfterError()` — resets state after failed operation, enables trigger button
+  - `buildPatchOptionsPanel()` — bordered centred panel grouping the primary action button + "Advanced Options" toggle checkbox + placeholder URL row (live ✓/✗ + clipboard paste icon); box **collapses when unticked / expands when ticked** (URL row hidden→shown+enabled) and the action button **relabels to the supplied custom label** (e.g. "Start Patching") while ticked; `wireUrlValidation()` — live ✓/✗ + green/red tint on a URL field (greyed when disabled), returns the updater; `wireClearOnClick()` — makes a ✓/✗ indicator clear its field on click (TipBox-explained); `clipboardIcon()` — drawn clipboard glyph; `readClipboardText()` — clipboard string or null
   - Abstract methods: `getBackgroundImage()`, `getWindowWidth()`, `getWindowHeight()`, `getWindowTitle()`, `getStepCount()`, `getSubstepCount(int)`, `getSubstepName(int,int)`, `getChipLabel(int)`, `buildContent(int,int,int)`, `updateStatusText(int,int)`
 - `Downloader` supports: resume (Range header), cancel (flg_CancelDownload), progress label updates, platform-based unzip (platform=0 auto-extracts), hash verification (SHA-256 for update files), multi-server speed test, onComplete callback
 - `SpecialButton` — image-based 3-state button with conthrax font, dynamically sized from button image
@@ -609,7 +626,7 @@ All marked `@Deprecated` or `// TODO: Remove in v0.9.0`:
 
 ### Desktop Shortcut (Revive variant) → IMPLEMENTED (was Future Feature)
 - **Revive shortcut**: `ReviveInjector.exe` with Echo VR args — now created by the Step 4 Steam Patch chain (`ReviveSetup.createInjectorShortcut()`, via `Helpers.createShortcut(name,target,args,workingDir,icon)`)
-- **vrmanifest**: create/update `revive.vrmanifest` with library ID entry — `ReviveSetup.patchVrManifest()` (gson upsert, library ID autodetected from existing entries)
-- **Empty manifest fallback**: if vrmanifest is empty → `EMPTY_MANIFEST` result → dialog tells user to download a free Meta app and restart SteamVR
+- **vrmanifest**: ~~create/update `revive.vrmanifest`~~ — **REMOVED from the wizard.** `ReviveSetup.patchVrManifest()` / `AdminBroker.patchVrManifest()` remain in the backend but are no longer wired into the Steam Patch chain or UI.
 - **Game artwork**: `ReviveSetup.installArtwork()` downloads + unzips assets into the Meta Horizon StoreAssets folder
+- **Revive version**: the installer download is **pinned to v3.1.1** (`releases/download/3.1.1/ReviveInstaller.exe`) in both `FrameGuidancePC` and the legacy `FrameSteamPatcher`, replacing `releases/latest`.
 - **Still future**: Dashboard manifest restore (`.json`/`.mini`) is wired but guarded (`restoreDashboardManifests()` throws `UnsupportedOperationException`) pending hosted file URLs
