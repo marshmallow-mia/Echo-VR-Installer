@@ -7,7 +7,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -159,34 +158,11 @@ public class FramePCDownload extends JDialog {
                     downloader.setOnCompleteListener(() -> {
                         nextButton.setVisible(true);
                         // Best-effort update: failure does not block installation
-                        final String tempDir = System.getProperty("java.io.tmpdir") + "/echo_update_fresh/";
                         final String installPath = labelPcDownloadPath.getText();
                         final String binPath = installPath + "/ready-at-dawn-echo-arena/bin/win10";
 
-                        Thread updateThread = new Thread(() -> {
-                            try {
-                                Downloader updateDl = new Downloader();
-                                updateDl.setOnCompleteListener(() -> {
-                                    try {
-                                        File zipFile = new File(tempDir + "bullet_patch.zip");
-                                        if (zipFile.exists() && zipFile.length() > 0) {
-                                            UnzipFile.unzip(zipFile.getAbsolutePath(), binPath);
-                                            System.out.println("Update extracted to: " + binPath);
-                                        }
-                                    } catch (Exception e) {
-                                        System.err.println("Update extraction failed (non-blocking): " + e.getMessage());
-                                    }
-                                });
-                                updateDl.startDownload(
-                                    "https://files.echovr.de/updates/bullet_patch.zip",
-                                    tempDir, "bullet_patch.zip",
-                                    labelPcProgress2, thisFrame, frameMain,
-                                    1, false, -1, true);
-                            } catch (Exception e) {
-                                System.err.println("Update download failed (non-blocking): " + e.getMessage());
-                            }
-                        });
-                        updateThread.start();
+                        SwingUtilities.invokeLater(() -> labelPcProgress2.setText("Applying update..."));
+                        UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, labelPcProgress2, thisFrame, frameMain, null);
                     });
                     downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0, false);
                 });

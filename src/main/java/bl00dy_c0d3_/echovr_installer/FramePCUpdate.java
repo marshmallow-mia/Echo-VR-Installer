@@ -6,8 +6,6 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 
 import static bl00dy_c0d3_.echovr_installer.Helpers.*;
 
@@ -16,7 +14,6 @@ public class FramePCUpdate extends BaseWizard {
     private PCWizardState wizardState = new PCWizardState();
     private SpecialTextfield pathField;
     private JLabel pathIndicator;
-    private String binPath;
     private SpecialLabel updateProgressLabel;
 
     public FramePCUpdate(FrameMain frameMain) {
@@ -54,14 +51,14 @@ public class FramePCUpdate extends BaseWizard {
 
     @Override
     protected int getSubstepCount(int s) {
-        return s == 1 ? 2 : 1;
+        return 1;
     }
 
     @Override
     protected String getSubstepName(int s, int sub) {
         switch (s) {
             case 0: return "Choose Path";
-            case 1: return sub == 0 ? "Download" : "Extract";
+            case 1: return "Update";
             case 2: return "All Done";
         }
         return "";
@@ -79,10 +76,7 @@ public class FramePCUpdate extends BaseWizard {
     protected void updateStatusText(int step, int sub) {
         switch (step) {
             case 0: dlProgressLabel.setText("Choose your Echo VR install path"); break;
-            case 1:
-                if (sub == 0) dlProgressLabel.setText(stepInProgress ? "Downloading update..." : "Ready to update");
-                else dlProgressLabel.setText("Extracting update...");
-                break;
+            case 1: dlProgressLabel.setText(stepInProgress ? "Updating..." : "Ready to update"); break;
             case 2: dlProgressLabel.setText("Echo VR update complete!"); break;
         }
     }
@@ -199,12 +193,7 @@ public class FramePCUpdate extends BaseWizard {
     }
 
     private void buildStep1(int cx, int sub) {
-        if (sub == 0) {
-            buildStep1Download(cx);
-        } else {
-            buildStep1Extract(cx);
-            startExtraction();
-        }
+        buildStep1Download(cx);
     }
 
     private void buildStep1Download(int cx) {
@@ -225,7 +214,7 @@ public class FramePCUpdate extends BaseWizard {
             public void mouseReleased(MouseEvent e) {
                 if (stepInProgress) {
                     if (!confirmAbortDownload()) return;
-                    if (downloader != null) downloader.cancelDownload();
+                    UpdateService.cancelUpdate();
                     stepInProgress = false;
                     progressAnimator.stop();
                     dlButton.changeText("Start Update");
@@ -252,96 +241,23 @@ public class FramePCUpdate extends BaseWizard {
         nextBtn.setEnabled(false);
         updateStatusText(1, 0);
 
-        if (downloader != null) { downloader.cancelDownload(); pause(1); }
-
-        final String tempDir = System.getProperty("java.io.tmpdir") + "/echo_update/";
-        new Thread(() -> {
-            downloader = new Downloader();
-            downloader.setOnCompleteListener(() -> SwingUtilities.invokeLater(() -> {
-                File f = new File(tempDir + "bullet_patch.zip");
-                if (f.exists() && f.length() > 0) {
-                    updateProgressLabel.setText("100.00%");
-                    stepInProgress = false;
-                    progressAnimator.stop();
-                    progPanel.repaint();
-                    statusBarBox.repaint();
-                    advance();
-                } else {
-                    stepInProgress = false;
-                    progressAnimator.stop();
-                    progPanel.repaint();
-                    statusBarBox.repaint();
-                    dlButton.changeText("Retry");
-                    dlButton.setEnabled(true);
-                    updateProgressLabel.setText("Download failed");
-                    updateStatusText(1, 0);
-                }
+        UpdateService.applyUpdates(
+            "https://files.echovr.de/updates/update.manifest",
+            wizardState.getBinPath(),
+            updateProgressLabel,
+            FramePCUpdate.this,
+            frameMain,
+            () -> SwingUtilities.invokeLater(() -> {
+                updateProgressLabel.setText("Update applied!");
+                stepInProgress = false;
+                stepCompleted = true;
+                progressAnimator.stop();
+                nextBtn.setEnabled(true);
+                dlProgressLabel.setText("Update applied!");
+                progPanel.repaint();
+                statusBarBox.repaint();
+                advance();
             }));
-            downloader.startDownload(
-                "https://files.echovr.de/updates/bullet_patch.zip",
-                tempDir, "bullet_patch.zip",
-                updateProgressLabel, FramePCUpdate.this, frameMain,
-                1, false, -1, true);
-        }).start();
-    }
-
-    private void buildStep1Extract(int cx) {
-        JLabel h = makeHeader("Extracting Echo VR update");
-        h.setBounds((cx - 450) / 2, 4, 450, 55); contentPanel.add(h);
-
-        updateProgressLabel = new SpecialLabel("Extracting...", 14);
-        updateProgressLabel.setBackground(new Color(255, 255, 255, 200));
-        updateProgressLabel.setForeground(Color.BLACK);
-        updateProgressLabel.setSize(440, updateProgressLabel.getHeight());
-        updateProgressLabel.setLocation((cx - 440) / 2, 70);
-        contentPanel.add(updateProgressLabel);
-    }
-
-    private void startExtraction() {
-        stepInProgress = true;
-        progressAnimator.start();
-        updateStatusText(1, 1);
-        nextBtn.setEnabled(false);
-
-        final String tempDir = System.getProperty("java.io.tmpdir") + "/echo_update/";
-        final File zipFile = new File(tempDir + "bullet_patch.zip");
-
-        new Thread(() -> {
-            try {
-                if (!zipFile.exists()) {
-                    SwingUtilities.invokeLater(() -> {
-                        new ErrorDialog().errorDialog(FramePCUpdate.this,
-                            "Download missing",
-                            "The update file was not found.\nPlease try downloading again.", 0);
-                        showStep(1, 0);
-                        resetAfterError(dlButton);
-                        dlButton.changeText("Retry");
-                    });
-                    return;
-                }
-                String binPath = wizardState.getBinPath();
-                UnzipFile.unzip(zipFile.getAbsolutePath(), binPath);
-                SwingUtilities.invokeLater(() -> {
-                    updateProgressLabel.setText("Update applied!");
-                    stepInProgress = false;
-                    stepCompleted = true;
-                    progressAnimator.stop();
-                    nextBtn.setEnabled(true);
-                    dlProgressLabel.setText("Update applied!");
-                    progPanel.repaint();
-                    statusBarBox.repaint();
-                });
-            } catch (IOException e) {
-                SwingUtilities.invokeLater(() -> {
-                    new ErrorDialog().errorDialog(FramePCUpdate.this,
-                        "Please close Echo VR first",
-                        "Please close Echo VR before updating.\n\n" + e.getMessage(), 0);
-                    showStep(1, 0);
-                    resetAfterError(dlButton);
-                    dlButton.changeText("Retry");
-                });
-            }
-        }).start();
     }
 
     private void buildStep2(int cx) {
