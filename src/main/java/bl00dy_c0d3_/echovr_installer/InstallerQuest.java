@@ -59,6 +59,12 @@ public class InstallerQuest {
                 adbPath = tempPath + "/platform-tools-linux/adb";
             }
 
+            // Game data lives in the app-owned external media dir. Unlike /sdcard/readyatdawn,
+            // this needs no storage permission, so it works on secondary Quest accounts.
+            // It MUST be staged AFTER the APK is installed, because Android wipes
+            // /sdcard/Android/media/<pkg> when the app is uninstalled.
+            String dataDir = "/sdcard/Android/media/com.readyatdawn.r15/files";
+
             System.out.println("**adb kill-server");
             runShellCommand(adbPath + " kill-server");
 
@@ -68,17 +74,17 @@ public class InstallerQuest {
             System.out.println("**Uninstall");
             runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
 
-            System.out.println("**delete old data /sdcard/readyatdawn/files/");
-            runShellCommand(adbPath + " shell \"rm -r /sdcard/readyatdawn/files\"");
+            System.out.println("**delete legacy data /sdcard/readyatdawn (old install location)");
+            runShellCommand(adbPath + " shell \"rm -rf /sdcard/readyatdawn\"");
 
             System.out.println("**Install");
             runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
-            System.out.println("**mkdir: /sdcard/readyatdawn/files/_local");
-            runShellCommand(adbPath + " shell \"mkdir -p /sdcard/readyatdawn/files/_local\"");
+            System.out.println("**mkdir: " + dataDir + "/_local");
+            runShellCommand(adbPath + " shell \"mkdir -p " + dataDir + "/_local\"");
 
             System.out.println("**Set permissions (pre-push)");
-            runShellCommand(adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"");
+            runShellCommand(adbPath + " shell \"chmod -R 777 " + dataDir + "\"");
 
             System.out.println("**push zip to /data/local/tmp");
             progressLabel.setText("Pushing data files...");
@@ -120,28 +126,28 @@ public class InstallerQuest {
 
             System.out.println("**mv zip to target");
             if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/\"",
+                    adbPath + " shell \"mv /data/local/tmp/_data.zip " + dataDir + "/\"",
                     "mv", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**unzip");
             if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"cd /sdcard/readyatdawn/files/; unzip _data.zip\"",
+                    adbPath + " shell \"cd " + dataDir + "/; unzip _data.zip\"",
                     "unzip", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**rm zip");
             if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"cd /sdcard/readyatdawn/files/; rm _data.zip\"",
+                    adbPath + " shell \"cd " + dataDir + "/; rm _data.zip\"",
                     "rm", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**Set permissions (post-unzip)");
             if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"chmod -R 777 /sdcard/readyatdawn/files\"",
+                    adbPath + " shell \"chmod -R 777 " + dataDir + "\"",
                     "chmod", progressLabel)) {
                 overallSuccess = false;
             }
