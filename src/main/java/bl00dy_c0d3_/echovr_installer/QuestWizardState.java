@@ -2,7 +2,7 @@ package bl00dy_c0d3_.echovr_installer;
 
 public class QuestWizardState extends WizardState {
 
-    private String apkFilename = "r15_26-06-25.apk";
+    private String apkFilename = "echo_quest_27-06-2026.001.apk";
     private int adbDeviceStatus = -1;
     private boolean isPatchedApk = false;
 
