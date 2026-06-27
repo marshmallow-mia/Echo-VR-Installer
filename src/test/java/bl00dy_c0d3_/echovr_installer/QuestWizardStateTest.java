@@ -15,7 +15,7 @@ public class QuestWizardStateTest {
 
     @Test
     void testDefaultApkFilename() {
-        assertEquals("r15_26-06-25.apk", state.getApkFilename());
+        assertEquals("echo_quest_27-06-2026.001.apk", state.getApkFilename());
     }
 
     @Test

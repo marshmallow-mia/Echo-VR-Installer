@@ -438,7 +438,7 @@ public class Helpers {
 
     /** Best-effort removal of staged patch temp files (PC dll + Quest patched APK). */
     public static void deletePatchTempFiles() {
-        String[] names = {"pnsovr.dll", "r15_26-06-25.apk", "personilizedechoapk.apk"};
+        String[] names = {"pnsovr.dll", "echo_quest_27-06-2026.001.apk", "personilizedechoapk.apk"};
         for (String n : names) {
             try { Files.deleteIfExists(PATCH_TEMP_DIR.resolve(n)); } catch (Exception ignored) {}
         }
