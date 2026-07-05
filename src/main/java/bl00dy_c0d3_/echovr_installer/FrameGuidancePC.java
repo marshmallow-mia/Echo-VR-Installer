@@ -57,7 +57,7 @@ public class FrameGuidancePC extends BaseWizard {
     protected int getWindowHeight() { return FH; }
 
     @Override
-    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b-005"; }
+    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b-006"; }
 
     @Override
     protected int getStepCount() { return 6; }

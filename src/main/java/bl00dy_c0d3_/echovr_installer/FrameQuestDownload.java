@@ -67,7 +67,7 @@ public class FrameQuestDownload extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.9.4b-005");
+        this.setTitle("Echo VR Installer v0.9.4b-006");
         FrameQuestDownload outFrame = this;
 
 
@@ -147,7 +147,7 @@ public class FrameQuestDownload extends JDialog {
         questStartDownload.changeText("Restart Download");
         Thread downloadThread = new Thread(() -> {
             downloader = new Downloader();
-            downloader.startDownload("echo_quest_27-06-2026.001.apk", targetPath + "", "echo_quest_27-06-2026.001.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
+            downloader.startDownload("echo_quest_05-07-2026.001.apk", targetPath + "", "echo_quest_05-07-2026.001.apk",  labelQuestProgress2, outFrame, null, 2, false, 0, false);
         });
 
         downloadThread.start();
@@ -177,7 +177,7 @@ public class FrameQuestDownload extends JDialog {
 
 
 
-        apkfileName = "echo_quest_27-06-2026.001.apk";
+        apkfileName = "echo_quest_05-07-2026.001.apk";
 
         String obbfileName = "_data.zip";
         InstallerQuest installToQuest = new InstallerQuest();
