@@ -48,7 +48,7 @@ public class FrameSteamPatcher extends JDialog {
         this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         this.setResizable(false);
         this.setIconImage(loadGUI("icon.png"));
-        this.setTitle("Echo VR Installer v0.9.4b-005");
+        this.setTitle("Echo VR Installer v0.9.4b-006");
         this.setModal(true);
 
 
