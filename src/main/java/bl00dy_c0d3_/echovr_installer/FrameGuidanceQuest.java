@@ -278,7 +278,7 @@ public class FrameGuidanceQuest extends BaseWizard {
                 apkProgressLabel.setText("100.00%");
                 onDownloadFileComplete();
             }));
-            downloader.startDownload("echo_quest_05-07-2026.001.apk", tempPath.toString(), "echo_quest_05-07-2026.001.apk",
+            downloader.startDownload("echo_quest_16-07-2026.001.apk", tempPath.toString(), "echo_quest_16-07-2026.001.apk",
                     apkProgressLabel, FrameGuidanceQuest.this, null, 2, false, 0, false);
         }).start();
 
