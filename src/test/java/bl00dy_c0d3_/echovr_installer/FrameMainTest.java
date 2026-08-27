@@ -40,6 +40,14 @@ public class FrameMainTest {
     }
 
     @Test
+    void testQuestUpdateEchoButtonVisible() {
+        // "Update Echo (Quest)" mirrors the PC update entry point on the Quest column
+        SpecialButton btn = findButtonByText("Update Echo (Quest)");
+        assertNotNull(btn, "Update Echo (Quest) button should exist");
+        assertTrue(btn.isVisible(), "Update Echo (Quest) button should be visible");
+    }
+
+    @Test
     void testNoLicenceFrameHidden() {
         // rahmen1 is the JPanel containing "No licence patch" AND "Steam Patch (Revive)"
         // It should be hidden

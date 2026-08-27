@@ -242,7 +242,7 @@ public class FramePCUpdate extends BaseWizard {
         updateStatusText(1, 0);
 
         UpdateService.applyUpdates(
-            "https://files.echovr.de/updates/update.manifest",
+            PC_MANIFEST_URL,
             wizardState.getBinPath(),
             updateProgressLabel,
             FramePCUpdate.this,

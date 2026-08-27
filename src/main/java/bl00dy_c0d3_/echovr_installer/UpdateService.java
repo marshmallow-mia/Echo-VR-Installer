@@ -2,24 +2,18 @@ package bl00dy_c0d3_.echovr_installer;
 
 import javax.swing.*;
 import java.io.*;
-import java.net.URL;
 import java.nio.file.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
- * Manifest-based update engine.
+ * Manifest-based update engine for the PC install.
  *
- * <p>Downloads a manifest file at {@code manifestUrl}, processes all {@code del} entries
- * first, then downloads and SHA-256-verifies each {@code add} entry. The base URL for
- * individual files is derived from the manifest URL (everything before the last '/').
+ * <p>Processes all {@code del} entries first, then downloads and SHA-256-verifies each
+ * {@code add} entry into {@code installBinPath}. Files whose on-disk hash already matches
+ * the manifest are skipped. See {@link UpdateManifest} for the manifest format.
  *
- * <p>Manifest format (whitespace-separated, {@code #} comments and blank lines supported):
- * <pre>
- *   add  path/to/file.dll  sha256hex
- *   del  path/to/old.dll
- * </pre>
+ * <p>The Quest equivalent is {@link QuestUpdateService}, which applies the same manifest
+ * shape over adb instead of the local filesystem.
  */
 public class UpdateService {
 
@@ -36,21 +30,14 @@ public class UpdateService {
         new Thread(() -> {
             try {
                 System.out.println("UpdateService: downloading manifest " + manifestUrl);
-                String manifestContent = downloadText(manifestUrl);
-                List<ManifestEntry> entries = parseManifest(manifestContent);
-                String baseUrl = manifestUrl.substring(0, manifestUrl.lastIndexOf('/'));
-
-                List<ManifestEntry> delEntries = new ArrayList<>();
-                List<ManifestEntry> addEntries = new ArrayList<>();
-                for (ManifestEntry e : entries) {
-                    if ("del".equals(e.action)) delEntries.add(e);
-                    else if ("add".equals(e.action)) addEntries.add(e);
-                }
+                UpdateManifest manifest = UpdateManifest.fetch(manifestUrl);
+                List<UpdateManifest.Entry> delEntries = manifest.dels();
+                List<UpdateManifest.Entry> addEntries = manifest.adds();
 
                 int total = delEntries.size() + addEntries.size();
                 int current = 0;
 
-                for (ManifestEntry e : delEntries) {
+                for (UpdateManifest.Entry e : delEntries) {
                     if (cancelRequested) return;
                     current++;
                     final int cur = current;
@@ -61,7 +48,7 @@ public class UpdateService {
                     Files.deleteIfExists(target);
                 }
 
-                for (ManifestEntry e : addEntries) {
+                for (UpdateManifest.Entry e : addEntries) {
                     if (cancelRequested) return;
                     current++;
                     final int cur = current;
@@ -73,7 +60,7 @@ public class UpdateService {
 
                     if (Files.exists(target)) {
                         try {
-                            if (sha256Matches(target, e.sha256)) {
+                            if (Helpers.sha256Matches(target, e.sha256)) {
                                 System.out.println("UpdateService: skipping " + e.path + " (already up to date)");
                                 continue;
                             }
@@ -82,13 +69,13 @@ public class UpdateService {
                         }
                     }
 
-                    String fileUrl = baseUrl + "/" + e.path;
+                    String fileUrl = manifest.urlFor(e);
                     Path tempFile = Files.createTempFile("echo_update_", ".tmp");
                     try {
                         System.out.println("UpdateService: downloading " + fileUrl);
-                        downloadFileSimple(fileUrl, tempFile);
+                        Helpers.downloadFileSimple(fileUrl, tempFile);
 
-                        if (!sha256Matches(tempFile, e.sha256)) {
+                        if (!Helpers.sha256Matches(tempFile, e.sha256)) {
                             abortUpdate(frame, "Hash mismatch for " + e.path,
                                 "The downloaded file " + e.path + " does not match the expected SHA-256 checksum.\nUpdate aborted.");
                             return;
@@ -120,91 +107,9 @@ public class UpdateService {
         }).start();
     }
 
-    private static List<ManifestEntry> parseManifest(String content) {
-        List<ManifestEntry> entries = new ArrayList<>();
-        String[] lines = content.split("\n");
-        for (String line : lines) {
-            String trimmed = line.trim();
-            if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
-
-            String[] tokens = trimmed.split("\\s+");
-            if (tokens.length < 2) continue;
-
-            String action = tokens[0];
-            String path = tokens[1];
-
-            if (path.contains("..") || path.startsWith("/")) {
-                System.err.println("UpdateService: path traversal detected in manifest: " + path);
-                throw new RuntimeException("Path traversal detected in manifest: " + path);
-            }
-
-            if ("add".equals(action)) {
-                if (tokens.length < 3) {
-                    throw new RuntimeException("Missing SHA-256 for add entry: " + path);
-                }
-                String sha256 = tokens[2];
-                entries.add(new ManifestEntry(action, path, sha256));
-            } else if ("del".equals(action)) {
-                entries.add(new ManifestEntry(action, path, null));
-            }
-        }
-        return entries;
-    }
-
-    private static String downloadText(String url) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(new URL(url).openStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-        }
-        return sb.toString();
-    }
-
-    private static void downloadFileSimple(String url, Path destination) throws IOException {
-        try (InputStream in = new URL(url).openStream()) {
-            Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
-        }
-    }
-
-    private static boolean sha256Matches(Path file, String expectedHex) throws IOException {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            try (InputStream is = Files.newInputStream(file)) {
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = is.read(buf)) != -1) {
-                    digest.update(buf, 0, n);
-                }
-            }
-            byte[] hash = digest.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString().equalsIgnoreCase(expectedHex);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IOException("SHA-256 not available", e);
-        }
-    }
-
     private static void abortUpdate(JDialog frame, String title, String message) {
         SwingUtilities.invokeLater(() -> {
             new ErrorDialog().errorDialog(frame, title, message, 0);
         });
-    }
-
-    private static class ManifestEntry {
-        final String action;
-        final String path;
-        final String sha256;
-
-        ManifestEntry(String action, String path, String sha256) {
-            this.action = action;
-            this.path = path;
-            this.sha256 = sha256;
-        }
     }
 }

@@ -47,17 +47,7 @@ public class InstallerQuest {
             String commandResult5;
             String commandResult6;
 
-            String adbPath = "";
-
-            if (isWindows) {
-                adbPath = "\"" + tempPath + "/platform-tools/adb.exe" + "\"";
-            } else if (isChrome) {
-                adbPath = "adb";
-            } else if (mac) {
-                adbPath = tempPath + "/platform-tools-mac/adb";
-            } else { // Linux or other
-                adbPath = tempPath + "/platform-tools-linux/adb";
-            }
+            String adbPath = Adb.path();
 
             // Game data lives in the app-owned external media dir. Unlike /sdcard/readyatdawn,
             // this needs no storage permission, so it works on secondary Quest accounts.
@@ -203,31 +193,16 @@ public class InstallerQuest {
 
     //0 = connected, 1 = unauthorized, -1 not connected
     // Method to check if any device is connected based on the adb devices output
-    private static int checkQuestStatus(){
+    static int checkQuestStatus(){
 
         // Start the process
         Process process = null;
         try {
-            if(isWindows) {
-                process = new ProcessBuilder(tempPath + "/platform-tools/adb.exe", "devices").start();
-            }
-            else if(mac) {
-                process = new ProcessBuilder(tempPath + "/platform-tools-mac/adb", "devices").start();
-            }
-            else if(isChrome){
-                process = new ProcessBuilder("adb", "devices").start();
-            }
-            else{
-                System.out.println("LINUX checkQuestStatus: " + tempPath + "/platform-tools-linux/adb " + "devices");
-                process = new ProcessBuilder(tempPath + "/platform-tools-linux/adb", "devices").start();
-//                process = new ProcessBuilder("/lib64/ld-linux-x86-64.so.2", tempPath + "/platform-tools-linux/adb", "devices").start();
-
-            }
-
+            process = new ProcessBuilder(Adb.binary(), "devices").start();
         } catch (IOException e) {
             e.printStackTrace();
+            return -1;
         }
-        //TODO ^
 
         // StringBuilder to accumulate the output
         StringBuilder stdOutResult = new StringBuilder();
@@ -265,7 +240,7 @@ public class InstallerQuest {
     }
 
 
-    private static int parseExitCode(String output) {
+    static int parseExitCode(String output) {
         if (output == null) {
             return -1;
         }
@@ -283,9 +258,22 @@ public class InstallerQuest {
         return 0;
     }
 
-    private static boolean executeWithReconnect(String adbPath, String command,
+    static boolean executeWithReconnect(String adbPath, String command,
                                                  String commandDesc, SpecialLabel progressLabel) {
-        int exitCode = runShellCommandWithExitCode(command);
+        return executeWithReconnect(adbPath, () -> runShellCommandWithExitCode(command),
+                commandDesc, progressLabel);
+    }
+
+    /**
+     * Runs {@code action} and, if it fails <em>because the device dropped</em>, restarts the
+     * adb server and retries once. A failure with the device still connected is not retried.
+     *
+     * <p>The supplier form lets argv-based callers (see {@link Adb#exec}) reuse the same
+     * reconnect handling as the command-string ones.
+     */
+    static boolean executeWithReconnect(String adbPath, java.util.function.IntSupplier action,
+                                                 String commandDesc, SpecialLabel progressLabel) {
+        int exitCode = action.getAsInt();
         if (exitCode == 0) {
             return true;
         }
@@ -312,7 +300,7 @@ public class InstallerQuest {
 
         progressLabel.setText("Device reconnected, continuing...");
 
-        exitCode = runShellCommandWithExitCode(command);
+        exitCode = action.getAsInt();
         if (exitCode != 0) {
             System.out.println("**ERROR: " + commandDesc + " failed after reconnection (exit code " + exitCode + ")");
             return false;
