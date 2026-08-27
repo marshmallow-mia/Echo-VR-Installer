@@ -20,6 +20,8 @@ ext {
     javafxVersion = '17.0.2'
 }
 
+def os = org.gradle.internal.os.OperatingSystem.current()
+
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
@@ -65,6 +67,19 @@ test {
     enabled = project.hasProperty('runTests')
 }
 
+// The three bundled Android platform-tools copies are ~60 MB of the app module, but only the
+// host OS's copy is ever read: Helpers.prepareAdb() picks one folder at runtime (isWindows /
+// mac / else) and pulls it out via getResourceAsStream. Ship just that one.
+processResources {
+    if (os.isWindows()) {
+        exclude 'platform-tools-linux/**', 'platform-tools-mac/**'
+    } else if (os.isMacOsX()) {
+        exclude 'platform-tools/**', 'platform-tools-linux/**'
+    } else {
+        exclude 'platform-tools/**', 'platform-tools-mac/**'
+    }
+}
+
 jar {
     manifest {
         attributes "Main-Class": "bl00dy_c0d3_.echovr_installer.EchoVRInstaller"
@@ -77,60 +92,102 @@ tasks.register('copyLibjpeg', Copy) {
     into "$buildDir/jpackage/EchoVR_Installer/lib/runtime/lib/"
 }
 
-def os = org.gradle.internal.os.OperatingSystem.current()
+// Nix builds openjdk with debug symbols stripped out of lib/ but NOT out of jmods/*.jmod (the strip
+// hook cannot see inside those zips). jlink builds the runtime from jmods/, so on NixOS it pulls a
+// 233 MB libjvm.so carrying 211 MB of DWARF instead of the 26 MB stripped one — which is why local
+// images balloon to ~350 MB. jlink can strip the natives itself, but only if handed an objcopy.
+//
+// Detected rather than hardcoded: objcopy is absent from PATH on a bare NixOS shell (run the build
+// under `nix-shell -p binutils` to get it) and its /nix/store path changes on every binutils bump.
+// When it is missing we simply skip the flag, so the build still works — just larger. On Debian and
+// on the CI runners the jmods are already stripped, so this is a no-op there.
+//
+// Do NOT swap this for a plain --strip-debug: on JDK 21 that implies native stripping too and hard
+// fails with `Cannot run program "objcopy"` instead of degrading gracefully.
+def objcopyPath = System.getenv('PATH')?.split(File.pathSeparator)
+        ?.collect { new File(it, 'objcopy') }
+        ?.find { it.isFile() && it.canExecute() }
+def nativeStripOptions = objcopyPath
+        ? ['--strip-native-debug-symbols', "objcopy=${objcopyPath.absolutePath}".toString()]
+        : []
+if (!objcopyPath) {
+    logger.lifecycle('jlink: objcopy not on PATH — skipping native debug-symbol stripping. ' +
+                     'On NixOS, build under `nix-shell -p binutils` to shrink the runtime.')
+}
 
 jlink {
-    options = ['--add-modules', 'jdk.zipfs,javafx.controls,javafx.fxml,javafx.web,javafx.graphics,javafx.base']
+    // --compress=2 shrinks the lib/runtime/lib/modules jimage, which is by far the largest file in
+    // the image (uncompressed it is ~250 MB). --no-header-files/--no-man-pages drop C headers and
+    // man pages that a shipped runtime has no use for. NOTE: '2' is JDK 17 syntax; JDK 21+ wants
+    // '--compress=zip-6' instead and only warns about the old form.
+    options = ['--add-modules', 'jdk.zipfs,javafx.controls,javafx.fxml,javafx.web,javafx.graphics,javafx.base',
+               '--compress=2', '--no-header-files', '--no-man-pages'] + nativeStripOptions
     jpackage {
-        installerName = 'Echo_VR_Installer'
+        // Lock the app-image name: the portable output lands in build/jpackage/EchoVR_Installer/,
+        // a path that copyLibjpeg and the Windows taskkill hook below both hardcode.
+        imageName = 'EchoVR_Installer'
+
+        // Installer-only, disabled — see the `jpackage` task below.
+        // installerName = 'Echo_VR_Installer'
 
         if (os.isWindows()) {
             appVersion = '0.94.006'
             icon = 'icon.ico'  // Update path
 
-            installerOptions = [
-                    '--app-version', '0.94.006',
-                    '--vendor', 'marshmallow_mia',
-                    '--name', 'Echo_VR_Installer',
-                    '--install-dir', 'EchoVRInstaller',
-                    '--icon', 'icon.ico',  // Update path
-                    '--win-dir-chooser',
-                    '--win-shortcut',
-                    '--win-menu',
-                    '--win-menu-group', 'EchoVRInstaller',
-            ]
+            // Installer-only, disabled — every one of these flags (--install-dir, --win-*, --vendor)
+            // is read solely by the .exe/.msi installer step, which we no longer run.
+            // installerOptions = [
+            //         '--app-version', '0.94.006',
+            //         '--vendor', 'marshmallow_mia',
+            //         '--name', 'Echo_VR_Installer',
+            //         '--install-dir', 'EchoVRInstaller',
+            //         '--icon', 'icon.ico',  // Update path
+            //         '--win-dir-chooser',
+            //         '--win-shortcut',
+            //         '--win-menu',
+            //         '--win-menu-group', 'EchoVRInstaller',
+            // ]
         } else if (os.isMacOsX()) {
             appVersion = '1.0.94.006'
-            installerOptions = [
-                    '--mac-package-identifier', 'IhateApple',
-            ]
+
+            // Installer-only, disabled — applies to the .dmg/.pkg we no longer build.
+            // installerOptions = [
+            //         '--mac-package-identifier', 'IhateApple',
+            // ]
         } else {
             appVersion = '0.94.006'
             icon = 'icon.png'  // Update path if needed
-
-            // Ensure copyLibjpeg runs after jpackage
-            tasks.named('jpackage').configure {
-                finalizedBy(copyLibjpeg)
-            }
         }
     }
 }
 
+// Ship libjpeg alongside the portable image on Linux. This hangs off jpackageImage (not jpackage,
+// which is disabled below) because jpackageImage is what creates the app-image dir it copies into.
+if (!os.isWindows() && !os.isMacOsX()) {
+    tasks.named('jpackageImage').configure {
+        finalizedBy(copyLibjpeg)
+    }
+}
 
-
-// Ensure build depends on jlink and jpackage
+// Ensure build depends on jlink and the portable app image (NOT jpackage — see below)
 tasks.named('build').configure {
     dependsOn('jlink')
-    dependsOn('jpackage')
+    dependsOn('jpackageImage')
 }
+
+// Portable-only distribution: no .exe / .msi / .deb / .rpm / .dmg installers.
+// jpackageImage (above) produces build/jpackage/EchoVR_Installer/ — that IS the deliverable.
+// Disabling the task means even an explicit `gradlew jpackage` stops at the portable image
+// instead of quietly wrapping it in whatever native installer format the build host defaults to.
+// To bring installers back: re-enable this task, uncomment the installerName/installerOptions
+// blocks in the jlink{} config above, and switch the build dependsOn back to 'jpackage'.
+tasks.named('jpackage').configure { enabled = false }
 
 // Building the app-image (jpackageImage) first deletes the previous build/jpackage output. That
 // fails ("Unable to delete ... EchoVR_Installer.exe") whenever a copy of the app is still holding
 // the exe — a running instance, a leftover elevated admin-helper from testing, or AV/Explorer
 // briefly scanning the file. Before the image is rebuilt, kill any running EchoVR_Installer.exe and
 // clear the dir ourselves (with retries to ride out an AV scan) so packaging starts clean & unlocked.
-// NOTE: this must hook jpackageImage (runs first), NOT jpackage — the later jpackage/MSI step needs
-// the freshly built app-image that lives in build/jpackage.
 tasks.named('jpackageImage').configure {
     doFirst {
         if (os.isWindows()) {
