@@ -57,7 +57,7 @@ public class FrameGuidancePC extends BaseWizard {
     protected int getWindowHeight() { return FH; }
 
     @Override
-    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b.002"; }
+    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b-006"; }
 
     @Override
     protected int getStepCount() { return 6; }
@@ -192,7 +192,7 @@ public class FrameGuidancePC extends BaseWizard {
                 final String binPath = root + "/ready-at-dawn-echo-arena/bin/win10";
 
                 SwingUtilities.invokeLater(() -> dlProgressLabel.setText("Applying update..."));
-                UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, dlProgressLabel, FrameGuidancePC.this, frameMain, () -> {
+                UpdateService.applyUpdates(PC_MANIFEST_URL, binPath, dlProgressLabel, FrameGuidancePC.this, frameMain, () -> {
                     SwingUtilities.invokeLater(() -> {
                         dlProgressLabel.setText("Installation complete!");
                         nextBtn.setEnabled(true);

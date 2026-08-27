@@ -188,14 +188,14 @@ Type → Download → Install → Done
 | Role | Image series | Font size | Example |
 |------|-------------|-----------|---------|
 | Primary | `button_up.png` | **18** | "I own Echo on Meta", "Start Download", "Authorize with Discord", "Add Desktop Shortcut", "Quest Install Echo" |
-| Secondary | `button_up_middle.png` | **14** | "No Licence Patch", "Steam Patch (Revive)", "Start Install", "Update Echo (PC)" |
+| Secondary | `button_up_middle.png` | **14** | "No Licence Patch", "Steam Patch (Revive)", "Start Install", "Update Echo (PC)", "Update Echo (Quest)" |
 | Small action | `button_up_small.png` | **11–12** | "Choose path", "← Back" |
 | Nav | `button_up_small.png` | **11** | "Back", "Next", "Finish" |
 
 - All buttons **centered horizontally** in their section
 - Every button has a **TipBox hover tip** via `mouseEntered`/`mouseExited` listeners
 - Button image series: 3-state (up/down/highlighted) with corresponding image name pattern
-- FrameMain uses font size **20** for main Install buttons, **15** for "Update Echo (PC)", **17** for utility buttons
+- FrameMain uses font size **20** for main Install buttons, **15** for "Update Echo (PC)" and "Update Echo (Quest)", **17** for utility buttons
 - Step 5 Done step: "Add Desktop Shortcut" and "Open Install Folder" use primary image series, font size **18**
 
 ## 9. Special Components
@@ -352,7 +352,7 @@ Type → Download → Install → Done
 - Resets `questState.setUserType(null)` on every entry, forcing re-selection
 
 ### Step 1: Download
-- Owner: Downloads `r15_26-06-25.apk` + `_data.zip` in parallel via two `Downloader` instances
+- Owner: Downloads the APK named by the Quest manifest's `# BASE_APK:` header + `_data.zip` in parallel via two `Downloader` instances. The manifest is fetched on entry (`fetchQuestManifest()`); when it can't be reached, `QuestWizardState.apkFilename`'s built-in default is used and the post-install update is skipped.
 - New Player: OAuth2 flow → downloads patched APK → then downloads `_data.zip`
 - Two progress labels: APK and data (white bg, black text, 440px wide)
 - Tracks `downloadCompleteCount` (synchronized), both must finish before advancing
@@ -375,17 +375,21 @@ Type → Download → Install → Done
   4. `adb kill-server`
   5. `adb devices`
   6. `adb uninstall com.readyatdawn.r15`
-  7. `adb shell rm -r /sdcard/readyatdawn/files`
+  7. `adb shell rm -rf /sdcard/readyatdawn` — **legacy** cleanup of the pre-`Android/media` location
   8. `adb install -g <apk>`
-  9. `adb shell mkdir -p /sdcard/readyatdawn/files/_local`
-  10. `adb shell chmod -R 777 /sdcard/readyatdawn/files`
+  9. `adb shell mkdir -p /sdcard/Android/media/com.readyatdawn.r15/files/_local`
+  10. `adb shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
   11. `adb push _data.zip /data/local/tmp` (with transfer validation)
-  12. `adb shell mv /data/local/tmp/_data.zip /sdcard/readyatdawn/files/`
-  13. `adb shell cd /sdcard/readyatdawn/files/; unzip _data.zip`
-  14. `adb shell cd /sdcard/readyatdawn/files/; rm _data.zip`
-  15. `adb shell chmod -R 777 /sdcard/readyatdawn/files`
+  12. `adb shell mv /data/local/tmp/_data.zip /sdcard/Android/media/com.readyatdawn.r15/files/`
+  13. `adb shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; unzip _data.zip`
+  14. `adb shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; rm _data.zip`
+  15. `adb shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
   16. Grant permissions: `appops`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO`
   17. `adb kill-server`
+  18. `recordInstalledVersion()` — hashes the staged APK locally and writes the base-version marker to the headset
+  19. `QuestUpdateService.applyUpdates(...)` — applies the Quest manifest (label reads "Applying update...")
+
+  Steps 4–17 live in `InstallerQuest.installAPK`; 18–19 in `FrameGuidanceQuest`. All adb paths resolve through `Adb.path()` / `Adb.binary()`.
 - Includes auto-reconnect on device disconnect during push/install phases
 - Post-install warning: "DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!"
 
@@ -393,6 +397,33 @@ Type → Download → Install → Done
 - "You're all set!" in green (Arial Bold 24, at y=55 — lower than PC's y=20)
 - "Echo VR is ready to play on your Quest." (Arial Plain 16, at y=105)
 - Next button says "Finish"
+
+### Quest Update Wizard (`FrameQuestUpdate`)
+
+Standalone Quest update, mirroring `FramePCUpdate`. Reached from FrameMain's "Update Echo (Quest)" button. **3 steps** — "Connect" stands in for PC's "Path", because the on-device location is fixed and needs no user choice.
+
+| Step | Chip | Substep | Content |
+|------|------|---------|---------|
+| 0 | "Connect" | "Connect to Quest" | Header "Connect your Quest"; ✓/✗ status row + "Connect to Quest" button, auto-checked on entry via the shared `BaseWizard.refreshQuestConnection(...)`. Next enabled only when status == 0 |
+| 1 | "Update" | "Update" | Header "Update Echo VR on your Quest". Version gate runs on entry; "Start Update" / "Cancel" |
+| 2 | "Done" | "All Done" | "Update applied!" green (Arial Bold 24, y=55) + "Echo VR on your Quest has been updated." (Arial Plain 16, y=105) |
+
+- **Manifest**: `Helpers.QUEST_MANIFEST_URL` = `https://files.echovr.de/updates/quest/update.manifest`. Parsed by `UpdateManifest`, shared with the PC path. Quest-only headers: `# BASE_APK: <name> <sha256>` and `# Target: <abs path>`. Entry paths are validated against a strict charset and the target root against `/sdcard/Android/media/com.readyatdawn.<x>` — both reach `adb shell`, including `rm -rf`.
+- **Version gate** (`QuestUpdateService.checkVersion` → pure `decide(...)`): a Quest update is only valid on top of the exact APK the manifest was built for. Because Discord-patched APKs are repacked and can never hash to `BASE_APK`, a marker file on the **headset** (not the PC, so it works from any machine) records which base version an install came from.
+- **Marker**: `/sdcard/Android/media/com.readyatdawn.r15/.echo_installer_version`, `key=value` lines (`base_apk`, `base_sha256`, `installed_sha256`, `patched`, `installed_at`, `installer_version`). Written by push, read by `adb shell cat`. Android wipes `/sdcard/Android/media/<pkg>` on uninstall, so it can never outlive its install.
+
+| Installed | Marker | Condition | Result |
+|-----------|--------|-----------|--------|
+| no | — | — | `NOT_INSTALLED` |
+| yes | present | base matches **and** installed hash agrees | **OK** |
+| yes | present | base matches, installed hash differs | `MISMATCH` (APK replaced) |
+| yes | present | base differs | `MISMATCH` (version out of date) |
+| yes | absent | installed hash == manifest base | **OK** + marker back-filled |
+| yes | absent | otherwise | `MISMATCH` (no provenance) |
+
+- **Mismatch UX**: `JOptionPane` with "Reinstall Echo VR" / "Cancel". Choosing reinstall `dispose()`s this wizard and opens `FrameGuidanceQuest` via `invokeLater` (so the new modal isn't stacked behind the old one). `NOT_INSTALLED` shows the same dialog — the remedy is identical.
+- **Apply** (`QuestUpdateService.applyUpdates`): `del` entries (`rm -rf`) first, then `add` entries. Existing files are hashed on-device in one batched `sha256sum` call and skipped when current; when `sha256sum` is unavailable, skipping is disabled and everything is pushed. Each file downloads to a temp, is SHA-256-verified locally, then `mkdir -p` + `adb push` to the full destination path. `chmod -R 777` runs last and is **never fatal** — `/sdcard` is a synthesized FUSE mount where it may be a no-op.
+- **Failure/cancel**: `applyUpdates` takes an `onFailure` callback so an abort returns the step to a retryable state instead of stranding the wizard mid-progress. Cancel takes effect at the next file boundary ("Cancelling after the current file...").
 
 ## 14. OAuth2 Discord Flow (Licence Patch)
 
@@ -498,7 +529,7 @@ WizardState (base)
 y=0   ─── Background (Echox720.png, 1280×720) ───
 y=200 ─── "Install Echo VR" (PC, centered left half, button_up.png 20)  |  "Quest Install Echo" (right, x=819, button_up.png 20)
 y=240 ─── TipBox (centered)
-y=280 ─── "Update Echo (PC)" (same x as PC Install, button_up_middle.png 15)
+y=280 ─── "Update Echo (PC)" (same x as PC Install, button_up_middle.png 15)  |  "Update Echo (Quest)" (x=819, button_up_middle.png 15)
 y=420 ─── rahmen1 [HIDDEN panel: "No licence patch" + "Steam Patch (Revive)" buttons]
 y=430 ─── Easter egg zone (invisible JLabel, 100×100)
 y=547 ─── "Get Quest Logs" [HIDDEN, button_up_middle.png 17, x=818]
@@ -506,8 +537,9 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
 ```
 
 - **"Install Echo VR" button** (PC side, centered left): opens `new FrameGuidancePC(this)`
-- **"Update Echo (PC)" button**: opens `new FramePCEchoUpdate(this)` — standalone legacy dialog
+- **"Update Echo (PC)" button**: opens `new FramePCUpdate(this)` — a `BaseWizard` (Path / Update / Done)
 - **"Quest Install Echo" button** (right side): opens `new FrameGuidanceQuest(this)`
+- **"Update Echo (Quest)" button** (right side): opens `new FrameQuestUpdate(this)` — a `BaseWizard` (Connect / Update / Done)
 - Background frames panel (rahmen1, below buttons, **HIDDEN by default**): legacy `FramePCPatcher` and `FrameSteamPatcher`
 - **"Get Quest Logs"**: x=818, y=547, **HIDDEN by default** (`setVisible(false)`)
 - **"Delete cache"**: x=818, y=595, **VISIBLE by default** (`setVisible(true)`) — clears temp download files
@@ -520,6 +552,7 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
 - **"Install Echo VR" button** (PC): x = `(FRAME_WIDTH / 2 - buttonWidth) / 2` (centered on left half), y=**200**
 - **"Update Echo (PC)" button**: same x as PC Install button, y=**280**
 - **"Quest Install Echo" button**: x=**819**, y=**200**
+- **"Update Echo (Quest)" button**: same x as Quest Install button (**819**), y=**280**
 - **Section panel "rahmen1"**: positioned at `((FRAME_WIDTH / 2 - pcPanelW) / 2, 420)`, fill `Color(200, 0, 150, 150)`, arc **20**, inner padding **15**
   - Contains: "No licence patch" (button_up.png, 20) + "Steam Patch (Revive)" (button_up.png, 19)
   - Hidden by default (`setVisible(false)`)
@@ -536,7 +569,6 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
 - **Commented-out music buttons** (disabled): play.png at (590,90) → plays `EchoLobby.wav` (hardcoded path), stop.png at (657,90)
 
 ### Other Entry Points (outside FrameMain)
-- **FramePCEchoUpdate**: standalone dialog for updating existing PC installation
 - **FramePCPatcher**: standalone No Licence Patch dialog (legacy, replaced by wizard step 4)
 - **FrameSteamPatcher**: standalone Revive installer dialog (legacy, replaced by wizard step 4)
 

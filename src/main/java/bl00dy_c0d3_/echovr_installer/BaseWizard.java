@@ -717,4 +717,66 @@ public abstract class BaseWizard extends JDialog {
         } catch (Exception ignored) {}
         return null;
     }
+
+
+    /**
+     * Checks (on a background thread) whether the Quest is connected and authorized, then updates
+     * the status label with a ✓/✗ hook. When {@code interactive} (user pressed Connect), also shows
+     * a guidance dialog if the device is unauthorized or not detected.
+     *
+     * <p>Shared by the Quest install and Quest update wizards.
+     */
+    protected void refreshQuestConnection(SpecialButton connectBtn, JLabel statusLbl, boolean interactive) {
+        refreshQuestConnection(connectBtn, statusLbl, interactive, null);
+    }
+
+    /**
+     * As above, additionally handing the raw status (0/1/-1) to {@code onResult} on the EDT
+     * so callers can gate navigation on it.
+     */
+    protected void refreshQuestConnection(SpecialButton connectBtn, JLabel statusLbl,
+                                          boolean interactive, java.util.function.IntConsumer onResult) {
+        connectBtn.setEnabled(false);
+        statusLbl.setIcon(null);
+        statusLbl.setForeground(Color.LIGHT_GRAY);
+        statusLbl.setText("Checking Quest connection...");
+        new Thread(() -> {
+            int status;
+            try { status = InstallerQuest.checkConnection(); }
+            catch (Exception ex) { status = -1; }
+            final int s = status;
+            SwingUtilities.invokeLater(() -> {
+                connectBtn.setEnabled(true);
+                switch (s) {
+                    case 0 -> {
+                        statusLbl.setIcon(markIcon(true, new Color(0, 200, 0), 18));
+                        statusLbl.setForeground(Color.WHITE);
+                        statusLbl.setText("Quest connected");
+                    }
+                    case 1 -> {
+                        statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
+                        statusLbl.setForeground(Color.WHITE);
+                        statusLbl.setText("Quest found — not authorized");
+                        if (interactive) {
+                            new ErrorDialog().errorDialog(BaseWizard.this, "Allow your PC on the Quest",
+                                "<html><center>Your Quest is connected, but it hasn't allowed this PC yet.<br>"
+                                + "Put on your headset and tap&nbsp;<b>Allow</b>&nbsp;when the USB debugging prompt appears "
+                                + "(replug the cable if you don't see it).</center></html>", 3);
+                        }
+                    }
+                    default -> {
+                        statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
+                        statusLbl.setForeground(Color.WHITE);
+                        statusLbl.setText("No Quest detected");
+                        if (interactive) {
+                            new ErrorDialog().errorDialog(BaseWizard.this, "No Quest detected",
+                                "<html><center>Couldn't find your Quest. Connect it by USB and make sure<br>"
+                                + "Developer Mode is enabled.</center></html>", 1);
+                        }
+                    }
+                }
+                if (onResult != null) onResult.accept(s);
+            });
+        }).start();
+    }
 }

@@ -28,7 +28,7 @@ public class FrameMain extends JFrame {
         });
         setResizable(false);
         setIconImage(loadGUI("icon.png"));
-        setTitle("Echo VR Installer v0.9.4b.002");
+        setTitle("Echo VR Installer v0.9.4b-006");
 
         Background back = new Background("Echox720.png");
         back.setLayout(null);
@@ -222,6 +222,23 @@ public class FrameMain extends JFrame {
             }
         });
         back.add(btn_QuestInstallEcho);
+
+        SpecialButton btn_QuestUpdateEcho = new SpecialButton("Update Echo (Quest)", "button_up_middle.png", "button_down_middle.png", "button_highlighted_middle.png", 15);
+        btn_QuestUpdateEcho.setLocation(btn_QuestInstallEcho.getX(), 280);
+        btn_QuestUpdateEcho.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent event) {
+                new FrameQuestUpdate(outFrame);
+            }
+        });
+        btn_QuestUpdateEcho.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent event) {
+                tipBox.showTip("Download and install the latest Echo VR update on your Quest");
+            }
+            public void mouseExited(MouseEvent event) {
+                tipBox.showDefault();
+            }
+        });
+        back.add(btn_QuestUpdateEcho);
     }
 
     private void addBackgroundFrames(JPanel back, FrameMain outFrame) {
