@@ -58,7 +58,7 @@ def launcherName = 'EchoVR_Installer'
 // enclosing script scope before the closure's delegate, so a script-level `appVersion` would shadow
 // the jlink jpackage extension's own `appVersion` property and the assignments below would silently
 // write to this variable instead.
-def appVersionStr = targetMac ? '1.0.94.006' : '0.94.006'
+def appVersionStr = targetMac ? '1.0.95.001' : '0.95.001'
 
 if (crossToWindows) {
     logger.lifecycle("Cross-building the Windows portable image on ${os.name}.")
@@ -387,13 +387,13 @@ jlink {
         // Target-driven. Unused when cross-building (windowsAppImage writes the cfg itself), but kept
         // correct so a native Windows or macOS build still behaves as it always did.
         if (targetWindows) {
-            appVersion = '0.94.006'
+            appVersion = '0.95.001'
             icon = 'icon.ico'  // Update path
 
             // Installer-only, disabled — every one of these flags (--install-dir, --win-*, --vendor)
             // is read solely by the .exe/.msi installer step, which we no longer run.
             // installerOptions = [
-            //         '--app-version', '0.94.006',
+            //         '--app-version', '0.95.001',
             //         '--vendor', 'marshmallow_mia',
             //         '--name', 'Echo_VR_Installer',
             //         '--install-dir', 'EchoVRInstaller',
@@ -404,14 +404,14 @@ jlink {
             //         '--win-menu-group', 'EchoVRInstaller',
             // ]
         } else if (targetMac) {
-            appVersion = '1.0.94.006'
+            appVersion = '1.0.95.001'
 
             // Installer-only, disabled — applies to the .dmg/.pkg we no longer build.
             // installerOptions = [
             //         '--mac-package-identifier', 'IhateApple',
             // ]
         } else {
-            appVersion = '0.94.006'
+            appVersion = '0.95.001'
             icon = 'icon.png'  // Update path if needed
         }
     }
