@@ -1,0 +1,33 @@
+<component name="ProjectRunConfigurationManager">
+  <!-- Cross-builds the portable Windows app-image on this Linux box. The plain `build` task targets
+       the host OS; -PtargetOs=windows switches every packaging decision (bundled platform-tools,
+       JavaFX classifier, jlink target platform) over to Windows and swaps jpackageImage out for
+       windowsAppImage + windowsPortableZip.
+
+       Output: build/distributions/EchoVR_Installer-<version>-windows-x64.zip
+               build/windows-image/EchoVR_Installer/   (the same tree, unzipped)
+
+       First run downloads a ~195 MB Temurin Windows JDK into .jdks/ (gitignored, survives `clean`). -->
+  <configuration default="false" name="build (win)" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="-PtargetOs=windows" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="build" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <method v="2" />
+  </configuration>
+</component>

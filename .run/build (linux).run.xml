@@ -1,0 +1,27 @@
+<component name="ProjectRunConfigurationManager">
+  <!-- The ordinary host build: jlink + jpackageImage -> build/jpackage/EchoVR_Installer/.
+       Identical to running `build` with no arguments; it exists so the two targets sit side by side
+       in the run dropdown and it is always obvious which one produced what is in build/. -->
+  <configuration default="false" name="build (linux)" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="-PtargetOs=linux" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="build" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <method v="2" />
+  </configuration>
+</component>
