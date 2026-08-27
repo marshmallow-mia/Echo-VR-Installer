@@ -9,3 +9,4 @@ echo_ideas.md
 *.jar
 *.kate-swp
 echovr/
+.jdks/

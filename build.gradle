@@ -20,14 +20,76 @@ ext {
     javafxVersion = '17.0.2'
 }
 
+// =====================================================================================================
+// Host vs. target
+// -----------------------------------------------------------------------------------------------------
+// `os` is the machine RUNNING the build. `targetOs` is the machine the image will RUN on. Until now
+// those were always the same thing and every decision keyed off `os`; they diverge the moment you pass
+// -PtargetOs=windows on a Linux box to cross-build the Windows portable image (see the fetchWindowsJdk
+// and windowsAppImage tasks near the bottom of this file).
+//
+// Getting the split wrong fails silently -- you get an image that looks right on disk and dies on the
+// user's machine -- so every decision below is labelled with which of the two it belongs to:
+//
+//   host-driven   : the taskkill/PowerShell pre-clean (it shells out to Windows tools), objcopy
+//                   detection, and the JavaFX classifier used for COMPILATION.
+//   target-driven : which platform-tools/ copy is bundled, appVersion/icon, which JavaFX classifier is
+//                   LINKED into the image, whether libjpeg.so.62 ships, whether --strip-native-debug-
+//                   symbols is passed, and which task `build` ultimately hangs off.
+// =====================================================================================================
 def os = org.gradle.internal.os.OperatingSystem.current()
+
+def targetOs = (project.findProperty('targetOs')
+        ?: (os.isWindows() ? 'windows' : os.isMacOsX() ? 'macos' : 'linux')).toString().toLowerCase()
+if (!(targetOs in ['windows', 'macos', 'linux'])) {
+    throw new GradleException("-PtargetOs must be one of windows|macos|linux (got '${targetOs}')")
+}
+def targetWindows = (targetOs == 'windows')
+def targetMac     = (targetOs == 'macos')
+def targetLinux   = (targetOs == 'linux')
+
+// Only Linux -> Windows is actually implemented. Building FOR Windows ON Windows still takes the
+// ordinary jpackageImage path, because there a real jpackage is available and does a strictly better
+// job (icon, VERSIONINFO, .jpackage.xml) than the hand assembly in windowsAppImage.
+def crossToWindows = targetWindows && !os.isWindows()
+
+def launcherName = 'EchoVR_Installer'
+// NOTE: deliberately NOT named `appVersion`. Groovy resolves a name inside a closure against the
+// enclosing script scope before the closure's delegate, so a script-level `appVersion` would shadow
+// the jlink jpackage extension's own `appVersion` property and the assignments below would silently
+// write to this variable instead.
+def appVersionStr = targetMac ? '1.0.94.006' : '0.94.006'
+
+if (crossToWindows) {
+    logger.lifecycle("Cross-building the Windows portable image on ${os.name}.")
+}
 
 sourceCompatibility = '17'
 targetCompatibility = '17'
 
+// The openjfx plugin resolves org.openjfx:javafx-<m>:<ver>:<classifier>, where <classifier> comes from
+// JavaFXPlatform.detect() -> osdetector, i.e. always the BUILD HOST. There is no setter for it (0.0.13
+// exposes only setVersion/setSdk/setConfiguration/setModules), so the target's jars have to be declared
+// by hand in dependencies{} below. The seven names are what the plugin's own transitive expansion of
+// [controls, fxml, web, swing] produces -- exactly what lands in build/jlinkbase/jlinkjars/.
+def javafxArtifacts = ['base', 'controls', 'fxml', 'graphics', 'media', 'swing', 'web']
+def javafxHostClassifier   = os.isWindows() ? 'win' : os.isMacOsX() ? 'mac' : 'linux'
+def javafxTargetClassifier = targetWindows  ? 'win' : targetMac     ? 'mac' : 'linux'
+
 javafx {
-    version = '17.0.2'
+    version = javafxVersion
     modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing']
+
+    // Park the plugin's host-classifier jars on compileOnly. compileOnly is part of compileClasspath
+    // (so javac still sees a real JavaFX -- and org.javamodularity.moduleplugin, which this plugin
+    // drags in, puts the WHOLE compileClasspath on --module-path) but it is NOT part of
+    // runtimeClasspath, which is what badass-jlink actually links. That leaves runtimeClasspath free
+    // for the TARGET's jars.
+    //
+    // Careful: setConfiguration() re-runs the plugin's updateJavaFXDependencies(), which first strips
+    // EVERY org.openjfx dependency out of the previously-used configuration. Never declare your own
+    // org.openjfx deps above this block -- they get silently deleted.
+    configuration = 'compileOnly'
 }
 
 tasks.withType(JavaCompile) {
@@ -52,11 +114,26 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
     //implementation files('libs/jlibtorrent-1.2.19.0.jar')
     //implementation files('libs/jlibtorrent-linux-1.2.19.0.jar')
-    implementation "org.openjfx:javafx-controls:${javafxVersion}"
-    implementation "org.openjfx:javafx-fxml:${javafxVersion}"
-    implementation "org.openjfx:javafx-web:${javafxVersion}"
     implementation 'org.jetbrains:annotations:24.1.0'
     implementation 'com.google.code.gson:gson:2.11.0'
+
+    // NOTE: the classifier-less `implementation "org.openjfx:javafx-{controls,fxml,web}:17.0.2"` lines
+    // that used to live here are gone. Those coordinates resolve to 306-byte placeholder jars whose
+    // entire content is `Automatic-Module-Name: javafx.controlsEmpty` -- phantom modules on the compile
+    // module path, contributing nothing.
+    javafxArtifacts.each { m ->
+        // compileOnly is NOT inherited by testCompileClasspath, and compileTestJava still runs as part
+        // of `build` even though the `test` task below is disabled. Without this line the 15 files under
+        // src/test/java stop compiling the moment JavaFX leaves `implementation`.
+        testCompileOnly "org.openjfx:javafx-$m:$javafxVersion:$javafxHostClassifier"
+
+        // This is the line that decides whether the image gets libglass.so or glass.dll.
+        // runtimeClasspath is badass-jlink's default `configuration`, and its prepareModulesDir step
+        // copies exactly that configuration's modular jars into build/jlinkbase/jlinkjars/, which is the
+        // module path handed to jlink. The empty classifier-less transitives the -win POMs drag in are
+        // dropped by the plugin's own isEmptyJar() filter.
+        runtimeOnly "org.openjfx:javafx-$m:$javafxVersion:$javafxTargetClassifier"
+    }
 }
 
 test {
@@ -67,13 +144,21 @@ test {
     enabled = project.hasProperty('runTests')
 }
 
-// The three bundled Android platform-tools copies are ~60 MB of the app module, but only the
-// host OS's copy is ever read: Helpers.prepareAdb() picks one folder at runtime (isWindows /
-// mac / else) and pulls it out via getResourceAsStream. Ship just that one.
+// The three bundled Android platform-tools copies are ~60 MB of the app module, but only the target
+// OS's copy is ever read: Helpers.prepareAdb() picks one folder at runtime (isWindows / mac / else) and
+// pulls it out via getResourceAsStream. Ship just that one.
+//
+// TARGET-driven, not host-driven: a Linux-built Windows image needs platform-tools/adb.exe. Key this
+// off the host and prepareAdb()'s Windows branch gets null streams, NPEs into its empty catch, and
+// every Quest flow fails later with a missing %TEMP%\platform-tools\adb.exe.
 processResources {
-    if (os.isWindows()) {
+    if (targetWindows) {
         exclude 'platform-tools-linux/**', 'platform-tools-mac/**'
-    } else if (os.isMacOsX()) {
+        // A Linux shared object has no business inside a Windows image. It only gets there by riding
+        // along in the app jar (and from there into runtime\lib\modules); the Linux build gets its copy
+        // from copyLibjpeg below, straight out of src/main/resources.
+        exclude 'libjpeg.so.62'
+    } else if (targetMac) {
         exclude 'platform-tools/**', 'platform-tools-linux/**'
     } else {
         exclude 'platform-tools/**', 'platform-tools-mac/**'
@@ -107,12 +192,88 @@ tasks.register('copyLibjpeg', Copy) {
 def objcopyPath = System.getenv('PATH')?.split(File.pathSeparator)
         ?.collect { new File(it, 'objcopy') }
         ?.find { it.isFile() && it.canExecute() }
-def nativeStripOptions = objcopyPath
+// The objcopy lookup is host-driven; whether we USE it is target-driven. --strip-native-debug-symbols
+// hands every native file in the image to the host's objcopy, which is right for ELF (that is where the
+// DWARF lives) and wrong for PE: MSVC keeps debug info in side-car .pdb files, so there is nothing to
+// strip and every reason not to let binutils rewrite a Windows DLL.
+def nativeStripOptions = (objcopyPath && !targetWindows)
         ? ['--strip-native-debug-symbols', "objcopy=${objcopyPath.absolutePath}".toString()]
         : []
 if (!objcopyPath) {
     logger.lifecycle('jlink: objcopy not on PATH — skipping native debug-symbol stripping. ' +
                      'On NixOS, build under `nix-shell -p binutils` to shrink the runtime.')
+}
+
+// =====================================================================================================
+// Windows JDK — used ONLY as a source of jmods (for jlink's --module-path) and of jpackage's own
+// launcher exe. Not one byte of it is ever executed on this machine.
+//
+// Version choice: 21.0.12.1 rather than 17.x. jdk.tools.jlink.internal.JlinkTask refuses to link jmods
+// whose feature+interim version differs from jlink's own:
+//     jlink version {0}.{1} does not match target java.base version {2}.{3}
+// (update/patch levels may differ freely). The host jlink is whatever JDK the Gradle daemon runs on —
+// nix openjdk 21.0.12 here — so a 21.0.x target links cleanly with nothing extra to provision.
+// Targeting 17 would additionally require a runnable *Linux* JDK 17, because badass-jlink shells out to
+// $javaHome/bin/{jlink,javac,jdeps,java} from five different tasks and its javac calls carry no
+// --release, so javaHome also fixes the class-file version of the generated merged-module module-info.
+//
+// Kept in .jdks/ (gitignored) rather than build/jdks/ on purpose: `clean` must not cost a 200 MB
+// re-download. That is also why we do the fetch ourselves instead of using the plugin's
+// TargetPlatform.jdkDownload(), which hardcodes "$buildDir/jdks/$name" and stashes a lazily-evaluated
+// build-script Closure inside jlink's @Input snapshot.
+// =====================================================================================================
+ext.winJdkRelease     = 'jdk-21.0.12.1+1'
+ext.winJdkDirName     = 'jdk-21.0.12.1+1'   // the directory inside the zip
+ext.winJdkJavaVersion = '21.0.12.1'         // the target runtime's java.version, for .jpackage.xml
+ext.winJdkArchiveName = 'OpenJDK21U-jdk_x64_windows_hotspot_21.0.12.1_1.zip'
+ext.winJdkUrl         = 'https://github.com/adoptium/temurin21-binaries/releases/download/' +
+                        'jdk-21.0.12.1%2B1/' + winJdkArchiveName
+ext.winJdkSha256      = 'f9d6e191ab098c0d416e7d588a24420a8621cd2f4720dab2459b8b7b2d2d8b4e'
+ext.winJdkUnpackDir   = file("$rootDir/.jdks/temurin-windows-x64-21.0.12.1+1")
+ext.winJdkHome        = file("$winJdkUnpackDir/$winJdkDirName")
+
+tasks.register('fetchWindowsJdk') {
+    group = 'build setup'
+    description = 'Downloads, verifies and unpacks the Temurin Windows JDK used as a jmod source (~195 MB).'
+
+    // No declared outputs on purpose: hashing a 300 MB unpacked JDK on every build costs far more than
+    // the check is worth. This onlyIf is the up-to-date check.
+    onlyIf { !file("$winJdkHome/jmods/java.base.jmod").exists() }
+
+    doLast {
+        def archive = file("$rootDir/.jdks/$winJdkArchiveName")
+        if (!archive.exists()) {
+            archive.parentFile.mkdirs()
+            logger.lifecycle("Downloading $winJdkUrl\n  -> $archive (~195 MB, one time)")
+            // Download to .part and rename, so an interrupted build cannot leave a truncated archive
+            // that then fails the checksum forever.
+            def part = new File(archive.parentFile, archive.name + '.part')
+            part.delete()
+            new URL(winJdkUrl).withInputStream { input -> part.withOutputStream { out -> out << input } }
+            if (!part.renameTo(archive)) throw new GradleException("Cannot rename $part -> $archive")
+        }
+
+        def digest = java.security.MessageDigest.getInstance('SHA-256')
+        archive.eachByte(1 << 16) { byte[] buf, int n -> digest.update(buf, 0, n) }
+        def actual = digest.digest().encodeHex().toString()
+        if (actual != winJdkSha256) {
+            throw new GradleException("Checksum mismatch for $archive\n  expected $winJdkSha256\n" +
+                                      "  actual   $actual\nDelete the file and retry, or update winJdkSha256.")
+        }
+
+        project.delete(winJdkUnpackDir)
+        copy {
+            from zipTree(archive)
+            into winJdkUnpackDir
+        }
+        // Fail loudly here rather than 40 seconds later inside jlink with a confusing message.
+        ['jmods/java.base.jmod', 'jmods/jdk.jpackage.jmod'].each { rel ->
+            if (!file("$winJdkHome/$rel").exists()) {
+                throw new GradleException("Unpacked JDK looks wrong: $winJdkHome/$rel is missing")
+            }
+        }
+        logger.lifecycle("Windows JDK ready at $winJdkHome")
+    }
 }
 
 jlink {
@@ -122,15 +283,36 @@ jlink {
     // '--compress=zip-6' instead and only warns about the old form.
     options = ['--add-modules', 'jdk.zipfs,javafx.controls,javafx.fxml,javafx.web,javafx.graphics,javafx.base',
                '--compress=2', '--no-header-files', '--no-man-pages'] + nativeStripOptions
+
+    if (crossToWindows) {
+        // Genuine cross-link, not a hack. JlinkTaskImpl.runJlink() runs "$javaHome/bin/jlink" (the HOST
+        // tool) but builds --module-path from "$jdkHome/jmods", so the tool is local and the modules are
+        // foreign. jlink reads java.base's ModuleTarget attribute ("windows-amd64") and switches
+        // DefaultImageBuilder into Windows layout: lib/*.dll move to bin\, lib/server/jvm.dll to
+        // bin\server\jvm.dll, and the bundled msvcp140/vcruntime140/ucrtbase DLLs come along -- so the
+        // runtime needs no VC++ redistributable on the user's machine.
+        //
+        // Output moves to build/image/<launcherName>-win. javaHome is deliberately left at its default:
+        // it must stay a RUNNABLE host JDK (five badass-jlink tasks shell out to $javaHome/bin/*).
+        targetPlatform('win', winJdkHome.absolutePath)
+
+        // Skips the javac+java round-trip badass-jlink otherwise performs in a temp dir purely to learn
+        // the JVM's feature version (used only to pick META-INF/versions/<n>/ when unpacking jars into
+        // the merged module -- which is empty in this project anyway).
+        jvmVersion = 21
+    }
+
     jpackage {
         // Lock the app-image name: the portable output lands in build/jpackage/EchoVR_Installer/,
         // a path that copyLibjpeg and the Windows taskkill hook below both hardcode.
-        imageName = 'EchoVR_Installer'
+        imageName = launcherName
 
         // Installer-only, disabled — see the `jpackage` task below.
         // installerName = 'Echo_VR_Installer'
 
-        if (os.isWindows()) {
+        // Target-driven. Unused when cross-building (windowsAppImage writes the cfg itself), but kept
+        // correct so a native Windows or macOS build still behaves as it always did.
+        if (targetWindows) {
             appVersion = '0.94.006'
             icon = 'icon.ico'  // Update path
 
@@ -147,7 +329,7 @@ jlink {
             //         '--win-menu',
             //         '--win-menu-group', 'EchoVRInstaller',
             // ]
-        } else if (os.isMacOsX()) {
+        } else if (targetMac) {
             appVersion = '1.0.94.006'
 
             // Installer-only, disabled — applies to the .dmg/.pkg we no longer build.
@@ -161,9 +343,192 @@ jlink {
     }
 }
 
+if (crossToWindows) {
+    tasks.named('jlink').configure { dependsOn('fetchWindowsJdk') }
+}
+
+// =====================================================================================================
+// Windows portable app-image.
+//
+// This is NOT a re-implementation of jpackage. It is jpackage's own launcher binary, lifted out of the
+// Windows JDK, placed against jpackage's own on-disk contract:
+//
+//     EchoVR_Installer/
+//       EchoVR_Installer.exe        <- jpackageapplauncherw.exe, renamed
+//       app/
+//         EchoVR_Installer.cfg      <- <exe-dir>\app\<exe-basename>.cfg
+//         .jpackage.xml             <- inert; see below
+//       runtime/                    <- the cross-linked image
+//
+// Verified against the binary itself (jdk.jpackage.jmod, Temurin windows-x64): the exe's UTF-16 string
+// table contains exactly "app", "runtime", ".cfg", "bin\jli.dll", "jvm.dll" and "server", and its PE
+// import table is KERNEL32/USER32/SHELL32 only -- no applauncher.dll, no CRT redistributable, no sibling
+// file of any kind. The JVM is loaded IN-PROCESS, which is the entire point: it makes
+// ProcessHandle.current().info().command() report ...\EchoVR_Installer.exe rather than java.exe, which
+// is the precondition AdminBroker.launchHelper() checks before it will elevate. A jlink .bat launcher
+// would silently break every UAC flow in the app.
+//
+// The icon and VERSIONINFO a real jpackage run would swap in are handled by gradle/tools/PeIconStamper.java
+// (step 5 below); .jpackage.xml is written by hand and is inert at runtime either way.
+// =====================================================================================================
+def winStagingDir = layout.buildDirectory.dir("windows-image/$launcherName")
+def winRuntimeSrc = layout.buildDirectory.dir("image/$launcherName-win")
+def winZipName    = "${launcherName}-${appVersionStr}-windows-x64.zip"
+
+tasks.register('windowsAppImage') {
+    group = 'distribution'
+    description = 'Assembles the portable Windows app-image from the cross-linked runtime.'
+
+    if (!crossToWindows) {
+        doLast {
+            throw new GradleException('windowsAppImage cross-builds the Windows image on a non-Windows ' +
+                                      'host. Run it as: ./gradlew -PtargetOs=windows windowsAppImage')
+        }
+        return
+    }
+
+    dependsOn('jlink', 'fetchWindowsJdk')
+    inputs.dir(winRuntimeSrc)
+    inputs.file("$winJdkHome/jmods/jdk.jpackage.jmod")
+    inputs.property('appVersion', appVersionStr)
+    inputs.property('mainModule', application.mainModule)
+    inputs.property('mainClass', application.mainClass)
+    inputs.property('jvmArgs', providers.provider { application.applicationDefaultJvmArgs.toList() })
+    inputs.file('icon.ico')
+    inputs.file('gradle/tools/PeIconStamper.java')
+    outputs.dir(winStagingDir)
+
+    doLast {
+        def root = winStagingDir.get().asFile
+        project.delete(root)
+        root.mkdirs()
+
+        // --- 1. runtime/ -----------------------------------------------------------------------------
+        // Gradle's Copy is used rather than a shell cp for one specific reason: jlink's default
+        // --dedup-legal-notices makes DefaultImageBuilder call Files.createSymbolicLink for every
+        // duplicated legal notice, and on a POSIX host that produces ~42 real symlinks under legal/.
+        // Gradle's default LinksStrategy is FOLLOW, so they are materialised into real files here;
+        // `cp -a`/`tar`/the `zip` CLI would carry them into the archive as dangling links on Windows.
+        // Verify with: find build/windows-image -type l   (must print nothing)
+        //
+        // The two launcher scripts LaunchScriptGenerator always writes (it emits both a unix script and
+        // a .bat, unconditionally) are dropped: a .bat that starts java.exe is precisely the launcher
+        // AdminBroker.launchHelper() refuses to elevate, so shipping one ships a second, broken way to
+        // start the app.
+        copy {
+            from winRuntimeSrc
+            into new File(root, 'runtime')
+            exclude "bin/$launcherName", "bin/${launcherName}.bat"
+        }
+
+        // --- 2. EchoVR_Installer.exe -------------------------------------------------------------------
+        // jpackageapplauncherw.exe is the windowed variant; jpackage picks it whenever --win-console is
+        // absent, which matches this build (the app redirects stdout/stderr to log.log itself). A .jmod
+        // is a ZIP with a 4-byte "JM\1\0" header; java.util.zip.ZipFile transparently tolerates prepended
+        // bytes (the self-extracting-archive case), whereas Gradle's zipTree() chokes on the magic.
+        def launcherRes = 'classes/jdk/jpackage/internal/resources/jpackageapplauncherw.exe'
+        def exe = new File(root, "${launcherName}.exe")
+        new java.util.zip.ZipFile(file("$winJdkHome/jmods/jdk.jpackage.jmod")).withCloseable { jmod ->
+            def entry = jmod.getEntry(launcherRes)
+            if (entry == null) {
+                throw new GradleException("$launcherRes not found in $winJdkHome/jmods/jdk.jpackage.jmod")
+            }
+            exe.withOutputStream { out -> jmod.getInputStream(entry).withCloseable { out << it } }
+        }
+        logger.lifecycle("windowsAppImage: ${exe.name} (${exe.length()} bytes) from $winJdkRelease")
+
+        def appDir = new File(root, 'app')
+        appDir.mkdirs()
+
+        // --- 3. app\EchoVR_Installer.cfg ----------------------------------------------------------------
+        // Deliberately identical in shape to the cfg jpackage writes for the Linux image (see
+        // build/jpackage/EchoVR_Installer/lib/app/EchoVR_Installer.cfg), and generated from the
+        // application{} block so the two cannot drift. Note what is absent: no app.modulepath /
+        // app.classpath, because jlink links the application module INTO the runtime
+        // (--add-modules bl00dy_c0d3_.echovr_installer) so it lives in runtime\lib\modules and there is
+        // nothing to put on a module path; and no app.runtime, because the launcher already defaults it
+        // to <exe dir>\runtime.
+        //
+        // CRLF because that is what jpackage's PrintWriter.println() emits on Windows.
+        def cfgLines = ['[Application]',
+                        "app.mainmodule=${application.mainModule.get()}/${application.mainClass.get()}",
+                        '',
+                        '[JavaOptions]',
+                        "java-options=-Djpackage.app-version=$appVersionStr"]
+        cfgLines += application.applicationDefaultJvmArgs.collect { "java-options=$it" }
+        new File(appDir, "${launcherName}.cfg").setText(cfgLines.join('\r\n') + '\r\n', 'UTF-8')
+
+        // --- 4. app\.jpackage.xml -------------------------------------------------------------------------
+        // Inert at runtime: dump the launcher's string table and you find "app", "runtime" and ".cfg" but
+        // no "jpackage.xml". Only jdk.jpackage.internal.AppImageFile reads it, and only when someone feeds
+        // this directory to `jpackage --app-image` to wrap an installer. Written anyway so that path stays
+        // open, in the shape JDK 21 uses. A missing file is handled gracefully by AppImageFile.load() --
+        // a WRONG one is not, so version/platform are kept accurate to the target JDK.
+        new File(appDir, '.jpackage.xml').setText("""<?xml version="1.0" ?>
+<jpackage-state version="$winJdkJavaVersion" platform="windows">
+  <app-version>$appVersionStr</app-version>
+  <main-launcher>$launcherName</main-launcher>
+  <main-class>${application.mainClass.get()}</main-class>
+  <signed>false</signed>
+  <app-store>false</app-store></jpackage-state>
+""", 'UTF-8')
+
+        // --- 5. icon and VERSIONINFO -----------------------------------------------------------------------
+        // The launcher lifted out of the jmod carries only RT_VERSION and RT_MANIFEST resources -- no icon
+        // at all -- so untouched it shows the generic Windows default and reports itself as "OpenJDK
+        // Platform binary" in Explorer. A real jpackage run fixes that with IconSwap/VersionInfoSwap,
+        // which call the Win32 UpdateResource API and therefore only exist on Windows.
+        //
+        // gradle/tools/PeIconStamper.java does the same edit by rewriting the PE directly, so the whole
+        // cross-build stays pure-Linux. (The obvious alternative, `wine rcedit`, was tried first and does
+        // not work here: rcedit x64 dies with STATUS_STACK_BUFFER_OVERRUN under wine 11, the x86 build and
+        // Resource Hacker both need a wow64 prefix, and either way it would make wine a build dependency.)
+        //
+        // Run inside this task rather than as a finalizedBy so Gradle's up-to-date snapshot of the output
+        // dir stays consistent with what produced it.
+        //
+        // Not touched: the embedded RT_MANIFEST, which asks for requestedExecutionLevel="asInvoker". That
+        // is what we want -- elevation goes through AdminBroker's `Start-Process -Verb RunAs`, not through
+        // the manifest -- and the stamper preserves every resource it does not explicitly replace.
+        def stamper = file("$rootDir/gradle/tools/PeIconStamper.java")
+        project.exec {
+            // Single-file source-code launch (JDK 11+): no buildSrc, no extra compile configuration.
+            // Uses the Gradle daemon's own JVM, which is the same one that just ran jlink.
+            commandLine "${System.getProperty('java.home')}/bin/java", stamper.absolutePath,
+                    exe.absolutePath, file('icon.ico').absolutePath, appVersionStr,
+                    "FileDescription=Echo VR Installer",
+                    "ProductName=Echo VR Installer",
+                    "CompanyName=marshmallow_mia",
+                    "InternalName=$launcherName",
+                    "OriginalFilename=${launcherName}.exe"
+        }
+    }
+}
+
+tasks.register('windowsPortableZip', Zip) {
+    group = 'distribution'
+    description = 'Zips the portable Windows app-image.'
+    archiveFileName = winZipName
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+
+    // Unconditional: outside cross mode windowsAppImage is the task that fails with the explanation.
+    // A doFirst here would never fire -- a Zip with no source is NO-SOURCE and gets skipped, silently
+    // producing an empty archive.
+    dependsOn('windowsAppImage')
+    if (crossToWindows) {
+        from winStagingDir
+        into launcherName   // a single top-level folder inside the zip
+        // Gradle's Zip resolves symlinks (LinksStrategy.FOLLOW) -- but windowsAppImage has already
+        // materialised them, so by this point the tree is plain files. Keep using this task rather than
+        // shelling out to `zip`, which would store the links.
+        doLast { logger.lifecycle("Windows portable image: ${archiveFile.get().asFile}") }
+    }
+}
+
 // Ship libjpeg alongside the portable image on Linux. This hangs off jpackageImage (not jpackage,
 // which is disabled below) because jpackageImage is what creates the app-image dir it copies into.
-if (!os.isWindows() && !os.isMacOsX()) {
+// Target-driven: a Linux host cross-building for Windows must not run this.
+if (targetLinux) {
     tasks.named('jpackageImage').configure {
         finalizedBy(copyLibjpeg)
     }
@@ -172,7 +537,7 @@ if (!os.isWindows() && !os.isMacOsX()) {
 // Ensure build depends on jlink and the portable app image (NOT jpackage — see below)
 tasks.named('build').configure {
     dependsOn('jlink')
-    dependsOn('jpackageImage')
+    dependsOn(crossToWindows ? 'windowsPortableZip' : 'jpackageImage')
 }
 
 // Portable-only distribution: no .exe / .msi / .deb / .rpm / .dmg installers.
@@ -183,11 +548,20 @@ tasks.named('build').configure {
 // blocks in the jlink{} config above, and switch the build dependsOn back to 'jpackage'.
 tasks.named('jpackage').configure { enabled = false }
 
+// jpackage/jpackageImage know nothing about jlink's targetPlatforms: they read td.runtimeImageDir
+// (= build/image), and declaring a target platform moves the runtime to build/image/<name>-win, leaving
+// build/image empty. Pointing the host's jpackage at that would fail -- and if it somehow succeeded it
+// would produce a Linux app-image. windowsAppImage replaces it in cross mode.
+if (crossToWindows) {
+    tasks.named('jpackageImage').configure { enabled = false }
+}
+
 // Building the app-image (jpackageImage) first deletes the previous build/jpackage output. That
 // fails ("Unable to delete ... EchoVR_Installer.exe") whenever a copy of the app is still holding
 // the exe — a running instance, a leftover elevated admin-helper from testing, or AV/Explorer
 // briefly scanning the file. Before the image is rebuilt, kill any running EchoVR_Installer.exe and
 // clear the dir ourselves (with retries to ride out an AV scan) so packaging starts clean & unlocked.
+// HOST-driven, correctly: it shells out to Windows tools, so it must key off `os`, not `targetOs`.
 tasks.named('jpackageImage').configure {
     doFirst {
         if (os.isWindows()) {
