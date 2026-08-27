@@ -23,6 +23,10 @@ public class FrameGuidanceQuest extends BaseWizard {
     // True once a patched APK has actually been downloaded in THIS session — only then may a Retry
     // reuse the staged temp file (otherwise a stale APK would short-circuit OAuth on the first click).
     private boolean patchedApkReady = false;
+    // Quest update manifest: names the APK to install and drives the post-install update.
+    // Null when it couldn't be fetched, in which case the built-in APK name is used and the
+    // update step is skipped.
+    private UpdateManifest questManifest;
 
     public FrameGuidanceQuest(FrameMain frameMain) {
         super(frameMain);
@@ -57,7 +61,7 @@ public class FrameGuidanceQuest extends BaseWizard {
     }
 
     @Override
-    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b.002"; }
+    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b-006"; }
 
     @Override
     protected int getStepCount() { return 4; }
@@ -150,6 +154,7 @@ public class FrameGuidanceQuest extends BaseWizard {
 
     private void buildStep1(int cx) {
         downloadCompleteCount = 0;
+        fetchQuestManifest();
 
         String headerText = questState.getUserType() == WizardState.UserType.OWNER
                 ? "Download Echo VR client files"
@@ -278,7 +283,8 @@ public class FrameGuidanceQuest extends BaseWizard {
                 apkProgressLabel.setText("100.00%");
                 onDownloadFileComplete();
             }));
-            downloader.startDownload("r15_26-06-25.apk", tempPath.toString(), "r15_26-06-25.apk",
+            String apkName = questState.getApkFilename();
+            downloader.startDownload(apkName, tempPath.toString(), apkName,
                     apkProgressLabel, FrameGuidanceQuest.this, null, 2, false, 0, false);
         }).start();
 
@@ -432,6 +438,24 @@ public class FrameGuidanceQuest extends BaseWizard {
         resetAfterError(dlButton);
     }
 
+    /**
+     * Fetches the Quest manifest in the background. It names the APK to install and drives
+     * the update applied after installation. Failure is non-fatal: the built-in APK name
+     * stays in place and the update step is skipped.
+     */
+    private void fetchQuestManifest() {
+        new Thread(() -> {
+            UpdateManifest m = UpdateManifest.fetchQuiet(QUEST_MANIFEST_URL);
+            if (m == null) return;
+            SwingUtilities.invokeLater(() -> {
+                questManifest = m;
+                if (m.baseApkName() != null) questState.setApkFilename(m.baseApkName());
+                questState.setBaseApkSha256(m.baseApkSha());
+                System.out.println("FrameGuidanceQuest: manifest APK is " + m.baseApkName());
+            });
+        }).start();
+    }
+
     // === Step 2: Install to Quest ===
 
     private void buildStep2(int cx) {
@@ -483,22 +507,21 @@ public class FrameGuidanceQuest extends BaseWizard {
                         boolean success = installer.installAPK(tempPath.toString(),
                                 questState.getApkFilename(), "_data.zip",
                                 installProgressLabel, FrameGuidanceQuest.this);
-                        SwingUtilities.invokeLater(() -> {
-                            stepInProgress = false;
-                            if (success) {
-                                stepCompleted = true;
-                                installProgressLabel.setText("Installation is complete!");
-                                dlProgressLabel.setText("Installation complete!");
-                            } else {
-                                installProgressLabel.setText("Installation did not finish!");
-                                dlProgressLabel.setText("Installation failed");
-                            }
-                            progressAnimator.stop();
-                            nextBtn.setEnabled(true);
-                            installBtn.setEnabled(true);
-                            progPanel.repaint();
-                            statusBarBox.repaint();
-                        });
+                        if (success) {
+                            recordInstalledVersion();
+                        }
+                        if (success && questManifest != null) {
+                            SwingUtilities.invokeLater(() ->
+                                installProgressLabel.setText("Applying update..."));
+                            // Either way the install itself succeeded, so the user may
+                            // continue; only the label differs.
+                            QuestUpdateService.applyUpdates(questManifest, installProgressLabel,
+                                FrameGuidanceQuest.this, frameMain,
+                                () -> finishInstall(true, installBtn),
+                                () -> finishInstall(true, installBtn));
+                        } else {
+                            finishInstall(success, installBtn);
+                        }
                     } catch (Exception ex) {
                         SwingUtilities.invokeLater(() -> {
                             stepInProgress = false;
@@ -518,52 +541,39 @@ public class FrameGuidanceQuest extends BaseWizard {
     }
 
     /**
-     * Checks (on a background thread) whether the Quest is connected and authorized, then updates
-     * the status label with a ✓/✗ hook. When {@code interactive} (user pressed Connect), also shows
-     * a guidance dialog if the device is unauthorized or not detected.
+     * Records on the headset which base version this install corresponds to. Written before
+     * the update runs, so a failed update still leaves a correct marker and the standalone
+     * update wizard can retry cleanly.
      */
-    private void refreshQuestConnection(SpecialButton connectBtn, JLabel statusLbl, boolean interactive) {
-        connectBtn.setEnabled(false);
-        statusLbl.setIcon(null);
-        statusLbl.setForeground(Color.LIGHT_GRAY);
-        statusLbl.setText("Checking Quest connection...");
-        new Thread(() -> {
-            int status;
-            try { status = InstallerQuest.checkConnection(); }
-            catch (Exception ex) { status = -1; }
-            final int s = status;
-            SwingUtilities.invokeLater(() -> {
-                connectBtn.setEnabled(true);
-                switch (s) {
-                    case 0 -> {
-                        statusLbl.setIcon(markIcon(true, new Color(0, 200, 0), 18));
-                        statusLbl.setForeground(Color.WHITE);
-                        statusLbl.setText("Quest connected");
-                    }
-                    case 1 -> {
-                        statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
-                        statusLbl.setForeground(Color.WHITE);
-                        statusLbl.setText("Quest found — not authorized");
-                        if (interactive) {
-                            new ErrorDialog().errorDialog(FrameGuidanceQuest.this, "Allow your PC on the Quest",
-                                "<html><center>Your Quest is connected, but it hasn't allowed this PC yet.<br>"
-                                + "Put on your headset and tap&nbsp;<b>Allow</b>&nbsp;when the USB debugging prompt appears "
-                                + "(replug the cable if you don't see it).</center></html>", 3);
-                        }
-                    }
-                    default -> {
-                        statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
-                        statusLbl.setForeground(Color.WHITE);
-                        statusLbl.setText("No Quest detected");
-                        if (interactive) {
-                            new ErrorDialog().errorDialog(FrameGuidanceQuest.this, "No Quest detected",
-                                "<html><center>Couldn't find your Quest. Connect it by USB and make sure<br>"
-                                + "Developer Mode is enabled.</center></html>", 1);
-                        }
-                    }
-                }
-            });
-        }).start();
+    private void recordInstalledVersion() {
+        try {
+            String installedSha = Helpers.sha256Hex(tempPath.resolve(questState.getApkFilename()));
+            questState.setInstalledApkSha256(installedSha);
+            QuestUpdateService.writeMarkerAfterInstall(questState.getApkFilename(),
+                questState.getBaseApkSha256(), installedSha, questState.isPatchedApk());
+        } catch (Exception ex) {
+            // Non-fatal: the update wizard falls back to comparing the raw APK hash.
+            System.err.println("FrameGuidanceQuest: could not record installed version: " + ex.getMessage());
+        }
+    }
+
+    private void finishInstall(boolean success, SpecialButton installBtn) {
+        SwingUtilities.invokeLater(() -> {
+            stepInProgress = false;
+            if (success) {
+                stepCompleted = true;
+                installProgressLabel.setText("Installation is complete!");
+                dlProgressLabel.setText("Installation complete!");
+            } else {
+                installProgressLabel.setText("Installation did not finish!");
+                dlProgressLabel.setText("Installation failed");
+            }
+            progressAnimator.stop();
+            nextBtn.setEnabled(true);
+            installBtn.setEnabled(true);
+            progPanel.repaint();
+            statusBarBox.repaint();
+        });
     }
 
     // === Step 3: Done ===

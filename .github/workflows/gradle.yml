@@ -16,7 +16,11 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    # Pinned deliberately, do NOT move to ubuntu-latest: the portable image links against the
+    # runner's glibc, so the runner sets the oldest distro we can run on. 22.04 ships glibc 2.35,
+    # which covers Debian 12 (2.36) and Ubuntu 22.04+. ubuntu-latest is 24.04 (glibc 2.39) and
+    # would silently drop Debian 12 support. For Debian 11 (2.31), build in a debian:11 container.
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
 
@@ -35,6 +39,15 @@ jobs:
 
     - name: Build with Gradle Wrapper
       run: ./gradlew build
+
+    # The portable app image is the deliverable (no installers are built — see build.gradle).
+    # Without this the workflow builds it and then throws it away.
+    - name: Upload portable app image
+      uses: actions/upload-artifact@v4
+      with:
+        name: EchoVR_Installer-linux-portable
+        path: build/jpackage/EchoVR_Installer/
+        if-no-files-found: error
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.

@@ -99,8 +99,8 @@ public class FrameGuidanceQuestTest {
         // These fields are used by FrameGuidanceQuest's Download step.
         QuestWizardState state = new QuestWizardState();
 
-        assertEquals("r15_26-06-25.apk", state.getApkFilename(),
-                "Default APK filename should be r15_26-06-25.apk");
+        assertEquals("echo_quest_16-07-2026.001.apk", state.getApkFilename(),
+                "Default APK filename should be echo_quest_16-07-2026.001.apk");
         assertEquals(-1, state.getAdbDeviceStatus(),
                 "Default ADB status should be -1 (not connected)");
         assertFalse(state.isPatchedApk(),
