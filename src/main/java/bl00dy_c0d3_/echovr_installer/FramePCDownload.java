@@ -162,7 +162,7 @@ public class FramePCDownload extends JDialog {
                         final String binPath = installPath + "/ready-at-dawn-echo-arena/bin/win10";
 
                         SwingUtilities.invokeLater(() -> labelPcProgress2.setText("Applying update..."));
-                        UpdateService.applyUpdates("https://files.echovr.de/updates/update.manifest", binPath, labelPcProgress2, thisFrame, frameMain, null);
+                        UpdateService.applyUpdates(PC_MANIFEST_URL, binPath, labelPcProgress2, thisFrame, frameMain, null);
                     });
                     downloader.startDownload("ready-at-dawn-echo-arena.zip", labelPcDownloadPath.getText(), "ready-at-dawn-echo-arena.zip",  labelPcProgress2, thisFrame, frameMain, 0, false, 0, false);
                 });

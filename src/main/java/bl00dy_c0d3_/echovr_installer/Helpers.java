@@ -13,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -438,10 +440,20 @@ public class Helpers {
 
     /** Best-effort removal of staged patch temp files (PC dll + Quest patched APK). */
     public static void deletePatchTempFiles() {
-        String[] names = {"pnsovr.dll", "echo_quest_16-07-2026.001.apk", "personilizedechoapk.apk"};
+        String[] names = {"pnsovr.dll", "personilizedechoapk.apk"};
         for (String n : names) {
             try { Files.deleteIfExists(PATCH_TEMP_DIR.resolve(n)); } catch (Exception ignored) {}
         }
+        // The staged APK is named by the manifest's BASE_APK header, so match by pattern
+        // rather than a fixed name -- otherwise every version bump leaks a ~96 MB file.
+        try (java.util.stream.Stream<Path> staged = Files.list(PATCH_TEMP_DIR)) {
+            staged.filter(p -> {
+                String n = p.getFileName().toString();
+                return n.startsWith("echo_quest_") && n.endsWith(".apk");
+            }).forEach(p -> {
+                try { Files.deleteIfExists(p); } catch (Exception ignored) {}
+            });
+        } catch (Exception ignored) {}
     }
 
     /** Copies {@code src} into {@code dstDir/name}, creating the directory. Throws on failure. */
@@ -708,9 +720,118 @@ public class Helpers {
 
     }
 
+    // ------------------------------------------------------------------
+    // Update manifests
+    // ------------------------------------------------------------------
+
+    /** Window title / version stamp recorded in the on-device Quest install marker. */
+    public static final String VERSION_TITLE = "Echo VR Installer v0.9.4b-006";
+
+    /** Manifest driving incremental PC updates; files resolve against its parent URL. */
+    public static final String PC_MANIFEST_URL = "https://files.echovr.de/updates/update.manifest";
+
+    /** Manifest driving incremental Quest updates. Also names the base APK to install. */
+    public static final String QUEST_MANIFEST_URL = "https://files.echovr.de/updates/quest/update.manifest";
+
+    /** Android package name of Echo VR on Quest. */
+    public static final String QUEST_PACKAGE = "com.readyatdawn.r15";
 
 
+    // ------------------------------------------------------------------
+    // Hashing / simple transfers
+    // ------------------------------------------------------------------
+
+    /**
+     * Lowercase, zero-padded hex SHA-256 of a file, streamed so large APKs don't
+     * need to fit in memory.
+     */
+    public static String sha256Hex(Path file) throws IOException {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("SHA-256 not available", e);
+        }
+        try (InputStream in = Files.newInputStream(file)) {
+            byte[] buf = new byte[8192];
+            int read;
+            while ((read = in.read(buf)) != -1) {
+                digest.update(buf, 0, read);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digest.digest()) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    public static boolean sha256Matches(Path file, String expectedHex) throws IOException {
+        return expectedHex != null && sha256Hex(file).equalsIgnoreCase(expectedHex);
+    }
+
+    /** Fetches a small text resource (manifests) in full. */
+    public static String downloadText(String url) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new URL(url).openStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    /** Streams a URL straight to disk. No progress reporting -- for small update files. */
+    public static void downloadFileSimple(String url, Path destination) throws IOException {
+        try (InputStream in = new URL(url).openStream()) {
+            Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
 
 
+    // ------------------------------------------------------------------
+    // argv-based process execution
+    // ------------------------------------------------------------------
 
+    /**
+     * Runs an argv directly via {@link ProcessBuilder} -- no shell, so no argument is
+     * ever re-parsed. Use this (not {@link #runShellCommand}) whenever the output is
+     * parsed or an argument may contain spaces: on Windows {@code runShellCommand}
+     * goes through {@code Runtime.exec(String)}, which whitespace-tokenizes and
+     * ignores quotes.
+     *
+     * @return combined stdout (stderr is appended after stdout), never null
+     */
+    public static String runArgv(List<String> argv) {
+        StringBuilder out = new StringBuilder();
+        runArgvExit(argv, out);
+        return out.toString();
+    }
+
+    /**
+     * As {@link #runArgv}, but returns the exit code and appends the output into
+     * {@code out}.
+     *
+     * @return the process exit code, or -1 if the process could not be run
+     */
+    public static int runArgvExit(List<String> argv, StringBuilder out) {
+        try {
+            ProcessBuilder builder = new ProcessBuilder(argv);
+            builder.redirectErrorStream(true);
+            Process process = builder.start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (out != null) out.append(line).append("\n");
+                }
+            }
+            return process.waitFor();
+        } catch (Exception e) {
+            System.err.println("runArgv failed: " + String.join(" ", argv) + " -- " + e.getMessage());
+            return -1;
+        }
+    }
 }

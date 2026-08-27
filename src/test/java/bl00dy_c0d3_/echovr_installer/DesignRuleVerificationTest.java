@@ -130,10 +130,54 @@ public class DesignRuleVerificationTest {
         };
         assertEquals(1, wizard.getSubstepCount(0),
                 "PC Update step 0 (Path) must have 1 substep");
-        assertEquals(2, wizard.getSubstepCount(1),
-                "PC Update step 1 (Update) must have 2 substeps");
+        assertEquals(1, wizard.getSubstepCount(1),
+                "PC Update step 1 (Update) must have 1 substep");
         assertEquals(1, wizard.getSubstepCount(2),
                 "PC Update step 2 (Done) must have 1 substep");
+    }
+
+    @Test
+    void testFrameQuestUpdateStepCount() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FrameQuestUpdate wizard = new FrameQuestUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        assertEquals(3, wizard.getStepCount(),
+                "Quest Update wizard must have exactly 3 steps: Connect, Update, Done");
+    }
+
+    @Test
+    void testFrameQuestUpdateChipLabels() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FrameQuestUpdate wizard = new FrameQuestUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        String[] expected = {"Connect", "Update", "Done"};
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals(expected[i], wizard.getChipLabel(i),
+                    "Quest Update wizard chip label at step " + i);
+        }
+    }
+
+    @Test
+    void testFrameQuestUpdateSubstepCounts() {
+        if (GraphicsEnvironment.isHeadless()) return;
+        FrameQuestUpdate wizard = new FrameQuestUpdate(null) {
+            @Override
+            public void setVisible(boolean b) {
+                super.setVisible(false);
+            }
+        };
+        for (int step = 0; step < wizard.getStepCount(); step++) {
+            assertEquals(1, wizard.getSubstepCount(step),
+                    "Quest Update step " + step + " must have 1 substep");
+        }
     }
 
     @Test
@@ -165,6 +209,11 @@ public class DesignRuleVerificationTest {
     @Test
     void testAllAbstractMethodsImplementedInPCUpdate() throws Exception {
         assertAbstractMethodsImplemented(BaseWizard.class, FramePCUpdate.class, "FramePCUpdate");
+    }
+
+    @Test
+    void testAllAbstractMethodsImplementedInQuestUpdate() throws Exception {
+        assertAbstractMethodsImplemented(BaseWizard.class, FrameQuestUpdate.class, "FrameQuestUpdate");
     }
 
     private static void assertAbstractMethodsImplemented(

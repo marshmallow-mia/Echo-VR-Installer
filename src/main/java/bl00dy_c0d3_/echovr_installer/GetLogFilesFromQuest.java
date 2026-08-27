@@ -16,26 +16,11 @@ public class GetLogFilesFromQuest {
     static String commandResult = "";
 
     public static void getLogFilesFromQuest(){
-        Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
+        // NOTE: the pre-Adb Linux branch prefixed the loader (/lib64/ld-linux-x86-64.so.2);
+        // Adb.path() does not, matching what InstallerQuest already does everywhere else.
         prepareAdb();
-        //runShellCommand(tempPath + "/platform-tools/adb.exe " + "pull /sdcard/r14logs r14logs");
-
-        if(isWindows) {
-            commandResult = runShellCommand(tempPath + "/platform-tools/adb.exe " + "pull /sdcard/r14logs/ r14logs/");
-            commandResult = runShellCommand(tempPath + "/platform-tools/adb.exe " + "pull /sdcard/Android/data/com.readyatdawn.r15/files/_local/r14logs/ r14logs/");
-        }
-        else if(isChrome){
-            commandResult = runShellCommand("adb " + "pull /sdcard/r14logs/ r14logs/");
-            commandResult = runShellCommand("adb " + "pull /sdcard/Android/data/com.readyatdawn.r15/files/_local/r14logs/ r14logs/");
-        }
-        else if(mac){
-            commandResult = runShellCommand(tempPath + "/platform-tools-mac/adb " + "pull /sdcard/r14logs/ r14logs/");
-            commandResult = runShellCommand(tempPath + "/platform-tools-mac/adb " + "pull /sdcard/Android/data/com.readyatdawn.r15/files/_local/r14logs/ r14logs/");
-                    }
-        else {
-            commandResult = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "pull /sdcard/r14logs/ r14logs/");
-            commandResult = runShellCommand("/lib64/ld-linux-x86-64.so.2 " + tempPath + "/platform-tools-linux/adb " + "pull /sdcard/Android/data/com.readyatdawn.r15/files/_local/r14logs/ r14logs/");
-        }
+        commandResult = Adb.run("pull /sdcard/r14logs/ r14logs/");
+        commandResult = Adb.run("pull /sdcard/Android/data/com.readyatdawn.r15/files/_local/r14logs/ r14logs/");
         System.out.println(commandResult);
 
     }
