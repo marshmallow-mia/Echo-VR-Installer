@@ -725,7 +725,7 @@ public class Helpers {
     // ------------------------------------------------------------------
 
     /** Window title / version stamp recorded in the on-device Quest install marker. */
-    public static final String VERSION_TITLE = "Echo VR Installer v0.9.4b-006";
+    public static final String VERSION_TITLE = "Echo VR Installer v0.9.5-001";
 
     /** Manifest driving incremental PC updates; files resolve against its parent URL. */
     public static final String PC_MANIFEST_URL = "https://files.echovr.de/updates/update.manifest";

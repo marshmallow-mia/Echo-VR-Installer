@@ -545,7 +545,7 @@ y=595 ─── delete.png icon (x=770) | "Delete cache" button (VISIBLE, x=818,
 - **"Delete cache"**: x=818, y=595, **VISIBLE by default** (`setVisible(true)`) — clears temp download files
 - FrameMain stays unchanged behind modal guidance dialogs
 - Window close: calls `javafx.application.Platform.exit()` then `System.exit(0)`
-- Title: `"Echo VR Installer v0.9.3b"`
+- Title: `"Echo VR Installer v0.9.5-001"`
 
 ### Button Positions (detailed)
 

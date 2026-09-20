@@ -61,7 +61,7 @@ public class FrameGuidanceQuest extends BaseWizard {
     }
 
     @Override
-    protected String getWindowTitle() { return "Echo VR Installer v0.9.4b-006"; }
+    protected String getWindowTitle() { return "Echo VR Installer v0.9.5-001"; }
 
     @Override
     protected int getStepCount() { return 4; }
