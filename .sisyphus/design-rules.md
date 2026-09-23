@@ -370,26 +370,46 @@ Type → Download → Install → Done
 - Status bar: "Installation complete!" / "Installation failed"
 - **ADB flow** (detailed in `InstallerQuest.java`):
   1. `prepareAdb()` — extracts platform-tools per platform
-  2. `checkQuestStatus()` — verifies device is connected (0=OK, 1=unauthorized, -1=not found)
+  2. `checkQuestStatus()` — reads the device table via `AdbDevices.probe()` and resolves the
+     target serial (0=OK, 1=unauthorized, **2=several usable devices**, -1=not found)
   3. Verify APK and _data files exist
   4. `adb kill-server`
   5. `adb devices`
-  6. `adb uninstall com.readyatdawn.r15`
-  7. `adb shell rm -rf /sdcard/readyatdawn` — **legacy** cleanup of the pre-`Android/media` location
-  8. `adb install -g <apk>`
-  9. `adb shell mkdir -p /sdcard/Android/media/com.readyatdawn.r15/files/_local`
-  10. `adb shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
-  11. `adb push _data.zip /data/local/tmp` (with transfer validation)
-  12. `adb shell mv /data/local/tmp/_data.zip /sdcard/Android/media/com.readyatdawn.r15/files/`
-  13. `adb shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; unzip _data.zip`
-  14. `adb shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; rm _data.zip`
-  15. `adb shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
-  16. Grant permissions: `appops`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO`
+  6. `adb -s <serial> uninstall com.readyatdawn.r15`
+  7. `adb -s <serial> shell rm -rf /sdcard/readyatdawn` — **legacy** cleanup of the pre-`Android/media` location
+  8. `adb -s <serial> install -g <apk>`
+  9. `adb -s <serial> shell mkdir -p /sdcard/Android/media/com.readyatdawn.r15/files/_local`
+  10. `adb -s <serial> shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
+  11. `adb -s <serial> push _data.zip /data/local/tmp` (with transfer validation)
+  12. `adb -s <serial> shell mv /data/local/tmp/_data.zip /sdcard/Android/media/com.readyatdawn.r15/files/`
+  13. `adb -s <serial> shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; unzip _data.zip`
+  14. `adb -s <serial> shell cd /sdcard/Android/media/com.readyatdawn.r15/files/; rm _data.zip`
+  15. `adb -s <serial> shell chmod -R 777 /sdcard/Android/media/com.readyatdawn.r15/files`
+  16. Grant permissions (each `adb -s <serial> shell ...`): `appops`, `READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`, `RECORD_AUDIO`
   17. `adb kill-server`
   18. `recordInstalledVersion()` — hashes the staged APK locally and writes the base-version marker to the headset
   19. `QuestUpdateService.applyUpdates(...)` — applies the Quest manifest (label reads "Applying update...")
 
-  Steps 4–17 live in `InstallerQuest.installAPK`; 18–19 in `FrameGuidanceQuest`. All adb paths resolve through `Adb.path()` / `Adb.binary()`.
+  Steps 4–17 live in `InstallerQuest.installAPK`; 18–19 in `FrameGuidanceQuest`. Every adb
+  invocation goes through `Adb`, which owns the binary path, the `-s <serial>` pin and the
+  log trace. **`-s` is only on the device-addressed steps (6–16)** — steps 4, 5 and 17 talk
+  to the adb server, not a device, and `Adb.takesSerial()` exempts them. Running
+  `kill-server` / `start-server` also drops the cached serial, so a reconnect re-resolves it.
+
+- **ADB logging format** — everything adb does lands in the log file under these markers.
+  This is what to ask a user for when an install fails:
+  - `**adb: binary <path>` — logged once per run, so a broken temp path is visible.
+  - `**adb-devices | …` / `**adb-devices = …` — the raw `adb devices -l` table, then the
+    parsed interpretation (serial, state, model, `[EMULATOR]`/`[QUEST?]` tags), then the
+    chosen serial and the reason for choosing it.
+  - `**adb[n] > argv:` / `> cmd:` — the command as executed; `argv:` means no shell parsed
+    it. `**adb[n] < exit=… in …` — exit code and duration. `**adb[n] | …` — output,
+    elided in the middle when a successful command is chatty, never elided on failure.
+    `n` is a per-run counter: the install, the update service and the wizard's connection
+    check run on different threads and their lines interleave.
+  - `**ADB-PROBLEM: …` — adb refused because of *which device* it was talking to
+    ("more than one device/emulator", "device not found", offline, unauthorized). The block
+    quotes the device table and re-reads it. Always the first thing to look for.
 - Includes auto-reconnect on device disconnect during push/install phases
 - Post-install warning: "DON'T CLICK ON RESTORE IF YOU WILL GET ASKED TO OR YOU NEED TO REINSTALL AGAIN!"
 
@@ -510,7 +530,7 @@ WizardState (base)
 │
 └── QuestWizardState extends WizardState
     ├── apkFilename (default: "r15_26-06-25.apk")
-    ├── adbDeviceStatus (-1 = unknown/disconnected)
+    ├── adbDeviceStatus (0 = ready, 1 = unauthorized, 2 = several devices, -1 = unknown/disconnected)
     ├── isPatchedApk (true after OAuth2 download)
     └── getters/setters
 ```

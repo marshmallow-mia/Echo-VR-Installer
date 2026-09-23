@@ -748,10 +748,31 @@ public abstract class BaseWizard extends JDialog {
             SwingUtilities.invokeLater(() -> {
                 connectBtn.setEnabled(true);
                 switch (s) {
-                    case 0 -> {
-                        statusLbl.setIcon(markIcon(true, new Color(0, 200, 0), 18));
+                    case 0 -> showQuestConnected(statusLbl);
+                    case 2 -> {
+                        // Several usable devices and nothing in the table tells them apart.
+                        // Guessing could install to the user's phone, so ask instead -- but
+                        // only when they pressed Connect: this method also runs during frame
+                        // construction, where a modal dialog would ambush them.
+                        statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
                         statusLbl.setForeground(Color.WHITE);
-                        statusLbl.setText("Quest connected");
+                        statusLbl.setText("Several devices connected");
+                        if (interactive) {
+                            java.util.List<AdbDevices.Device> devices =
+                                    Adb.lastSelection().pickable();
+                            DevicePickerDialog picker =
+                                    new DevicePickerDialog(BaseWizard.this, devices);
+                            picker.setVisible(true);
+                            String chosen = picker.getChosenSerial();
+                            if (chosen != null) {
+                                // Pin it directly rather than re-running checkConnection,
+                                // which deliberately clears the target on every call.
+                                Adb.setTargetSerial(chosen);
+                                showQuestConnected(statusLbl);
+                                if (onResult != null) onResult.accept(0);
+                                return;
+                            }
+                        }
                     }
                     case 1 -> {
                         statusLbl.setIcon(markIcon(false, new Color(255, 80, 80), 18));
@@ -778,5 +799,16 @@ public abstract class BaseWizard extends JDialog {
                 if (onResult != null) onResult.accept(s);
             });
         }).start();
+    }
+
+    /** The connected state of the status row, naming the model when adb reported one. */
+    private void showQuestConnected(JLabel statusLbl) {
+        AdbDevices.Device device = Adb.targetDevice();
+        String model = device == null ? null : device.model();
+        statusLbl.setIcon(markIcon(true, new Color(0, 200, 0), 18));
+        statusLbl.setForeground(Color.WHITE);
+        statusLbl.setText(model == null || model.isEmpty()
+                ? "Quest connected"
+                : "Quest connected (" + model.replace('_', ' ') + ")");
     }
 }
