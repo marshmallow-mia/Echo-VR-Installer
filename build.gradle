@@ -144,25 +144,222 @@ test {
     enabled = project.hasProperty('runTests')
 }
 
-// The three bundled Android platform-tools copies are ~60 MB of the app module, but only the target
-// OS's copy is ever read: Helpers.prepareAdb() picks one folder at runtime (isWindows / mac / else) and
-// pulls it out via getResourceAsStream. Ship just that one.
+// =====================================================================================================
+// Android platform-tools (adb)
+// -----------------------------------------------------------------------------------------------------
+// The three platform-tools trees under src/main/resources are an OFFLINE FALLBACK, not the deliverable.
+// They are whatever revision happened to be committed (r35.0.1) and go stale silently. Every build
+// re-resolves the CURRENT revision from Google's own SDK repository manifest -- the same XML that
+// `sdkmanager` itself reads -- and stages that instead:
 //
-// TARGET-driven, not host-driven: a Linux-built Windows image needs platform-tools/adb.exe. Key this
-// off the host and prepareAdb()'s Windows branch gets null streams, NPEs into its empty catch, and
-// every Quest flow fails later with a missing %TEMP%\platform-tools\adb.exe.
-processResources {
+//     manifest : https://dl.google.com/android/repository/repository2-3.xml
+//     archive  : https://dl.google.com/android/repository/platform-tools_r<rev>-{win,linux,darwin}.zip
+//
+// The manifest is used rather than the platform-tools-latest-<os>.zip aliases because it is the only
+// one of the two carrying a SHA-1 to verify the download against. They are the same bytes -- each
+// alias' Content-Length matches the versioned archive's exactly.
+//
+// TARGET-driven, like every other packaging decision in this file: a Linux host cross-building for
+// Windows must stage adb.exe, not adb. Key it off the host instead and prepareAdb()'s Windows branch
+// gets null streams, and every Quest flow dies later on a missing %TEMP%\platform-tools\adb.exe.
+//
+// Pin with -PplatformToolsRevision=36.0.0 to reproduce an older build or to sit out a bad adb release.
+// Google keeps every past revision downloadable, but the manifest only carries a checksum for the
+// CURRENT one, so a pin to anything else downloads unverified and says so out loud.
+//
+// Kept in .android/ (gitignored) rather than build/ for the same reason as the Windows JDK: `clean`
+// must not cost a re-download.
+// =====================================================================================================
+ext.platformToolsManifestUrl = 'https://dl.google.com/android/repository/repository2-3.xml'
+ext.platformToolsBaseUrl     = 'https://dl.google.com/android/repository/'
+ext.platformToolsCacheDir    = file("$rootDir/.android")
+
+// <host-os> as the manifest spells it, the archive's filename suffix, and the resource folder name
+// Helpers.prepareAdb() looks for at runtime. All three are TARGET-driven.
+def ptManifestOs     = targetWindows ? 'windows' : targetMac ? 'macosx' : 'linux'
+def ptArchiveSuffix  = targetWindows ? 'win'     : targetMac ? 'darwin' : 'linux'
+def ptResourceDir    = targetWindows ? 'platform-tools' : targetMac ? 'platform-tools-mac' : 'platform-tools-linux'
+def ptPinnedRevision = project.findProperty('platformToolsRevision')?.toString()
+def ptStageDir       = layout.buildDirectory.dir('platform-tools-staging')
+def ptRevisionMarker = layout.buildDirectory.file('platform-tools.revision')
+
+tasks.register('fetchPlatformTools') {
+    group = 'build setup'
+    description = 'Resolves, downloads and stages the current Android platform-tools (adb) for the target OS.'
+
+    outputs.dir(ptStageDir)
+    outputs.file(ptRevisionMarker)
+
+    // Deliberately never up-to-date: "newest on every build" only means something if the manifest is
+    // re-read every build (~400 KB). The body is a no-op once the resolved revision is already staged,
+    // and because nothing under the output dir is touched then, processResources -- and with it jar and
+    // jlink -- still come out UP-TO-DATE. An incremental build pays one HTTP GET, not a relink.
+    outputs.upToDateWhen { false }
+
+    doLast {
+        def stage  = ptStageDir.get().asFile
+        def marker = ptRevisionMarker.get().asFile
+        def staged = new File(stage, ptResourceDir)
+        def current = (marker.exists() && staged.isDirectory()) ? marker.text.trim() : null
+
+        // --- 1. resolve the current revision from the manifest ---------------------------------------
+        def revision = null, archiveName = null, sha1 = null
+        try {
+            def pkg = new XmlSlurper(false, false)
+                    .parseText(new URL(platformToolsManifestUrl).text)
+                    .'remotePackage'.find { it.@path.text() == 'platform-tools' }
+            if (pkg == null || pkg.isEmpty()) {
+                throw new GradleException('no platform-tools package in the manifest')
+            }
+            revision = "${pkg.revision.major.text()}.${pkg.revision.minor.text()}.${pkg.revision.micro.text()}"
+            def archive = pkg.archives.archive.find { it.'host-os'.text() == ptManifestOs }
+            if (archive == null || archive.isEmpty()) {
+                throw new GradleException("the manifest lists no '$ptManifestOs' archive")
+            }
+            archiveName = archive.complete.url.text()
+            sha1        = archive.complete.checksum.text()
+        } catch (Exception e) {
+            logger.warn("platform-tools: cannot read $platformToolsManifestUrl (${e.message}).")
+        }
+
+        // A pin that is not the current revision still resolves -- Google keeps old archives -- but the
+        // manifest has no checksum for it, so the download cannot be verified.
+        if (ptPinnedRevision && ptPinnedRevision != revision) {
+            logger.lifecycle("platform-tools: pinned to r$ptPinnedRevision " +
+                             "(current is ${revision ?: 'unknown'}) -- no checksum available, download unverified.")
+            revision    = ptPinnedRevision
+            archiveName = "platform-tools_r${ptPinnedRevision}-${ptArchiveSuffix}.zip"
+            sha1        = null
+        }
+
+        // --- 2. fetch and unpack into the cache -------------------------------------------------------
+        def unpacked = revision ? new File(platformToolsCacheDir, "$ptManifestOs-$revision") : null
+        if (revision && !new File(unpacked, 'platform-tools/source.properties').exists()) {
+            def archive = new File(platformToolsCacheDir, archiveName)
+            try {
+                if (!archive.exists()) {
+                    archive.parentFile.mkdirs()
+                    logger.lifecycle("platform-tools: downloading r$revision -> $archive")
+                    // .part then rename, so an interrupted build cannot leave a truncated archive that
+                    // then fails its checksum forever.
+                    def part = new File(archive.parentFile, archive.name + '.part')
+                    part.delete()
+                    new URL(platformToolsBaseUrl + archiveName).withInputStream { input ->
+                        part.withOutputStream { out -> out << input }
+                    }
+                    if (!part.renameTo(archive)) throw new GradleException("cannot rename $part -> $archive")
+                }
+                if (sha1) {
+                    def digest = java.security.MessageDigest.getInstance('SHA-1')
+                    archive.eachByte(1 << 16) { byte[] buf, int n -> digest.update(buf, 0, n) }
+                    def actual = digest.digest().encodeHex().toString()
+                    if (actual != sha1) {
+                        archive.delete()
+                        throw new GradleException("checksum mismatch for $archiveName\n  expected $sha1\n" +
+                                                  "  actual   $actual\nThe download was deleted; re-run the build.")
+                    }
+                }
+                project.delete(unpacked)
+                copy {
+                    from zipTree(archive)   // the archive carries a top-level platform-tools/ folder
+                    into unpacked
+                }
+            } catch (Exception e) {
+                logger.warn("platform-tools: r$revision could not be fetched (${e.message}).")
+                revision = null
+            }
+        }
+
+        // --- 3. stage --------------------------------------------------------------------------------
+        // Nothing to do when the resolved revision is already the staged one: leaving the tree untouched
+        // is what keeps processResources/jar/jlink UP-TO-DATE on an incremental build.
+        if (revision && revision == current) {
+            logger.info("platform-tools: r$revision already staged.")
+            return
+        }
+
+        def label = revision
+        def source = null
+        if (revision) {
+            source = new File(unpacked, 'platform-tools')
+        } else if (current) {
+            // Offline with a usable tree already staged -- keep it rather than downgrade.
+            logger.warn("platform-tools: offline, keeping the staged r$current.")
+            return
+        } else {
+            // Offline on a clean build. Prefer the newest revision already sitting in the cache over the
+            // committed tree: `clean` deletes the staging dir but not .android/, and dropping from r37 to
+            // the committed r35 just because the network blinked would be a silent downgrade.
+            def revKey = { String r -> r.tokenize('.').collect { it.isInteger() ? it.toInteger() : 0 } }
+            def cached = (platformToolsCacheDir.listFiles() ?: new File[0])
+                    .findAll { it.isDirectory() && it.name.startsWith("$ptManifestOs-") &&
+                               new File(it, 'platform-tools/source.properties').exists() }
+                    .max { revKey(it.name.substring(ptManifestOs.length() + 1)) }
+
+            if (cached) {
+                label = cached.name.substring(ptManifestOs.length() + 1)
+                source = new File(cached, 'platform-tools')
+                logger.warn("platform-tools: offline -- staging the newest cached revision, r$label.")
+            } else {
+                // Nothing cached either: fall back to the copy committed under src/main/resources. It is
+                // stale by definition, so say so rather than let an old adb ship quietly.
+                source = file("src/main/resources/$ptResourceDir")
+                if (!source.isDirectory()) {
+                    throw new GradleException("platform-tools: no download, no cache and no fallback at $source")
+                }
+                label = 'committed-fallback'
+                logger.warn("platform-tools: OFFLINE -- staging the committed $ptResourceDir tree, " +
+                            'which may be out of date.')
+            }
+        }
+
+        project.delete(stage)
+        copy {
+            from source
+            into new File(stage, ptResourceDir)
+        }
+
+        // files.list closes the two `//TODO read filelist from the folder instead of that` in
+        // Helpers.prepareAdb(): that method used to extract a hardcoded array of filenames, which is
+        // exactly the assumption that breaks the first time Google adds a tool to the archive. It is
+        // generated here, from what was actually staged, and read back at runtime.
+        def root = new File(stage, ptResourceDir).toPath()
+        def listed = []
+        new File(stage, ptResourceDir).eachFileRecurse(groovy.io.FileType.FILES) { f ->
+            listed << root.relativize(f.toPath()).toString().replace(File.separator, '/')
+        }
+        new File(stage, "$ptResourceDir/files.list").setText(listed.sort().join('\n') + '\n', 'UTF-8')
+
+        marker.parentFile.mkdirs()
+        marker.setText(label, 'UTF-8')
+        logger.lifecycle("platform-tools: staged $ptResourceDir ${label == 'committed-fallback' ? label : 'r' + label} " +
+                         "(${listed.size()} files).")
+    }
+}
+
+// Only the target OS's platform-tools copy is ever read: Helpers.prepareAdb() picks one folder at
+// runtime (isWindows / mac / else) and pulls it out via getResourceAsStream. Ship just that one -- and
+// ship the freshly fetched one, not the committed fallback.
+//
+// The drops below are declared on the SOURCE SET, not on processResources. A task-level exclude on a
+// Copy applies to every source spec the task has, so putting them there would filter the staged tree
+// too -- its folder name IS one of the excluded patterns -- and the image would ship with no adb at all.
+sourceSets.main.resources {
+    // All three committed trees go: fetchPlatformTools stages exactly one -- the target OS's, freshly
+    // downloaded, or the committed tree copied verbatim when the network is unreachable.
+    exclude 'platform-tools/**', 'platform-tools-linux/**', 'platform-tools-mac/**'
+
     if (targetWindows) {
-        exclude 'platform-tools-linux/**', 'platform-tools-mac/**'
         // A Linux shared object has no business inside a Windows image. It only gets there by riding
         // along in the app jar (and from there into runtime\lib\modules); the Linux build gets its copy
         // from copyLibjpeg below, straight out of src/main/resources.
         exclude 'libjpeg.so.62'
-    } else if (targetMac) {
-        exclude 'platform-tools/**', 'platform-tools-linux/**'
-    } else {
-        exclude 'platform-tools/**', 'platform-tools-mac/**'
     }
+}
+
+processResources {
+    dependsOn('fetchPlatformTools')
+    from ptStageDir
 }
 
 jar {
