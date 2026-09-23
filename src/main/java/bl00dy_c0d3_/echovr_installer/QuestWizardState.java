@@ -36,6 +36,12 @@ public class QuestWizardState extends WizardState {
         this.installedApkSha256 = installedApkSha256;
     }
 
+    /**
+     * 0 = ready, 1 = unauthorized, 2 = several usable devices, -1 = none.
+     *
+     * <p>{@link Adb} owns the serial commands are actually built with; this is the
+     * wizard-facing summary.
+     */
     public int getAdbDeviceStatus() {
         return adbDeviceStatus;
     }
