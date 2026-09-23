@@ -20,40 +20,82 @@ jobs:
     # runner's glibc, so the runner sets the oldest distro we can run on. 22.04 ships glibc 2.35,
     # which covers Debian 12 (2.36) and Ubuntu 22.04+. ubuntu-latest is 24.04 (glibc 2.39) and
     # would silently drop Debian 12 support. For Debian 11 (2.31), build in a debian:11 container.
+    #
+    # The constraint above is about the LINUX image only; the Windows matrix entry is cross-built
+    # here (no glibc involved) and shares the runner purely for simplicity.
     runs-on: ubuntu-22.04
     permissions:
       contents: write
 
+    strategy:
+      # A Windows regression must not hide a Linux one, and vice versa.
+      fail-fast: false
+      matrix:
+        include:
+          # Native build: jpackageImage writes build/jpackage/EchoVR_Installer/.
+          - target: linux
+            artifact: EchoVR_Installer-linux-portable
+            image-path: build/jpackage/EchoVR_Installer/
+          # Cross-build (see build.gradle's "Host vs. target" header). jpackageImage is DISABLED in
+          # cross mode, so build/jpackage is empty and windowsAppImage's staging dir is the image.
+          - target: windows
+            artifact: EchoVR_Installer-windows-portable
+            image-path: build/windows-image/EchoVR_Installer/
+
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 17
+
+    # 21, not 17: the Windows cross-link feeds jlink the Temurin Windows 21.0.12.1 jmods and
+    # jdk.tools.jlink.internal.JlinkTask refuses to link jmods whose feature+interim version differs
+    # from jlink's own (see the "Windows JDK" comment block in build.gradle). On 17 the Windows job
+    # fails deep inside jlink rather than at setup. Both targets share it so the two jobs stay
+    # identical, which also matches the JDK the build is developed against locally.
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
+
+    # fetchWindowsJdk unpacks a ~195 MB Temurin Windows JDK into $rootDir/.jdks/ — deliberately
+    # outside build/ (so `clean` does not cost a re-download) and therefore outside everything
+    # setup-gradle caches. Without this the Windows job re-downloads it on every single run.
+    # Keyed on build.gradle so bumping winJdkRelease invalidates the entry by itself; no
+    # restore-keys, because a stale entry unpacks under a different version directory that
+    # fetchWindowsJdk's onlyIf ignores anyway, and the cache would only grow.
+    - name: Cache the Temurin Windows JDK (jmod source)
+      if: matrix.target == 'windows'
+      uses: actions/cache@v4
+      with:
+        path: |
+          .jdks
+          !.jdks/*.zip
+        key: winjdk-${{ hashFiles('build.gradle') }}
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
+    # -PtargetOs is passed for linux too, even though it is the default on a Linux runner, so both
+    # matrix entries run the exact same command.
     - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      run: ./gradlew -PtargetOs=${{ matrix.target }} build
 
     # The portable app image is the deliverable (no installers are built — see build.gradle).
     # Without this the workflow builds it and then throws it away.
+    # if-no-files-found: error is what catches a wrong image-path loudly instead of uploading nothing.
     - name: Upload portable app image
       uses: actions/upload-artifact@v4
       with:
-        name: EchoVR_Installer-linux-portable
-        path: build/jpackage/EchoVR_Installer/
+        name: ${{ matrix.artifact }}
+        path: ${{ matrix.image-path }}
         if-no-files-found: error
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
     #
     # - name: Setup Gradle
-    #   uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+    #   uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
     #   with:
     #     gradle-version: '8.5'
     #
@@ -68,16 +110,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 17
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'temurin'
 
     - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
     # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
     # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
     - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
