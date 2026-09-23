@@ -336,7 +336,15 @@ public class QuestUpdateService {
             try {
                 setLabel(progressLabel, "Checking your Quest...");
                 Helpers.prepareAdb();
-                if (InstallerQuest.checkQuestStatus() != 0) {
+                int deviceStatus = InstallerQuest.checkQuestStatus();
+                if (deviceStatus == 2) {
+                    // Several usable devices: pinning a serial would be a guess, and guessing
+                    // wrong means writing an update to someone's phone.
+                    status = new Status(VersionCheck.NO_DEVICE,
+                            "More than one device is plugged in, so the updater can't tell which "
+                            + "one is your Quest.\nUnplug the others and try again.",
+                            null, null, null, false);
+                } else if (deviceStatus != 0) {
                     status = new Status(VersionCheck.NO_DEVICE,
                             "Your Quest is no longer connected.", null, null, null, false);
                 } else {
@@ -398,7 +406,7 @@ public class QuestUpdateService {
                             "The Quest update manifest is missing its target location.\nUpdate aborted.", onFailure);
                     return;
                 }
-                String adbPath = Adb.prepare();
+                Adb.prepare();   // stages platform-tools; the path itself is no longer needed
 
                 List<UpdateManifest.Entry> dels = manifest.dels();
                 List<UpdateManifest.Entry> adds = manifest.adds();
@@ -411,7 +419,7 @@ public class QuestUpdateService {
                     setLabel(progressLabel, "Updating " + current + "/" + total + ": deleting " + e.path + "...");
                     System.out.println("QuestUpdateService: deleting " + e.path);
                     // rm -f exits 0 for a missing file; a leftover file is not worth aborting over.
-                    if (!InstallerQuest.executeWithReconnect(adbPath,
+                    if (!InstallerQuest.executeWithReconnect(
                             () -> Adb.shellExit(null, "rm -rf " + root + "/" + e.path),
                             "rm " + e.path, progressLabel)) {
                         System.out.println("QuestUpdateService: could not delete " + e.path + ", continuing");
@@ -458,7 +466,7 @@ public class QuestUpdateService {
 
                         System.out.println("QuestUpdateService: pushing " + remote);
                         final Path push = tempFile;
-                        if (!InstallerQuest.executeWithReconnect(adbPath,
+                        if (!InstallerQuest.executeWithReconnect(
                                 () -> Adb.pushFile(push, remote) ? 0 : 1,
                                 "push " + e.path, progressLabel)) {
                             abortUpdate(frame, "Transfer Failed",

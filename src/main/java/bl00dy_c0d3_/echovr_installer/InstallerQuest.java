@@ -47,8 +47,6 @@ public class InstallerQuest {
             String commandResult5;
             String commandResult6;
 
-            String adbPath = Adb.path();
-
             // Game data lives in the app-owned external media dir. Unlike /sdcard/readyatdawn,
             // this needs no storage permission, so it works on secondary Quest accounts.
             // It MUST be staged AFTER the APK is installed, because Android wipes
@@ -56,29 +54,29 @@ public class InstallerQuest {
             String dataDir = "/sdcard/Android/media/com.readyatdawn.r15/files";
 
             System.out.println("**adb kill-server");
-            runShellCommand(adbPath + " kill-server");
+            Adb.run("kill-server");
 
             System.out.println("**InstallerQuest ADB DEVICES (1st step)");
-            runShellCommand(adbPath + " devices");
+            Adb.run("devices");
 
             System.out.println("**Uninstall");
-            runShellCommand(adbPath + " uninstall com.readyatdawn.r15");
+            Adb.run("uninstall com.readyatdawn.r15");
 
             System.out.println("**delete legacy data /sdcard/readyatdawn (old install location)");
-            runShellCommand(adbPath + " shell \"rm -rf /sdcard/readyatdawn\"");
+            Adb.run("shell \"rm -rf /sdcard/readyatdawn\"");
 
             System.out.println("**Install");
-            runShellCommand(adbPath + " install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
+            Adb.run("install -g \"" + pathToApkObb + "/" + apkfileName + "\"");
 
             System.out.println("**mkdir: " + dataDir + "/_local");
-            runShellCommand(adbPath + " shell \"mkdir -p " + dataDir + "/_local\"");
+            Adb.run("shell \"mkdir -p " + dataDir + "/_local\"");
 
             System.out.println("**Set permissions (pre-push)");
-            runShellCommand(adbPath + " shell \"chmod -R 777 " + dataDir + "\"");
+            Adb.run("shell \"chmod -R 777 " + dataDir + "\"");
 
             System.out.println("**push zip to /data/local/tmp");
             progressLabel.setText("Pushing data files...");
-            String pushOutput = runShellCommand(adbPath + " push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
+            String pushOutput = Adb.run("push \"" + pathToApkObb + "/" + obbfileName + "\" /data/local/tmp");
 
             boolean pushTransferredData = pushOutput.contains("bytes") && !pushOutput.contains("0 files pushed");
             int pushExitCode = parseExitCode(pushOutput);
@@ -97,8 +95,8 @@ public class InstallerQuest {
                 System.out.println("**WARNING: Device disconnected after data push (push transferred but adb connection lost)");
                 progressLabel.setText("Device disconnected - retrying...");
 
-                runShellCommand(adbPath + " kill-server");
-                runShellCommand(adbPath + " start-server");
+                Adb.run("kill-server");
+                Adb.run("start-server");
                 pause(2);
 
                 deviceStatus = checkQuestStatus();
@@ -115,44 +113,44 @@ public class InstallerQuest {
             boolean overallSuccess = true;
 
             System.out.println("**mv zip to target");
-            if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"mv /data/local/tmp/_data.zip " + dataDir + "/\"",
+            if (!executeWithReconnect(
+                    "shell \"mv /data/local/tmp/_data.zip " + dataDir + "/\"",
                     "mv", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**unzip");
-            if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"cd " + dataDir + "/; unzip _data.zip\"",
+            if (!executeWithReconnect(
+                    "shell \"cd " + dataDir + "/; unzip _data.zip\"",
                     "unzip", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**rm zip");
-            if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"cd " + dataDir + "/; rm _data.zip\"",
+            if (!executeWithReconnect(
+                    "shell \"cd " + dataDir + "/; rm _data.zip\"",
                     "rm", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**Set permissions (post-unzip)");
-            if (!executeWithReconnect(adbPath,
-                    adbPath + " shell \"chmod -R 777 " + dataDir + "\"",
+            if (!executeWithReconnect(
+                    "shell \"chmod -R 777 " + dataDir + "\"",
                     "chmod", progressLabel)) {
                 overallSuccess = false;
             }
 
             System.out.println("**Grant permissions");
-            runShellCommand(adbPath + " shell appops set com.readyatdawn.r15 MANAGE_EXTERNAL_STORAGE allow");
-            runShellCommand(adbPath + " shell pm grant com.readyatdawn.r15 android.permission.READ_EXTERNAL_STORAGE");
-            runShellCommand(adbPath + " shell pm grant com.readyatdawn.r15 android.permission.WRITE_EXTERNAL_STORAGE");
-            runShellCommand(adbPath + " shell pm grant com.readyatdawn.r15 android.permission.RECORD_AUDIO");
+            Adb.run("shell appops set com.readyatdawn.r15 MANAGE_EXTERNAL_STORAGE allow");
+            Adb.run("shell pm grant com.readyatdawn.r15 android.permission.READ_EXTERNAL_STORAGE");
+            Adb.run("shell pm grant com.readyatdawn.r15 android.permission.WRITE_EXTERNAL_STORAGE");
+            Adb.run("shell pm grant com.readyatdawn.r15 android.permission.RECORD_AUDIO");
 
             //System.out.println("**adb reboot");
-            //runShellCommand(adbPath + " reboot");
+            //Adb.run("reboot");
 
             System.out.println("**adb kill-server");
-            runShellCommand(adbPath + " kill-server");
+            Adb.run("kill-server");
 
             return overallSuccess;
         }
@@ -163,6 +161,14 @@ public class InstallerQuest {
                 + "Put on your headset and tap&nbsp;<b>Allow</b>&nbsp;when the USB debugging prompt appears "
                 + "(replug the cable if you don't see it).</center></html>", 3);
             System.out.println("Device is unauthorized!");
+            return false;
+        }
+        else if (deviceConnected == 2) {
+            ErrorDialog error = new ErrorDialog();
+            error.errorDialog(parrentFrame, "Several devices connected",
+                "<html><center>" + multiDeviceMessage() + "</center></html>", 0);
+            System.out.println("**Several usable devices are attached -- refusing to guess: "
+                    + Adb.lastSelection().reason());
             return false;
         }
         else if (deviceConnected == -1) {
@@ -184,59 +190,45 @@ public class InstallerQuest {
 
     /**
      * Prepares ADB and returns the Quest connection status.
-     * @return 0 = connected &amp; authorized, 1 = connected but unauthorized, -1 = not detected.
+     * @return 0 = connected &amp; authorized, 1 = connected but unauthorized,
+     *         2 = several usable devices and none selectable, -1 = not detected.
      */
     public static int checkConnection() {
         prepareAdb();
+        // The user may have re-plugged a different headset since the last check, so never
+        // answer this from a cached serial.
+        Adb.clearTargetSerial("connection check");
         return checkQuestStatus();
     }
 
-    //0 = connected, 1 = unauthorized, -1 not connected
-    // Method to check if any device is connected based on the adb devices output
+    /**
+     * The message shown when adb reports several usable devices. Lists what it saw, so the
+     * user can tell which cable to pull.
+     */
+    static String multiDeviceMessage() {
+        StringBuilder sb = new StringBuilder(
+                "More than one device is plugged in, so the installer can't tell<br>"
+                + "which one is your Quest:<br><br>");
+        for (AdbDevices.Device device : Adb.lastSelection().pickable()) {
+            sb.append("&nbsp;&nbsp;\u2022&nbsp;").append(device.label()).append("<br>");
+        }
+        sb.append("<br>Unplug the others (phone, second headset, emulator) and try again.");
+        return sb.toString();
+    }
+
+    /**
+     * Reads the device table and decides which headset to talk to.
+     *
+     * <p>This used to scan {@code adb devices} itself and return on the <em>first</em> line
+     * ending in {@code device}, so a second entry -- an emulator, a phone, an offline stub,
+     * a second headset -- was never noticed: the installer reported "Quest connected" and
+     * every later command then failed with "more than one device/emulator".
+     * {@link AdbDevices} now enumerates the whole table, logs it, and picks a serial to pin.
+     *
+     * @return 0 = ready, 1 = unauthorized, 2 = several usable devices, -1 = none.
+     */
     static int checkQuestStatus(){
-
-        // Start the process
-        Process process = null;
-        try {
-            process = new ProcessBuilder(Adb.binary(), "devices").start();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return -1;
-        }
-
-        // StringBuilder to accumulate the output
-        StringBuilder stdOutResult = new StringBuilder();
-
-        // Read the output from the process's input stream
-        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            String stdout;
-            while ((stdout = stdInput.readLine()) != null) {
-                stdOutResult.append(stdout).append("\n"); // Append each line and a newline character
-            }
-
-        }
-        catch (IOException e){}
-        //TODO ^
-
-        // Print the result
-        //System.out.println(stdOutResult + "");
-
-        // Check each line for device connection status
-        for (String line : (stdOutResult + "").split("\\r?\\n")) {
-
-            System.out.println(line);
-            // Check if the line ends with "device" indicating a connected device
-            if (line.endsWith("device")) {
-                return 0;
-            }
-            // Check if the line ends with "unauthorized" indicating a connected device
-            if (line.endsWith("unauthorized") || line.endsWith("[http://developer.android.com/tools/device.html]")) {
-                return 1;
-            }
-        }
-
-        // If no device lines containing "device or unauthorized" were found
-        return -1;
+        return AdbDevices.probe().statusCode();
     }
 
 
@@ -258,10 +250,17 @@ public class InstallerQuest {
         return 0;
     }
 
-    static boolean executeWithReconnect(String adbPath, String command,
+    /**
+     * @param argsTail the adb subcommand and its arguments, without the binary -- e.g.
+     *                 {@code shell "cd /x; unzip a.zip"}. {@link Adb} adds the binary, the
+     *                 {@code -s <serial>} pin and the trace.
+     */
+    static boolean executeWithReconnect(String argsTail,
                                                  String commandDesc, SpecialLabel progressLabel) {
-        return executeWithReconnect(adbPath, () -> runShellCommandWithExitCode(command),
-                commandDesc, progressLabel);
+        // Adb.runExit, not runShellCommandWithExitCode: the latter drains both streams into
+        // nothing, so a failure here -- the likeliest place for "more than one device" to
+        // surface -- used to leave only a bare exit code in the log.
+        return executeWithReconnect(() -> Adb.runExit(argsTail), commandDesc, progressLabel);
     }
 
     /**
@@ -271,7 +270,7 @@ public class InstallerQuest {
      * <p>The supplier form lets argv-based callers (see {@link Adb#exec}) reuse the same
      * reconnect handling as the command-string ones.
      */
-    static boolean executeWithReconnect(String adbPath, java.util.function.IntSupplier action,
+    static boolean executeWithReconnect(java.util.function.IntSupplier action,
                                                  String commandDesc, SpecialLabel progressLabel) {
         int exitCode = action.getAsInt();
         if (exitCode == 0) {
@@ -288,8 +287,11 @@ public class InstallerQuest {
         System.out.println("**WARNING: Device disconnected during " + commandDesc + ", retrying...");
         progressLabel.setText("Device disconnected - retrying...");
 
-        runShellCommand(adbPath + " kill-server");
-        runShellCommand(adbPath + " start-server");
+        // Unflagged by construction (Adb exempts the server subcommands), and each one drops
+        // the cached serial, so the retry below resolves against the device table that exists
+        // *after* the reconnect rather than reusing a stale one.
+        Adb.run("kill-server");
+        Adb.run("start-server");
         pause(2);
 
         deviceStatus = checkQuestStatus();

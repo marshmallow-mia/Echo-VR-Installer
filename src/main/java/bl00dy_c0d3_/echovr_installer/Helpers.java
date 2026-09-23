@@ -139,66 +139,82 @@ public class Helpers {
 
 
     public static String runShellCommand(String shellCommand) {
+        return runShellCommand(shellCommand, true);
+    }
+
+    /**
+     * As {@link #runShellCommand(String)}, but {@code echo == false} suppresses this
+     * method's own printing of the command and its output.
+     *
+     * <p>Only {@link Adb} passes false: it emits its own structured {@code **adb[n]} trace
+     * and would otherwise log everything twice. The returned string is identical either
+     * way -- {@link InstallerQuest#parseExitCode} scrapes the leading
+     * {@code "Process exited with code N"} marker out of it, and the push check looks for
+     * {@code "bytes"}.
+     */
+    static String runShellCommand(String shellCommand, boolean echo) {
         StringBuilder output = new StringBuilder();
         StringBuilder errorOutput = new StringBuilder();
-        BufferedReader stdInput = null;
-        BufferedReader stdError = null;
+        String stdoutText = "";
+        String stderrText = "";
+        int exitCode = -1;
 
-        if (linux || mac){
-            try {
-                ProcessBuilder builder = new ProcessBuilder("bash", "-c", shellCommand);
-                Process process = builder.start();
-
-                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-
-                int exitCode = process.waitFor();
-                output.append("Process exited with code ").append(exitCode).append("\n");
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        else {
-            try {
-                System.out.println("HelpersClass runShellCommand: " + shellCommand);
-                Process process = Runtime.getRuntime().exec(shellCommand);
-                stdInput = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-                int exitCode = process.waitFor();
-                output.append("Process exited with code ").append(exitCode).append("\n");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-
-
+        // NOTE: both streams are drained BEFORE waiting for the process, and stderr is
+        // drained on its own thread. The previous order (wait, then read) deadlocks whenever
+        // a command outfills the ~64 KB pipe buffer -- `adb push` of the data zip and
+        // `adb install` can both do that -- and draining them one after the other on a single
+        // thread only moves the deadlock to whichever stream is not being read.
         try {
-        // Read the output from the command
-        String s = null;
-        while ((s = stdInput.readLine()) != null) {
-            output.append(s).append("\n");
-        }
+            Process process;
+            if (linux || mac) {
+                process = new ProcessBuilder("bash", "-c", shellCommand).start();
+            } else {
+                if (echo) System.out.println("HelpersClass runShellCommand: " + shellCommand);
+                process = Runtime.getRuntime().exec(shellCommand);
+            }
 
-        // Read any errors from the attempted command
-        String e = null;
-        while ((e = stdError.readLine()) != null) {
-            errorOutput.append(e).append("\n");
-        }
+            StringBuilder stderrSink = new StringBuilder();
+            Thread stderrPump = new Thread(() -> {
+                try {
+                    stderrSink.append(drain(process.getErrorStream()));
+                } catch (Exception ignored) {
+                    // A broken stderr must not fail the command; stdout still carries the result.
+                }
+            }, "adb-stderr-pump");
+            stderrPump.setDaemon(true);
+            stderrPump.start();
+
+            stdoutText = drain(process.getInputStream());
+            exitCode = process.waitFor();
+            stderrPump.join();
+            stderrText = stderrSink.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        output.append("Process exited with code ").append(exitCode).append("\n");
+        output.append(stdoutText);
+        errorOutput.append(stderrText);
 
         // Combine standard output and error output (optional)
         if (!errorOutput.isEmpty()) {
             output.append("ERROR OUTPUT:\n").append(errorOutput.toString());
         }
-        System.out.println(output);
+        if (echo) System.out.println(output);
 
         return output.toString();
+    }
+
+    /** Reads a process stream to exhaustion. */
+    private static String drain(java.io.InputStream stream) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        return sb.toString();
     }
 
 
