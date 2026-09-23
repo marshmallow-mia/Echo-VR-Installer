@@ -12,10 +12,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.io.File;
@@ -638,86 +640,105 @@ public class Helpers {
 
 
 
-    public static void prepareAdb(){
-        Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"));
-        String[] fileList;
-        String[] fileList3;
-        Path targetPath;
-        Path targetPath2;
-        Path targetPath3;
-        String libcName;
-        String folder;
+    /**
+     * Name of the generated manifest listing every file in a staged platform-tools tree,
+     * one repo-relative path per line. Written by the {@code fetchPlatformTools} Gradle task.
+     */
+    private static final String ADB_FILE_LIST = "files.list";
 
+    /**
+     * The file list this method used to hardcode, kept only for the case where {@link #ADB_FILE_LIST}
+     * is missing -- e.g. running against a resources tree that some older build produced. Matches
+     * platform-tools r35.0.1; anything Google has added since is picked up through files.list instead.
+     */
+    private static final String[] LEGACY_WINDOWS_FILES = {
+            "adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe",
+            "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe",
+            "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
+    private static final String[] LEGACY_UNIX_FILES = {
+            "adb", "fastboot", "make_f2fs_casefold", "mke2fs.conf", "source.properties", "etc1tool",
+            "hprof-conv", "make_f2fs", "mke2fs", "NOTICE.txt", "sqlite3"};
 
-        if (isWindows) {
-            String dir = System.getProperty("java.io.tmpdir") + "platform-tools/";
-            File file = new File(dir);
-            if (!file.exists()){
-                file.mkdirs();
-            }
+    /** Resource folder holding the platform-tools build for the platform we are running on. */
+    private static String adbResourceFolder() {
+        if (isWindows) return "platform-tools";
+        if (mac) return "platform-tools-mac";
+        return "platform-tools-linux";
+    }
 
-            fileList = new String[]{"adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "etc1tool.exe", "fastboot.exe", "hprof-conv.exe", "libwinpthread-1.dll", "make_f2fs.exe", "make_f2fs_casefold.exe", "mke2fs.conf", "mke2fs.exe", "NOTICE.txt", "source.properties", "sqlite3.exe"};
-            //TODO read filelist from the folder instead of that
-            for (int a = 0; a < fileList.length; a++) {
-                targetPath = Paths.get(tempPath + "/platform-tools/" + fileList[a]);
-                try {
-                    InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream("platform-tools/" + fileList[a]);
-                    Files.copy(stream, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e) {
-
+    /**
+     * Which files to extract, read from the generated {@value #ADB_FILE_LIST}.
+     *
+     * <p>The build stages a freshly downloaded platform-tools on every compile, so the contents are
+     * whatever Google ships today -- which is exactly why the list cannot be hardcoded here any more:
+     * a tool added in a future release would simply never be extracted. Falls back to the r35.0.1
+     * list when the manifest is absent, so an old resources tree still works.
+     */
+    private static List<String> adbFileList(String folder) {
+        List<String> files = new ArrayList<>();
+        try (InputStream in = ClassLoader.getSystemClassLoader()
+                .getResourceAsStream(folder + "/" + ADB_FILE_LIST)) {
+            if (in != null) {
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(in, StandardCharsets.UTF_8));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+                    if (!line.isEmpty() && !line.equals(ADB_FILE_LIST)) files.add(line);
                 }
-                //TODO ^
             }
+        } catch (Exception e) {
+            System.out.println("**prepareAdb: could not read " + folder + "/" + ADB_FILE_LIST + ": " + e);
         }
-        else{
-            if (mac){
-                folder = "platform-tools-mac";
-                libcName = "libc++.dylib";
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
-            }
-            else{
-                folder = "platform-tools-linux";
-                libcName = "libc++.so";
-                targetPath2 = Paths.get(tempPath + "/" + folder + "/lib64/" + libcName);
-            }
-            String dir = tempPath + "/" + folder + "/";
-            File file = new File(dir);
-            if (!file.exists()){
-                file.mkdirs();
-            }
-            String dir2 = tempPath + "/" + folder + "/lib64/";
-            File file2 = new File(dir2);
-            if (!file2.exists()){
-                file2.mkdirs();
-            }
+        if (files.isEmpty()) {
+            System.out.println("**prepareAdb: no " + ADB_FILE_LIST + " in " + folder + ", using the legacy file list");
+            files.addAll(Arrays.asList(isWindows
+                    ? LEGACY_WINDOWS_FILES
+                    : LEGACY_UNIX_FILES));
+            files.add(mac ? "lib64/libc++.dylib" : "lib64/libc++.so");
+        }
+        return files;
+    }
+
+    /**
+     * Extracts the bundled platform-tools into the temp dir, where {@link Adb#binary()} expects them.
+     *
+     * <p>Every entry of the tree is copied, driven by {@value #ADB_FILE_LIST} rather than a hardcoded
+     * array, so the extraction follows whatever revision the build staged. Subdirectories (currently
+     * only {@code lib64/}) are created as needed.
+     */
+    public static void prepareAdb() {
+        String folder = adbResourceFolder();
+        Path root = tempPath.resolve(folder);
+
+        for (String relative : adbFileList(folder)) {
+            Path target = root.resolve(relative);
             try {
-                InputStream stream2 = ClassLoader.getSystemClassLoader().getResourceAsStream(folder + "/lib64/" + libcName);
-                Files.copy(stream2, targetPath2, StandardCopyOption.REPLACE_EXISTING);
-
-
-                fileList3 = new String[]{"adb", "fastboot", "make_f2fs_casefold", "mke2fs.conf", "source.properties", "etc1tool", "hprof-conv", "make_f2fs", "mke2fs", "NOTICE.txt", "sqlite3"};
-                //TODO read filelist from the folder instead of that
-                for (int b = 0; b < fileList3.length; b++) {
-                    targetPath3 = Paths.get(tempPath + "/" + folder + "/" + fileList3[b]);
-                    InputStream stream3 = ClassLoader.getSystemClassLoader().getResourceAsStream(folder + "/" + fileList3[b]);
-                    Files.copy(stream3, targetPath3, StandardCopyOption.REPLACE_EXISTING);
-                    stream2.close();
+                Files.createDirectories(target.getParent());
+                try (InputStream stream = ClassLoader.getSystemClassLoader()
+                        .getResourceAsStream(folder + "/" + relative)) {
+                    if (stream == null) {
+                        // Listed but absent: survivable for a tool the installer never calls, fatal
+                        // only for adb itself -- which the caller finds out about soon enough. Logged
+                        // either way, because the old code swallowed this silently on Windows.
+                        System.out.println("**prepareAdb: missing resource " + folder + "/" + relative);
+                        continue;
+                    }
+                    Files.copy(stream, target, StandardCopyOption.REPLACE_EXISTING);
                 }
-                if (mac) {
-                    runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/");
-                }
-                if (linux) {
-                    System.out.println("**Linux prepareAdb: chmod +x " + tempPath + "/" + folder + "/adb");
-                    runShellCommand("chmod +x " + tempPath + "/" + folder + "/adb");
-                }
-
             } catch (Exception e) {
-                e.printStackTrace();
-
+                System.out.println("**prepareAdb: could not extract " + relative + ": " + e);
             }
-            //TODO ^
         }
 
+        // Resource streams carry no unix mode bits, so the executables come out non-executable.
+        if (mac) {
+            runShellCommand("chmod -R +x " + tempPath + "/" + folder + "/");
+        }
+        if (linux) {
+            System.out.println("**Linux prepareAdb: chmod +x " + tempPath + "/" + folder + "/adb");
+            runShellCommand("chmod +x " + tempPath + "/" + folder + "/adb");
+        }
     }
 
     // ------------------------------------------------------------------

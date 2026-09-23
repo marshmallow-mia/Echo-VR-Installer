@@ -10,3 +10,4 @@ echo_ideas.md
 *.kate-swp
 echovr/
 .jdks/
+.android/
