@@ -1,3 +1,8 @@
+This installer is end-of-life.
+Use the new launcher:
+https://github.com/marshmallow-mia/EchoVR_Launcher 
+
+
 # Echo VR Installer
 
 This installs Echo VR onto your computer, **READ INSTRUCTIONS BELOW ON HOW TO INSTALL**
